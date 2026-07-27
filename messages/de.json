@@ -1,0 +1,120 @@
+{
+  "common": {
+    "appName": "LiveClub",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "loading": "Wird geladen …",
+    "back": "Zurück",
+    "confirm": "Bestätigen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert"
+  },
+  "auth": {
+    "registerTitle": "Verein registrieren",
+    "loginTitle": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "displayName": "Name",
+    "registerButton": "Registrieren",
+    "loginButton": "Anmelden",
+    "logoutButton": "Abmelden",
+    "forgotPassword": "Passwort vergessen?",
+    "alreadyHaveAccount": "Bereits registriert? Jetzt anmelden",
+    "noAccount": "Noch kein Konto? Jetzt registrieren"
+  },
+  "clubSetup": {
+    "title": "Verein anlegen",
+    "clubName": "Vereinsname",
+    "sport": "Sportart",
+    "country": "Land",
+    "language": "Sprache",
+    "contactName": "Kontaktname",
+    "contactEmail": "Kontakt-E-Mail",
+    "submit": "Verein erstellen",
+    "trialNotice": "Dein Verein erhält automatisch eine 30-tägige kostenlose Testphase."
+  },
+  "dashboard": {
+    "overview": "Übersicht",
+    "club": "Verein",
+    "teams": "Mannschaften",
+    "games": "Spiele",
+    "reporters": "Reporter",
+    "share": "Teilen & Einbetten",
+    "subscription": "Abo & Lizenz",
+    "trialEndsIn": "Testphase endet in {days} Tagen",
+    "trialExpired": "Testphase abgelaufen",
+    "licenseStatusActive": "Aktiv",
+    "licenseStatusExpired": "Abgelaufen"
+  },
+  "teams": {
+    "title": "Mannschaften",
+    "newTeam": "Neue Mannschaft",
+    "name": "Name",
+    "shortName": "Kurzname",
+    "create": "Mannschaft erstellen",
+    "empty": "Noch keine Mannschaften angelegt."
+  },
+  "games": {
+    "title": "Spiele",
+    "newGame": "Neues Spiel",
+    "team": "Mannschaft",
+    "homeTeam": "Heimteam",
+    "awayTeam": "Gastteam",
+    "kickoff": "Anstoss",
+    "status": {
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "live": "Live",
+      "paused": "Pausiert",
+      "finished": "Beendet",
+      "cancelled": "Abgesagt"
+    },
+    "create": "Spiel erstellen",
+    "empty": "Noch keine Spiele angelegt.",
+    "openLiveControl": "Live-Steuerung öffnen"
+  },
+  "live": {
+    "startGame": "Spiel starten",
+    "goalHome": "Tor Heim",
+    "goalAway": "Tor Gast",
+    "halfTime": "Halbzeit",
+    "startSecondHalf": "2. Halbzeit starten",
+    "pauseGame": "Spiel pausieren",
+    "resumeGame": "Spiel fortsetzen",
+    "finishGame": "Spiel beenden",
+    "correctLastEvent": "Letztes Ereignis korrigieren",
+    "confirmFinishTitle": "Spiel wirklich beenden?",
+    "confirmFinishBody": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "eventRecorded": "Ereignis erfasst",
+    "noReporterAccess": "Du bist für dieses Spiel nicht als Reporter eingetragen."
+  },
+  "reporters": {
+    "title": "Reporter",
+    "invite": "Reporter einladen",
+    "inviteEmail": "E-Mail der einzuladenden Person",
+    "generateLink": "Einladungslink erstellen",
+    "pendingInvites": "Offene Einladungen",
+    "remove": "Entfernen"
+  },
+  "share": {
+    "title": "Teilen & Einbetten",
+    "publicLink": "Öffentlicher Vereinslink",
+    "widgetCode": "HTML-Widget-Code",
+    "qrCode": "QR-Code",
+    "shareText": "Folge unserem Verein auf LiveClub"
+  },
+  "public": {
+    "noLiveGame": "Momentan läuft kein Spiel.",
+    "liveLabel": "LIVE",
+    "poweredBy": "Bald verfügbar: die LiveClub-App für Fans"
+  },
+  "admin": {
+    "title": "Plattform-Administration",
+    "clubs": "Vereine",
+    "setLicense": "Lizenz manuell setzen",
+    "licenseType": "Lizenztyp",
+    "validUntil": "Gültig bis",
+    "notes": "Interner Hinweis",
+    "apply": "Anwenden"
+  }
+}

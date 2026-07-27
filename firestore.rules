@@ -1,0 +1,152 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(clubId) {
+      return get(/databases/$(database)/documents/clubs/$(clubId)/members/$(request.auth.uid));
+    }
+
+    function isClubMember(clubId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/clubs/$(clubId)/members/$(request.auth.uid));
+    }
+
+    function clubRole(clubId) {
+      return memberDoc(clubId).data.role;
+    }
+
+    function isClubAdmin(clubId) {
+      return isClubMember(clubId) && clubRole(clubId) == 'clubAdmin';
+    }
+
+    // Denormalized onto the club doc by Cloud Functions whenever a license
+    // is created/changed (trial creation, manual admin action, later Stripe
+    // webhook) so this check never needs a scheduled "expire" job.
+    function isClubLicenseActive(clubId) {
+      let club = get(/databases/$(database)/documents/clubs/$(clubId));
+      return club.data.currentLicenseStatus == 'active' &&
+        club.data.currentLicenseValidUntil > request.time;
+    }
+
+    function isAssignedReporter(clubId, gameId) {
+      let game = get(/databases/$(database)/documents/clubs/$(clubId)/games/$(gameId));
+      return isClubMember(clubId) &&
+        (clubRole(clubId) == 'clubAdmin' ||
+         (clubRole(clubId) == 'reporter' && request.auth.uid in game.data.reporterUids));
+    }
+
+    // Fields that are only ever written by Cloud Functions (Admin SDK),
+    // never directly by a club member from the browser.
+    function unchangedOrAbsent(field) {
+      return !(field in request.resource.data) ||
+        (field in resource.data && request.resource.data[field] == resource.data[field]);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /clubs/{clubId} {
+      allow read: if isClubMember(clubId);
+      // Club creation happens via a Cloud Function (adminSdk) so that
+      // publicClubId + trial license + membership are created atomically.
+      allow create: if false;
+      allow update: if isClubAdmin(clubId) &&
+        unchangedOrAbsent('publicClubId') &&
+        unchangedOrAbsent('createdAt');
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow read: if isClubMember(clubId);
+        // Memberships are created by Cloud Functions (club creation,
+        // invitation acceptance). Club admins may remove a reporter.
+        allow create: if false;
+        allow update: if false;
+        allow delete: if isClubAdmin(clubId) &&
+          resource.data.role == 'reporter' &&
+          memberId != request.auth.uid;
+      }
+
+      match /teams/{teamId} {
+        allow read: if isClubMember(clubId);
+        allow create, update, delete: if isClubAdmin(clubId);
+      }
+
+      match /games/{gameId} {
+        allow read: if isClubMember(clubId);
+        allow create: if isClubAdmin(clubId) &&
+          request.resource.data.status in ['draft', 'scheduled'];
+        // Club admins may edit scheduling info before/around the match,
+        // but never the server-computed live state directly.
+        allow update: if isClubAdmin(clubId) &&
+          unchangedOrAbsent('score') &&
+          unchangedOrAbsent('status') &&
+          unchangedOrAbsent('period') &&
+          unchangedOrAbsent('actualStart') &&
+          unchangedOrAbsent('actualEnd');
+        allow delete: if false;
+
+        match /events/{eventId} {
+          allow read: if isClubMember(clubId);
+          allow create: if isAssignedReporter(clubId, gameId) &&
+            request.resource.data.clubId == clubId &&
+            request.resource.data.gameId == gameId &&
+            request.resource.data.createdByUid == request.auth.uid &&
+            request.resource.data.type in [
+              'gameStarted', 'goalHome', 'goalAway', 'goalCorrection',
+              'yellowCardHome', 'yellowCardAway', 'redCardHome', 'redCardAway',
+              'halfTime', 'secondHalfStarted', 'gamePaused', 'gameResumed',
+              'gameFinished', 'gameCancelled', 'manualCorrection'
+            ] &&
+            // A club with an expired/inactive license can no longer start a
+            // new match; already-running games may still be played to a
+            // finish so a lapse mid-game doesn't strand the reporter.
+            (request.resource.data.type != 'gameStarted' || isClubLicenseActive(clubId));
+          // Events are immutable audit records; corrections are new events.
+          allow update: if false;
+          allow delete: if false;
+        }
+      }
+
+      match /licenses/{licenseId} {
+        allow read: if isClubMember(clubId);
+        // Licenses are only ever created/changed via Cloud Functions
+        // (manual admin action today, Stripe webhook later).
+        allow write: if false;
+      }
+    }
+
+    match /invitations/{invitationId} {
+      // Fetching a single invitation by its (unguessable) id is how the
+      // accept-invitation page previews it before the user accepts.
+      // Listing/querying the collection is restricted to that club's admin,
+      // so a stranger can't enumerate pending invites + email addresses by
+      // just knowing a clubId.
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && isClubAdmin(resource.data.clubId);
+      allow create: if isSignedIn() && isClubAdmin(request.resource.data.clubId);
+      allow update: if false;
+      allow delete: if isSignedIn() &&
+        resource.data.status == 'pending' &&
+        isClubAdmin(resource.data.clubId);
+    }
+
+    match /publicClubs/{publicClubId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /publicGames/{gameId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -1,0 +1,24 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isClubAdmin(clubId) {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/clubs/$(clubId)/members/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/clubs/$(clubId)/members/$(request.auth.uid)).data.role == 'clubAdmin';
+    }
+
+    // Club logos: readable by anyone (used on public pages/widget),
+    // only writable by the club's own admin.
+    match /clubs/{clubId}/logo/{fileName} {
+      allow read: if true;
+      allow write: if isClubAdmin(clubId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+  }
+}
