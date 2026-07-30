@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# .env.production only holds public Firebase client config (no secrets) and
+# is needed at build time on the Infomaniak Node.js host, which deploys via
+# `git clone` — there's no other way to get it onto the server.
+!.env.production
 
 # vercel
 .vercel
