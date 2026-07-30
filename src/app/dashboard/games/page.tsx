@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
@@ -18,7 +19,7 @@ import { useClubContext } from "@/components/club/ClubContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Game, Member, Team } from "@/lib/types";
+import { Game, Member, PublicTeam, Team } from "@/lib/types";
 import { formatDateTimeDe } from "@/lib/date";
 import { buildGameLiveUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
@@ -34,10 +35,14 @@ export default function GamesPage() {
   const [members, setMembers] = useState<Member[]>([]);
 
   const [teamId, setTeamId] = useState("");
-  const [homeTeamName, setHomeTeamName] = useState("");
-  const [awayTeamName, setAwayTeamName] = useState("");
   const [isHomeGame, setIsHomeGame] = useState(true);
   const [opponentPublicClubId, setOpponentPublicClubId] = useState("");
+  const [opponentClub, setOpponentClub] = useState<{ name: string; logoUrl: string | null } | null>(
+    null
+  );
+  const [opponentTeams, setOpponentTeams] = useState<PublicTeam[]>([]);
+  const [opponentTeamId, setOpponentTeamId] = useState("");
+  const [opponentTeamName, setOpponentTeamName] = useState("");
   const [scheduledStart, setScheduledStart] = useState("");
   const [reporterUids, setReporterUids] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
@@ -99,29 +104,75 @@ export default function GamesPage() {
     };
   }, [club]);
 
+  const trimmedOpponentId = opponentPublicClubId.trim();
+
+  useEffect(() => {
+    setOpponentTeamId("");
+    if (!trimmedOpponentId) {
+      setOpponentClub(null);
+      setOpponentTeams([]);
+      return;
+    }
+    const { db } = getFirebaseClient();
+    const unsubClub = onSnapshot(doc(db, "publicClubs", trimmedOpponentId), (snap) => {
+      if (!snap.exists()) {
+        setOpponentClub(null);
+        return;
+      }
+      const data = snap.data();
+      setOpponentClub({ name: data.name, logoUrl: data.logoUrl ?? null });
+    });
+    const unsubTeams = onSnapshot(
+      collection(db, "publicClubs", trimmedOpponentId, "teams"),
+      (snap) => {
+        setOpponentTeams(
+          snap.docs.map((d) => ({
+            teamId: d.id,
+            name: d.data().name,
+            shortName: d.data().shortName,
+            sport: d.data().sport,
+          }))
+        );
+      }
+    );
+    return () => {
+      unsubClub();
+      unsubTeams();
+    };
+  }, [trimmedOpponentId]);
+
   if (!club) return null;
+
+  const opponentRequiresTeamPick = !!opponentClub && opponentTeams.length > 0;
+  const opponentDisplayName = opponentRequiresTeamPick
+    ? opponentTeams.find((t) => t.teamId === opponentTeamId)?.name ?? ""
+    : opponentTeamName.trim();
 
   const visibleGames =
     role === "reporter" ? games.filter((g) => g.reporterUids.includes(user?.uid ?? "")) : games;
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!club || !teamId || !homeTeamName || !awayTeamName) return;
+    const ownTeamName = teams.find((team) => team.teamId === teamId)?.name ?? "";
+    if (!club || !teamId || !ownTeamName || !opponentDisplayName) return;
     setCreating(true);
     try {
       const { db } = getFirebaseClient();
-      const trimmedOpponentId = opponentPublicClubId.trim() || null;
+      // "Our" side always gets our own club/team id; the opponent's ids are
+      // only known/set if the clubAdmin's entered id matched a real
+      // LiveClub-using club — otherwise their side just stays a plain name.
+      const opponentClubPublicId = opponentClub ? trimmedOpponentId : null;
+      const opponentTeamIdToStore = opponentRequiresTeamPick ? opponentTeamId : null;
       await addDoc(collection(db, "clubs", club.clubId, "games"), {
         clubId: club.clubId,
         publicClubId: club.publicClubId,
         teamId,
-        homeTeamName,
-        awayTeamName,
-        // "Our" side always gets our own club id; the opponent's id is only
-        // known/set if the clubAdmin entered one (i.e. the opponent also
-        // runs LiveClub) — otherwise their side just stays a plain name.
-        homeClubPublicId: isHomeGame ? club.publicClubId : trimmedOpponentId,
-        awayClubPublicId: isHomeGame ? trimmedOpponentId : club.publicClubId,
+        homeTeamName: isHomeGame ? ownTeamName : opponentDisplayName,
+        awayTeamName: isHomeGame ? opponentDisplayName : ownTeamName,
+        homeClubPublicId: isHomeGame ? club.publicClubId : opponentClubPublicId,
+        awayClubPublicId: isHomeGame ? opponentClubPublicId : club.publicClubId,
+        homeTeamId: isHomeGame ? teamId : opponentTeamIdToStore,
+        awayTeamId: isHomeGame ? opponentTeamIdToStore : teamId,
         isHomeGame,
         scheduledStart: scheduledStart ? Timestamp.fromDate(new Date(scheduledStart)) : null,
         status: "scheduled",
@@ -130,9 +181,9 @@ export default function GamesPage() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      setHomeTeamName("");
-      setAwayTeamName("");
       setOpponentPublicClubId("");
+      setOpponentTeamId("");
+      setOpponentTeamName("");
       setScheduledStart("");
       setReporterUids([]);
     } finally {
@@ -170,20 +221,6 @@ export default function GamesPage() {
                 ))}
               </select>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField
-                label={t("homeTeam")}
-                value={homeTeamName}
-                onChange={(e) => setHomeTeamName(e.target.value)}
-                required
-              />
-              <TextField
-                label={t("awayTeam")}
-                value={awayTeamName}
-                onChange={(e) => setAwayTeamName(e.target.value)}
-                required
-              />
-            </div>
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
@@ -192,12 +229,65 @@ export default function GamesPage() {
               />
               Heimspiel
             </label>
-            <TextField
-              label="Öffentliche Vereins-ID des Gegners (optional)"
-              placeholder="z. B. 563001 — nur falls der Gegner auch LiveClub nutzt"
-              value={opponentPublicClubId}
-              onChange={(e) => setOpponentPublicClubId(e.target.value)}
-            />
+            <div className="flex flex-col gap-2">
+              <TextField
+                label="Öffentliche Vereins-ID des Gegners (optional)"
+                placeholder="z. B. 563001 — nur falls der Gegner auch LiveClub nutzt"
+                value={opponentPublicClubId}
+                onChange={(e) => setOpponentPublicClubId(e.target.value)}
+              />
+              {trimmedOpponentId && opponentClub && (
+                <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+                  {opponentClub.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={opponentClub.logoUrl}
+                      alt=""
+                      className="h-6 w-6 rounded-full bg-white object-contain"
+                    />
+                  ) : (
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-500">
+                      {opponentClub.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span>{opponentClub.name} gefunden</span>
+                </div>
+              )}
+              {trimmedOpponentId && !opponentClub && (
+                <p className="text-xs text-amber-600">
+                  Kein Verein mit dieser ID gefunden — Gegner wird als Freitext gespeichert.
+                </p>
+              )}
+              {opponentRequiresTeamPick ? (
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700">Mannschaft des Gegners</label>
+                  <select
+                    value={opponentTeamId}
+                    onChange={(e) => setOpponentTeamId(e.target.value)}
+                    required
+                    className="rounded-lg border border-gray-300 px-4 py-3 text-base"
+                  >
+                    <option value="" disabled>
+                      –
+                    </option>
+                    {opponentTeams.map((team) => (
+                      <option key={team.teamId} value={team.teamId}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <TextField
+                  label={
+                    opponentClub ? `Mannschaft von ${opponentClub.name}` : "Name der gegnerischen Mannschaft"
+                  }
+                  value={opponentTeamName}
+                  onChange={(e) => setOpponentTeamName(e.target.value)}
+                  required
+                />
+              )}
+            </div>
             <TextField
               label={t("kickoff")}
               type="datetime-local"

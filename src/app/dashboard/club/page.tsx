@@ -65,6 +65,17 @@ export default function EditClubPage() {
     }
   }
 
+  async function handleLogoRemove() {
+    if (!club) return;
+    setUploading(true);
+    try {
+      const { db } = getFirebaseClient();
+      await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: null });
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <Card className="max-w-lg">
       <h1 className="mb-6 text-xl font-bold text-gray-900">{t("title")}</h1>
@@ -92,8 +103,13 @@ export default function EditClubPage() {
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Vereinslogo</label>
             {club.logoUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={club.logoUrl} alt="" className="h-16 w-16 rounded object-contain" />
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={club.logoUrl} alt="" className="h-16 w-16 rounded object-contain" />
+                <Button type="button" variant="secondary" onClick={handleLogoRemove} disabled={uploading}>
+                  Logo entfernen
+                </Button>
+              </div>
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploading} />
           </div>

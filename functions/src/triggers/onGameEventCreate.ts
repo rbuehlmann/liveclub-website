@@ -71,6 +71,8 @@ export const onGameEventCreate = onDocumentCreated(
         awayTeamName: gameData.awayTeamName,
         homeClubPublicId: gameData.homeClubPublicId ?? null,
         awayClubPublicId: gameData.awayClubPublicId ?? null,
+        homeTeamId: gameData.homeTeamId ?? null,
+        awayTeamId: gameData.awayTeamId ?? null,
         scoreHome: state.scoreHome,
         scoreAway: state.scoreAway,
         status: state.status,

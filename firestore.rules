@@ -142,6 +142,11 @@ service cloud.firestore {
     match /publicClubs/{publicClubId} {
       allow read: if true;
       allow write: if false;
+
+      match /teams/{teamId} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     match /publicGames/{gameId} {

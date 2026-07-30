@@ -54,6 +54,11 @@ export interface Game {
   // UI show the opponent's real logo instead of a placeholder.
   homeClubPublicId?: string | null;
   awayClubPublicId?: string | null;
+  // The scoring team's id within its own club's teams collection — set for
+  // "our" side always, and for the opponent's side only if a specific one of
+  // their teams was picked (vs. a plain typed name).
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
   isHomeGame: boolean;
   venue?: string;
   scheduledStart: string | null;
@@ -156,9 +161,21 @@ export interface PublicGame {
   awayTeamName: string;
   homeClubPublicId?: string | null;
   awayClubPublicId?: string | null;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
   scoreHome: number;
   scoreAway: number;
   status: GameStatus;
   period?: GamePeriod;
   lastEventType?: string | null;
+}
+
+// Public, read-only mirror of one club's active teams — lets another club
+// look up and select a specific opponent team by public club id, without
+// exposing the private clubs/{clubId}/teams collection itself.
+export interface PublicTeam {
+  teamId: string;
+  name: string;
+  shortName: string;
+  sport: string;
 }
