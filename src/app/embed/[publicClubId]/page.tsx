@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
+import { TeamIcon } from "@/components/TeamIcon";
 import { PublicClub, PublicGame } from "@/lib/types";
 
 function EmbedContent() {
@@ -54,6 +55,8 @@ function EmbedContent() {
         teamId: data.teamId,
         homeTeamName: data.homeTeamName,
         awayTeamName: data.awayTeamName,
+        homeClubPublicId: data.homeClubPublicId ?? null,
+        awayClubPublicId: data.awayClubPublicId ?? null,
         scoreHome: data.scoreHome ?? 0,
         scoreAway: data.scoreAway ?? 0,
         status: data.status,
@@ -105,8 +108,20 @@ function EmbedContent() {
               LIVE
             </span>
           )}
-          <div style={{ fontSize: 20, fontWeight: 700 }}>
-            {game.homeTeamName} {game.scoreHome}:{game.scoreAway} {game.awayTeamName}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 20,
+              fontWeight: 700,
+            }}
+          >
+            <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
+            <span>
+              {game.homeTeamName} {game.scoreHome}:{game.scoreAway} {game.awayTeamName}
+            </span>
+            <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
           </div>
         </>
       ) : (

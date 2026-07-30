@@ -49,6 +49,11 @@ export interface Game {
   teamId: string;
   homeTeamName: string;
   awayTeamName: string;
+  // Set automatically for "our own" side; set optionally by the reporting
+  // club for the opponent's side if that club also uses LiveClub — lets the
+  // UI show the opponent's real logo instead of a placeholder.
+  homeClubPublicId?: string | null;
+  awayClubPublicId?: string | null;
   isHomeGame: boolean;
   venue?: string;
   scheduledStart: string | null;
@@ -149,6 +154,8 @@ export interface PublicGame {
   teamId: string;
   homeTeamName: string;
   awayTeamName: string;
+  homeClubPublicId?: string | null;
+  awayClubPublicId?: string | null;
   scoreHome: number;
   scoreAway: number;
   status: GameStatus;

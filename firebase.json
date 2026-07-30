@@ -12,6 +12,7 @@
     }
   ],
   "storage": {
+    "bucket": "liveclub-app.firebasestorage.app",
     "rules": "storage.rules"
   },
   "emulators": {

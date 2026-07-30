@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
+import { TeamIcon } from "@/components/TeamIcon";
 import { PublicGame } from "@/lib/types";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -31,6 +32,8 @@ export default function PublicLiveGamePage() {
         teamId: data.teamId,
         homeTeamName: data.homeTeamName,
         awayTeamName: data.awayTeamName,
+        homeClubPublicId: data.homeClubPublicId ?? null,
+        awayClubPublicId: data.awayClubPublicId ?? null,
         scoreHome: data.scoreHome ?? 0,
         scoreAway: data.scoreAway ?? 0,
         status: data.status,
@@ -58,11 +61,13 @@ export default function PublicLiveGamePage() {
         </span>
       )}
       <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900">
+        <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
         <span>{game.homeTeamName}</span>
         <span className="text-5xl font-bold tabular-nums">
           {game.scoreHome}:{game.scoreAway}
         </span>
         <span>{game.awayTeamName}</span>
+        <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={48} />
       </div>
       <p className="text-sm text-gray-500">
         {STATUS_LABELS[game.status] ?? game.status}

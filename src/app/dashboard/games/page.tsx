@@ -21,6 +21,7 @@ import { TextField } from "@/components/ui/TextField";
 import { Game, Member, Team } from "@/lib/types";
 import { formatDateTimeDe } from "@/lib/date";
 import { buildGameLiveUrl } from "@/lib/publicRoutes";
+import { TeamIcon } from "@/components/TeamIcon";
 
 export default function GamesPage() {
   const t = useTranslations("games");
@@ -36,6 +37,7 @@ export default function GamesPage() {
   const [homeTeamName, setHomeTeamName] = useState("");
   const [awayTeamName, setAwayTeamName] = useState("");
   const [isHomeGame, setIsHomeGame] = useState(true);
+  const [opponentPublicClubId, setOpponentPublicClubId] = useState("");
   const [scheduledStart, setScheduledStart] = useState("");
   const [reporterUids, setReporterUids] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
@@ -56,6 +58,8 @@ export default function GamesPage() {
               teamId: data.teamId,
               homeTeamName: data.homeTeamName,
               awayTeamName: data.awayTeamName,
+              homeClubPublicId: data.homeClubPublicId ?? null,
+              awayClubPublicId: data.awayClubPublicId ?? null,
               isHomeGame: data.isHomeGame,
               scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
               status: data.status,
@@ -106,12 +110,18 @@ export default function GamesPage() {
     setCreating(true);
     try {
       const { db } = getFirebaseClient();
+      const trimmedOpponentId = opponentPublicClubId.trim() || null;
       await addDoc(collection(db, "clubs", club.clubId, "games"), {
         clubId: club.clubId,
         publicClubId: club.publicClubId,
         teamId,
         homeTeamName,
         awayTeamName,
+        // "Our" side always gets our own club id; the opponent's id is only
+        // known/set if the clubAdmin entered one (i.e. the opponent also
+        // runs LiveClub) — otherwise their side just stays a plain name.
+        homeClubPublicId: isHomeGame ? club.publicClubId : trimmedOpponentId,
+        awayClubPublicId: isHomeGame ? trimmedOpponentId : club.publicClubId,
         isHomeGame,
         scheduledStart: scheduledStart ? Timestamp.fromDate(new Date(scheduledStart)) : null,
         status: "scheduled",
@@ -122,6 +132,7 @@ export default function GamesPage() {
       });
       setHomeTeamName("");
       setAwayTeamName("");
+      setOpponentPublicClubId("");
       setScheduledStart("");
       setReporterUids([]);
     } finally {
@@ -182,6 +193,12 @@ export default function GamesPage() {
               Heimspiel
             </label>
             <TextField
+              label="Öffentliche Vereins-ID des Gegners (optional)"
+              placeholder="z. B. 563001 — nur falls der Gegner auch LiveClub nutzt"
+              value={opponentPublicClubId}
+              onChange={(e) => setOpponentPublicClubId(e.target.value)}
+            />
+            <TextField
               label={t("kickoff")}
               type="datetime-local"
               value={scheduledStart}
@@ -216,8 +233,10 @@ export default function GamesPage() {
         {visibleGames.map((game) => (
           <Card key={game.gameId} className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="flex items-center gap-2 font-medium text-gray-900">
+                <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
                 {game.homeTeamName} – {game.awayTeamName}
+                <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
               </p>
               <p className="text-sm text-gray-500">
                 {formatDateTimeDe(game.scheduledStart)} · {t(`status.${game.status}`)}
