@@ -21,6 +21,10 @@ export interface Club {
 export interface Member {
   uid: string;
   role: ClubRole;
+  // Only meaningful for role "reporter" (displayed as "Redaktor"): the
+  // team(s) this member may manage games for. Ignored for clubAdmin, who
+  // isn't scoped by team.
+  teamIds?: string[];
   email?: string | null;
   displayName?: string | null;
 }
@@ -77,7 +81,6 @@ export interface Game {
     redAway: number;
   };
   lastEventType?: string | null;
-  reporterUids: string[];
 }
 
 export type GameEventType =
@@ -139,6 +142,7 @@ export interface Invitation {
   invitationId: string;
   clubId: string;
   role: ClubRole;
+  teamIds?: string[];
   email?: string;
   status: InvitationStatus;
   createdBy: string;

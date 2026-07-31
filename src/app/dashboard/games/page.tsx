@@ -14,12 +14,11 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
-import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Game, Member, PublicTeam, Team } from "@/lib/types";
+import { Game, PublicTeam, Team } from "@/lib/types";
 import { formatDateTimeDe } from "@/lib/date";
 import { buildGameLiveUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
@@ -27,12 +26,10 @@ import { TeamIcon } from "@/components/TeamIcon";
 export default function GamesPage() {
   const t = useTranslations("games");
   const tCommon = useTranslations("common");
-  const { club, role } = useClubContext();
-  const { user } = useAuth();
+  const { club, role, teamIds: myTeamIds } = useClubContext();
 
   const [games, setGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
 
   const [teamId, setTeamId] = useState("");
   const [isHomeGame, setIsHomeGame] = useState(true);
@@ -44,7 +41,6 @@ export default function GamesPage() {
   const [opponentTeamId, setOpponentTeamId] = useState("");
   const [opponentTeamName, setOpponentTeamName] = useState("");
   const [scheduledStart, setScheduledStart] = useState("");
-  const [reporterUids, setReporterUids] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -69,7 +65,6 @@ export default function GamesPage() {
               scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
               status: data.status,
               score: data.score ?? { home: 0, away: 0 },
-              reporterUids: data.reporterUids ?? [],
             } as Game;
           })
         );
@@ -87,20 +82,9 @@ export default function GamesPage() {
         }))
       );
     });
-    const unsubMembers = onSnapshot(collection(db, "clubs", club.clubId, "members"), (snap) => {
-      setMembers(
-        snap.docs.map((d) => ({
-          uid: d.id,
-          role: d.data().role,
-          email: d.data().email,
-          displayName: d.data().displayName,
-        }))
-      );
-    });
     return () => {
       unsubGames();
       unsubTeams();
-      unsubMembers();
     };
   }, [club]);
 
@@ -148,8 +132,11 @@ export default function GamesPage() {
     ? opponentTeams.find((t) => t.teamId === opponentTeamId)?.name ?? ""
     : opponentTeamName.trim();
 
+  // A Redaktor (reporter) only manages the team(s) they're assigned to;
+  // clubAdmin manages every team.
+  const selectableTeams = role === "clubAdmin" ? teams : teams.filter((t) => myTeamIds.includes(t.teamId));
   const visibleGames =
-    role === "reporter" ? games.filter((g) => g.reporterUids.includes(user?.uid ?? "")) : games;
+    role === "reporter" ? games.filter((g) => myTeamIds.includes(g.teamId)) : games;
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -177,7 +164,6 @@ export default function GamesPage() {
         scheduledStart: scheduledStart ? Timestamp.fromDate(new Date(scheduledStart)) : null,
         status: "scheduled",
         score: { home: 0, away: 0 },
-        reporterUids,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -185,21 +171,16 @@ export default function GamesPage() {
       setOpponentTeamId("");
       setOpponentTeamName("");
       setScheduledStart("");
-      setReporterUids([]);
     } finally {
       setCreating(false);
     }
-  }
-
-  function toggleReporter(uid: string) {
-    setReporterUids((prev) => (prev.includes(uid) ? prev.filter((u) => u !== uid) : [...prev, uid]));
   }
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
 
-      {role === "clubAdmin" && (
+      {(role === "clubAdmin" || role === "reporter") && (
         <Card>
           <h2 className="mb-4 font-semibold text-gray-900">{t("newGame")}</h2>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
@@ -214,7 +195,7 @@ export default function GamesPage() {
                 <option value="" disabled>
                   –
                 </option>
-                {teams.map((team) => (
+                {selectableTeams.map((team) => (
                   <option key={team.teamId} value={team.teamId}>
                     {team.name}
                   </option>
@@ -294,23 +275,6 @@ export default function GamesPage() {
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />
-            {members.length > 0 && (
-              <div>
-                <p className="mb-2 text-sm font-medium text-gray-700">Reporter zuweisen</p>
-                <div className="flex flex-col gap-1">
-                  {members.map((m) => (
-                    <label key={m.uid} className="flex items-center gap-2 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={reporterUids.includes(m.uid)}
-                        onChange={() => toggleReporter(m.uid)}
-                      />
-                      {m.displayName ?? m.email ?? m.uid} ({m.role})
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
             <Button type="submit" disabled={creating}>
               {creating ? tCommon("loading") : t("create")}
             </Button>

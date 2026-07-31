@@ -121,7 +121,7 @@ export default function InvitePage() {
           <>
             <p className="mb-6 text-sm text-gray-700">
               Du wurdest eingeladen, <strong>{invitation.clubName}</strong> als{" "}
-              {invitation.role === "reporter" ? "Reporter" : "Vereinsadministrator"} beizutreten.
+              {invitation.role === "reporter" ? "Redaktor" : "Vereinsadministrator"} beizutreten.
             </p>
             <Button fullWidth onClick={handleAccept} disabled={accepting}>
               {accepting ? "Wird verarbeitet …" : "Einladung annehmen"}

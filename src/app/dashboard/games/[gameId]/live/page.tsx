@@ -31,7 +31,7 @@ export default function LiveControlPage() {
   const t = useTranslations("live");
   const tGames = useTranslations("games");
   const params = useParams<{ gameId: string }>();
-  const { club, role } = useClubContext();
+  const { club, role, teamIds } = useClubContext();
   const { user } = useAuth();
 
   const [game, setGame] = useState<Game | null>(null);
@@ -60,7 +60,6 @@ export default function LiveControlPage() {
         period: data.period,
         score: data.score ?? { home: 0, away: 0 },
         cards: data.cards,
-        reporterUids: data.reporterUids ?? [],
       });
     });
 
@@ -87,7 +86,7 @@ export default function LiveControlPage() {
 
   if (!club || !game) return null;
 
-  const isAssigned = role === "clubAdmin" || game.reporterUids.includes(user?.uid ?? "");
+  const isAssigned = role === "clubAdmin" || teamIds.includes(game.teamId);
   if (!isAssigned) {
     return <p className="text-sm text-red-600">{t("noReporterAccess")}</p>;
   }

@@ -38,7 +38,7 @@
     "club": "Verein",
     "teams": "Mannschaften",
     "games": "Spiele",
-    "reporters": "Reporter",
+    "reporters": "Redaktoren",
     "share": "Teilen & Einbetten",
     "subscription": "Abo & Lizenz",
     "trialEndsIn": "Testphase endet in {days} Tagen",
@@ -86,12 +86,13 @@
     "confirmFinishTitle": "Spiel wirklich beenden?",
     "confirmFinishBody": "Diese Aktion kann nicht rückgängig gemacht werden.",
     "eventRecorded": "Ereignis erfasst",
-    "noReporterAccess": "Du bist für dieses Spiel nicht als Reporter eingetragen."
+    "noReporterAccess": "Du bist für diese Mannschaft nicht als Redaktor eingetragen."
   },
   "reporters": {
-    "title": "Reporter",
-    "invite": "Reporter einladen",
+    "title": "Redaktoren",
+    "invite": "Redaktor einladen",
     "inviteEmail": "E-Mail der einzuladenden Person",
+    "inviteTeams": "Mannschaft(en) zuweisen",
     "generateLink": "Einladungslink erstellen",
     "pendingInvites": "Offene Einladungen",
     "remove": "Entfernen"

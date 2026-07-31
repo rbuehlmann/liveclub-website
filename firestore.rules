@@ -33,11 +33,18 @@ service cloud.firestore {
         club.data.currentLicenseValidUntil > request.time;
     }
 
-    function isAssignedReporter(clubId, gameId) {
-      let game = get(/databases/$(database)/documents/clubs/$(clubId)/games/$(gameId));
+    // A "Redaktor" (reporter) is scoped to one or more teams (Member.teamIds)
+    // rather than assigned per-game — full game-management rights within
+    // those teams, no access outside them. clubAdmin is never team-scoped.
+    function isTeamRedaktor(clubId, teamId) {
       return isClubMember(clubId) &&
         (clubRole(clubId) == 'clubAdmin' ||
-         (clubRole(clubId) == 'reporter' && request.auth.uid in game.data.reporterUids));
+         (clubRole(clubId) == 'reporter' && teamId in memberDoc(clubId).data.teamIds));
+    }
+
+    function isTeamRedaktorForGame(clubId, gameId) {
+      let game = get(/databases/$(database)/documents/clubs/$(clubId)/games/$(gameId));
+      return isTeamRedaktor(clubId, game.data.teamId);
     }
 
     // Fields that are only ever written by Cloud Functions (Admin SDK),
@@ -86,11 +93,12 @@ service cloud.firestore {
 
       match /games/{gameId} {
         allow read: if isClubMember(clubId);
-        allow create: if isClubAdmin(clubId) &&
+        allow create: if isTeamRedaktor(clubId, request.resource.data.teamId) &&
           request.resource.data.status in ['draft', 'scheduled'];
-        // Club admins may edit scheduling info before/around the match,
-        // but never the server-computed live state directly.
-        allow update: if isClubAdmin(clubId) &&
+        // clubAdmin or a Redaktor of this game's team may edit scheduling
+        // info before/around the match, but never the server-computed live
+        // state directly.
+        allow update: if isTeamRedaktor(clubId, resource.data.teamId) &&
           unchangedOrAbsent('score') &&
           unchangedOrAbsent('status') &&
           unchangedOrAbsent('period') &&
@@ -100,7 +108,7 @@ service cloud.firestore {
 
         match /events/{eventId} {
           allow read: if isClubMember(clubId);
-          allow create: if isAssignedReporter(clubId, gameId) &&
+          allow create: if isTeamRedaktorForGame(clubId, gameId) &&
             request.resource.data.clubId == clubId &&
             request.resource.data.gameId == gameId &&
             request.resource.data.createdByUid == request.auth.uid &&

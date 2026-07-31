@@ -41,24 +41,44 @@ export const acceptInvitation = onCall<AcceptInvitationRequest>(async (request) 
       );
     }
 
+    const teamIds: string[] = invitation.teamIds ?? [];
     const memberRef = db
       .collection("clubs")
       .doc(invitation.clubId)
       .collection("members")
       .doc(uid);
 
-    tx.set(memberRef, {
-      role: invitation.role,
-      email: request.auth?.token.email ?? null,
-      displayName: request.auth?.token.name ?? null,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    // All reads must happen before any writes in a Firestore transaction.
+    const memberSnap = await tx.get(memberRef);
+
+    // A member re-invited to more teams keeps their existing role and just
+    // gains the new team assignments — never downgrade an existing role.
+    const effectiveRole = memberSnap.exists ? memberSnap.data()!.role : invitation.role;
+
+    if (memberSnap.exists) {
+      tx.update(memberRef, {
+        ...(teamIds.length > 0 ? { teamIds: FieldValue.arrayUnion(...teamIds) } : {}),
+        email: request.auth?.token.email ?? null,
+        displayName: request.auth?.token.name ?? null,
+      });
+    } else {
+      tx.set(memberRef, {
+        role: invitation.role,
+        teamIds,
+        email: request.auth?.token.email ?? null,
+        displayName: request.auth?.token.name ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
 
     tx.set(
       db.collection("users").doc(uid),
       {
         clubIds: FieldValue.arrayUnion(invitation.clubId),
-        clubRoles: { [invitation.clubId]: invitation.role },
+        clubRoles: { [invitation.clubId]: effectiveRole },
+        ...(teamIds.length > 0
+          ? { clubTeamIds: { [invitation.clubId]: FieldValue.arrayUnion(...teamIds) } }
+          : {}),
       },
       { merge: true }
     );

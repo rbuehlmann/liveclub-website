@@ -20,7 +20,7 @@ import { buildInviteUrl } from "@/lib/publicRoutes";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Member } from "@/lib/types";
+import { Member, Team } from "@/lib/types";
 
 interface InvitationRow {
   invitationId: string;
@@ -36,8 +36,10 @@ export default function ReportersPage() {
   const { club, role } = useClubContext();
   const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [email, setEmail] = useState("");
+  const [inviteTeamIds, setInviteTeamIds] = useState<string[]>([]);
   const [inviting, setInviting] = useState(false);
   const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -50,8 +52,21 @@ export default function ReportersPage() {
         snap.docs.map((d) => ({
           uid: d.id,
           role: d.data().role,
+          teamIds: d.data().teamIds ?? [],
           email: d.data().email,
           displayName: d.data().displayName,
+        }))
+      );
+    });
+    const unsubTeams = onSnapshot(collection(db, "clubs", club.clubId, "teams"), (snap) => {
+      setTeams(
+        snap.docs.map((d) => ({
+          teamId: d.id,
+          clubId: club.clubId,
+          name: d.data().name,
+          shortName: d.data().shortName,
+          sport: d.data().sport,
+          active: d.data().active ?? true,
         }))
       );
     });
@@ -71,11 +86,18 @@ export default function ReportersPage() {
     });
     return () => {
       unsubMembers();
+      unsubTeams();
       unsubInvites();
     };
   }, [club]);
 
   if (!club || role !== "clubAdmin") return null;
+
+  function toggleInviteTeam(teamId: string) {
+    setInviteTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
+    );
+  }
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -91,6 +113,7 @@ export default function ReportersPage() {
         clubId: club.clubId,
         clubName: club.name,
         role: "reporter",
+        teamIds: inviteTeamIds,
         email: email.trim() || null,
         status: "pending",
         createdBy: user?.uid,
@@ -99,6 +122,7 @@ export default function ReportersPage() {
       });
       setLastInviteLink(`${window.location.origin}${buildInviteUrl(inviteRef.id)}`);
       setEmail("");
+      setInviteTeamIds([]);
     } finally {
       setInviting(false);
     }
@@ -127,15 +151,30 @@ export default function ReportersPage() {
 
       <Card>
         <h2 className="mb-4 font-semibold text-gray-900">{t("invite")}</h2>
-        <form onSubmit={handleInvite} className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <TextField
-              label={t("inviteEmail")}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        <form onSubmit={handleInvite} className="flex flex-col gap-4">
+          <TextField
+            label={t("inviteEmail")}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          {teams.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-medium text-gray-700">{t("inviteTeams")}</p>
+              <div className="flex flex-col gap-1">
+                {teams.map((team) => (
+                  <label key={team.teamId} className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={inviteTeamIds.includes(team.teamId)}
+                      onChange={() => toggleInviteTeam(team.teamId)}
+                    />
+                    {team.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <Button type="submit" disabled={inviting}>
             {inviting ? tCommon("loading") : t("generateLink")}
           </Button>
@@ -169,17 +208,25 @@ export default function ReportersPage() {
       <div className="flex flex-col gap-3">
         {members
           .filter((m) => m.role === "reporter")
-          .map((member) => (
-            <Card key={member.uid} className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-gray-900">{member.displayName ?? member.email}</p>
-                <p className="text-sm text-gray-500">{member.email}</p>
-              </div>
-              <Button variant="danger" onClick={() => handleRemove(member.uid)}>
-                {t("remove")}
-              </Button>
-            </Card>
-          ))}
+          .map((member) => {
+            const assignedTeamNames = teams
+              .filter((team) => member.teamIds?.includes(team.teamId))
+              .map((team) => team.name);
+            return (
+              <Card key={member.uid} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">{member.displayName ?? member.email}</p>
+                  <p className="text-sm text-gray-500">{member.email}</p>
+                  <p className="text-sm text-gray-500">
+                    {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : "Keine Mannschaft zugewiesen"}
+                  </p>
+                </div>
+                <Button variant="danger" onClick={() => handleRemove(member.uid)}>
+                  {t("remove")}
+                </Button>
+              </Card>
+            );
+          })}
       </div>
     </div>
   );
