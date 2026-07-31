@@ -16,6 +16,7 @@ export interface Club {
   currentLicenseType?: LicenseType | null;
   currentLicenseStatus?: LicenseStatus | null;
   currentLicenseValidUntil?: string | null; // ISO string on the client
+  stripeCustomerId?: string | null;
 }
 
 export interface Member {
@@ -154,6 +155,7 @@ export interface PublicClub {
   clubId: string;
   name: string;
   sport: string;
+  country?: string;
   logoUrl?: string | null;
   currentLiveGameId?: string | null;
   currentLiveGameIdByTeam?: Record<string, string>;

@@ -37,6 +37,10 @@ async function waitForClubMembership(uid: string, clubId: string) {
 // Nur Fussball für den Start — weitere Sportarten folgen später.
 const SPORTS = ["Fussball"];
 
+// Fixe Liste statt Freitext, damit die spätere Länder-Filterung in der
+// öffentlichen Suche konsistente Werte hat.
+const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
+
 export default function CreateClubPage() {
   const t = useTranslations("clubSetup");
   const tCommon = useTranslations("common");
@@ -45,7 +49,7 @@ export default function CreateClubPage() {
 
   const [name, setName] = useState("");
   const [sport, setSport] = useState(SPORTS[0]);
-  const [country, setCountry] = useState("Schweiz");
+  const [country, setCountry] = useState(COUNTRIES[0]);
   const [contactName, setContactName] = useState(user?.displayName ?? "");
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -111,13 +115,23 @@ export default function CreateClubPage() {
             </select>
             <p className="text-xs text-gray-500">Weitere Sportarten folgen bald.</p>
           </div>
-          <TextField
-            label={t("country")}
-            name="country"
-            required
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="country" className="text-sm font-medium text-gray-700">
+              {t("country")}
+            </label>
+            <select
+              id="country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className="rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
           <TextField
             label={t("contactName")}
             name="contactName"

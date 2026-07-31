@@ -100,7 +100,8 @@ service cloud.firestore {
       match /games/{gameId} {
         allow read: if isClubMember(clubId);
         allow create: if isTeamRedaktor(clubId, request.resource.data.teamId) &&
-          request.resource.data.status in ['draft', 'scheduled'];
+          request.resource.data.status in ['draft', 'scheduled'] &&
+          isClubLicenseActive(clubId);
         // clubAdmin or a Redaktor of this game's team may edit scheduling
         // info before/around the match, but never the server-computed live
         // state directly.

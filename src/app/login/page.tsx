@@ -91,7 +91,7 @@ function LoginForm() {
           </Link>
         </p>
         <p className="mt-2 text-center text-sm text-gray-600">
-          <Link href="/suche" className="text-blue-700 hover:underline">
+          <Link href="/" className="text-blue-700 hover:underline">
             Verein oder Mannschaft suchen
           </Link>
         </p>

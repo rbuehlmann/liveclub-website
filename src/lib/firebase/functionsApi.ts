@@ -108,3 +108,23 @@ export async function sendTestEmail(input: { to: string; subject: string; html: 
   const call = httpsCallable<typeof input, { ok: true }>(functions, "sendTestEmail");
   await call(input);
 }
+
+export async function createCheckoutSession(input: {
+  clubId: string;
+  interval: "monthly" | "yearly";
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { url: string }>(functions, "createCheckoutSession");
+  const result = await call(input);
+  return result.data;
+}
+
+export async function createBillingPortalSession(input: { clubId: string }) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { url: string }>(
+    functions,
+    "createBillingPortalSession"
+  );
+  const result = await call(input);
+  return result.data;
+}

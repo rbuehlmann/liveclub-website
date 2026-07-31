@@ -81,6 +81,7 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
     clubId: clubRef.id,
     name,
     sport,
+    country,
     logoUrl: null,
     createdAt: FieldValue.serverTimestamp(),
   });
