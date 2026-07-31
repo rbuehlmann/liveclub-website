@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { loginWithEmail, resetPassword } from "@/lib/firebase/authApi";
 import { toGermanAuthErrorMessage } from "@/lib/firebase/errorMessages";
+import { PublicHeader } from "@/components/layout/PublicHeader";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
@@ -52,51 +53,49 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <Card>
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">{t("loginTitle")}</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <TextField
-            label={t("email")}
-            name="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            label={t("password")}
-            name="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {info && <p className="text-sm text-green-700">{info}</p>}
-          <Button type="submit" fullWidth disabled={submitting}>
-            {submitting ? tCommon("loading") : t("loginButton")}
-          </Button>
-          <button
-            type="button"
-            onClick={handleForgotPassword}
-            className="text-sm text-blue-700 hover:underline"
-          >
-            {t("forgotPassword")}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          <Link href="/register" className="text-blue-700 hover:underline">
-            {t("noAccount")}
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          <Link href="/" className="text-blue-700 hover:underline">
-            Verein oder Mannschaft suchen
-          </Link>
-        </p>
-      </Card>
-    </main>
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      <PublicHeader />
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+        <Card>
+          <h1 className="mb-6 text-2xl font-bold text-gray-900">{t("loginTitle")}</h1>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <TextField
+              label={t("email")}
+              name="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              label={t("password")}
+              name="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {info && <p className="text-sm text-green-700">{info}</p>}
+            <Button type="submit" fullWidth disabled={submitting}>
+              {submitting ? tCommon("loading") : t("loginButton")}
+            </Button>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm text-blue-700 hover:underline"
+            >
+              {t("forgotPassword")}
+            </button>
+          </form>
+          <p className="mt-4 text-center text-sm text-gray-600">
+            <Link href="/register" className="text-blue-700 hover:underline">
+              {t("noAccount")}
+            </Link>
+          </p>
+        </Card>
+      </main>
+    </div>
   );
 }
 
