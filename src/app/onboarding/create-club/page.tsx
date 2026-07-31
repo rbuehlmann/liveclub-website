@@ -34,16 +34,8 @@ async function waitForClubMembership(uid: string, clubId: string) {
   }
 }
 
-const SPORTS = [
-  "Fussball",
-  "Eishockey",
-  "Handball",
-  "Basketball",
-  "Volleyball",
-  "Unihockey",
-  "Tennis",
-  "Andere",
-];
+// Nur Fussball für den Start — weitere Sportarten folgen später.
+const SPORTS = ["Fussball"];
 
 export default function CreateClubPage() {
   const t = useTranslations("clubSetup");
@@ -117,6 +109,7 @@ export default function CreateClubPage() {
                 </option>
               ))}
             </select>
+            <p className="text-xs text-gray-500">Weitere Sportarten folgen bald.</p>
           </div>
           <TextField
             label={t("country")}

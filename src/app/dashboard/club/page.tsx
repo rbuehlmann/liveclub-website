@@ -18,6 +18,8 @@ export default function EditClubPage() {
   const [name, setName] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#2563eb");
+  const [secondaryColor, setSecondaryColor] = useState("#1e293b");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -27,6 +29,8 @@ export default function EditClubPage() {
     setName(club.name);
     setContactName(club.contactName);
     setContactEmail(club.contactEmail);
+    setPrimaryColor(club.primaryColor ?? "#2563eb");
+    setSecondaryColor(club.secondaryColor ?? "#1e293b");
   }, [club]);
 
   if (!club) return null;
@@ -43,6 +47,8 @@ export default function EditClubPage() {
         name,
         contactName,
         contactEmail,
+        primaryColor,
+        secondaryColor,
       });
       setMessage(tCommon("save") + " ✓");
     } finally {
@@ -112,6 +118,29 @@ export default function EditClubPage() {
               </div>
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploading} />
+            <p className="text-xs text-gray-500">Empfehlung: 500×500 px, transparentes PNG.</p>
+          </div>
+        )}
+        {!readOnly && (
+          <div className="flex gap-6">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Hauptfarbe</label>
+              <input
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="h-10 w-16 rounded border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Nebenfarbe</label>
+              <input
+                type="color"
+                value={secondaryColor}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="h-10 w-16 rounded border border-gray-300"
+              />
+            </div>
           </div>
         )}
         {message && <p className="text-sm text-green-700">{message}</p>}

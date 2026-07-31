@@ -54,9 +54,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="min-h-screen bg-gray-50">
         <header className="border-b border-gray-200 bg-white">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-            <div>
-              <p className="text-lg font-bold text-gray-900">{clubState.club.name}</p>
-              <p className="text-xs text-gray-500">LiveClub</p>
+            <div className="flex items-center gap-3">
+              {clubState.club.logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={clubState.club.logoUrl}
+                  alt=""
+                  className="h-10 w-10 rounded object-contain"
+                />
+              )}
+              <div>
+                <p className="font-teko text-xl font-bold text-gray-900">{clubState.club.name}</p>
+                <p className="text-xs text-gray-500">LiveClub</p>
+              </div>
             </div>
             <button
               onClick={() => logout().then(() => router.push("/login"))}

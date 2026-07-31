@@ -83,6 +83,8 @@ export function useCurrentClub(): CurrentClubState {
             contactName: clubData.contactName,
             contactEmail: clubData.contactEmail,
             logoUrl: clubData.logoUrl ?? null,
+            primaryColor: clubData.primaryColor ?? null,
+            secondaryColor: clubData.secondaryColor ?? null,
             currentLicenseId: clubData.currentLicenseId ?? null,
             currentLicenseType: clubData.currentLicenseType ?? null,
             currentLicenseStatus: clubData.currentLicenseStatus ?? null,

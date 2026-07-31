@@ -77,7 +77,11 @@ service cloud.firestore {
 
       match /teams/{teamId} {
         allow read: if isClubMember(clubId);
-        allow create, update, delete: if isClubAdmin(clubId);
+        // Creation happens via the createTeam Cloud Function so the
+        // publicTeamId can be generated collision-free (see createClub for
+        // the same reasoning at the club level).
+        allow create: if false;
+        allow update, delete: if isClubAdmin(clubId);
       }
 
       match /games/{gameId} {
@@ -150,6 +154,11 @@ service cloud.firestore {
     }
 
     match /publicGames/{gameId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /publicTeams/{publicTeamId} {
       allow read: if true;
       allow write: if false;
     }

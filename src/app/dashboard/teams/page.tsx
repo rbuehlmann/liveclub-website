@@ -2,16 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-} from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
+import { createTeam } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -38,6 +32,7 @@ export default function TeamsPage() {
         snap.docs.map((d) => ({
           teamId: d.id,
           clubId: club.clubId,
+          publicTeamId: d.data().publicTeamId ?? null,
           name: d.data().name,
           shortName: d.data().shortName,
           sport: d.data().sport,
@@ -54,15 +49,7 @@ export default function TeamsPage() {
     if (!club || !name.trim()) return;
     setCreating(true);
     try {
-      const { db } = getFirebaseClient();
-      await addDoc(collection(db, "clubs", club.clubId, "teams"), {
-        clubId: club.clubId,
-        name: name.trim(),
-        shortName: shortName.trim() || name.trim().slice(0, 3).toUpperCase(),
-        sport: club.sport,
-        active: true,
-        createdAt: serverTimestamp(),
-      });
+      await createTeam({ clubId: club.clubId, name: name.trim(), shortName: shortName.trim() });
       setName("");
       setShortName("");
     } finally {

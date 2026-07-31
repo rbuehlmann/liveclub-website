@@ -2,6 +2,7 @@ export { onGameEventCreate } from "./triggers/onGameEventCreate";
 export { onTeamWrite } from "./triggers/onTeamWrite";
 
 export { createClub } from "./callable/createClub";
+export { createTeam } from "./callable/createTeam";
 export { acceptInvitation } from "./callable/acceptInvitation";
 export { adminSetLicense } from "./callable/adminSetLicense";
 export { adminListClubs } from "./callable/adminListClubs";

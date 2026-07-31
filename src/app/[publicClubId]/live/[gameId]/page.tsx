@@ -63,7 +63,7 @@ export default function PublicLiveGamePage() {
       <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900">
         <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
         <span>{game.homeTeamName}</span>
-        <span className="text-5xl font-bold tabular-nums">
+        <span className="font-teko text-6xl font-bold tabular-nums">
           {game.scoreHome}:{game.scoreAway}
         </span>
         <span>{game.awayTeamName}</span>

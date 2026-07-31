@@ -10,6 +10,8 @@ export interface Club {
   contactName: string;
   contactEmail: string;
   logoUrl?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
   currentLicenseId?: string | null;
   currentLicenseType?: LicenseType | null;
   currentLicenseStatus?: LicenseStatus | null;
@@ -26,6 +28,7 @@ export interface Member {
 export interface Team {
   teamId: string;
   clubId: string;
+  publicTeamId?: string | null;
   name: string;
   shortName: string;
   sport: string;
@@ -175,6 +178,22 @@ export interface PublicGame {
 // exposing the private clubs/{clubId}/teams collection itself.
 export interface PublicTeam {
   teamId: string;
+  publicTeamId?: string | null;
+  name: string;
+  shortName: string;
+  sport: string;
+}
+
+// Global, read-only mirror keyed by a team's own short publicTeamId — lets
+// a team's public page/QR code be resolved directly, without knowing its
+// club's publicClubId first.
+export interface PublicTeamProfile {
+  publicTeamId: string;
+  teamId: string;
+  clubId: string;
+  publicClubId: string;
+  clubName: string;
+  clubLogoUrl?: string | null;
   name: string;
   shortName: string;
   sport: string;

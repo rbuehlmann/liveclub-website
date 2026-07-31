@@ -90,6 +90,11 @@ function LoginForm() {
             {t("noAccount")}
           </Link>
         </p>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          <Link href="/suche" className="text-blue-700 hover:underline">
+            Verein oder Mannschaft suchen
+          </Link>
+        </p>
       </Card>
     </main>
   );

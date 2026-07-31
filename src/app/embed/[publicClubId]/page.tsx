@@ -118,7 +118,7 @@ function EmbedContent() {
             }}
           >
             <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
-            <span>
+            <span style={{ fontFamily: "var(--font-teko-display), system-ui, sans-serif" }}>
               {game.homeTeamName} {game.scoreHome}:{game.scoreAway} {game.awayTeamName}
             </span>
             <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />

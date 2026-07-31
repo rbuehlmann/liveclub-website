@@ -12,6 +12,10 @@ export function buildGameUrl(publicClubId: string, gameId: string): string {
   return `/${publicClubId}/live/${gameId}`;
 }
 
+export function buildTeamUrl(publicTeamId: string): string {
+  return `/team/${publicTeamId}`;
+}
+
 export function buildEmbedUrl(publicClubId: string, teamId?: string): string {
   const base = `/embed/${publicClubId}`;
   return teamId ? `${base}?team=${encodeURIComponent(teamId)}` : base;
