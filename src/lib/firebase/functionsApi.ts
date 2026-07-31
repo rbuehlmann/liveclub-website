@@ -96,3 +96,9 @@ export async function devGrantPlatformAdmin() {
   const call = httpsCallable(functions, "devGrantPlatformAdmin");
   await call({});
 }
+
+export async function grantPlatformAdmin() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable(functions, "grantPlatformAdmin");
+  await call({});
+}

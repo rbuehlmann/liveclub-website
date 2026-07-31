@@ -6,7 +6,7 @@ import Link from "next/link";
 import { getIdTokenResult } from "firebase/auth";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { logout } from "@/lib/firebase/authApi";
-import { devGrantPlatformAdmin } from "@/lib/firebase/functionsApi";
+import { devGrantPlatformAdmin, grantPlatformAdmin } from "@/lib/firebase/functionsApi";
 import { Button } from "@/components/ui/Button";
 
 const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
@@ -23,6 +23,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [checking, setChecking] = useState(true);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [grantingDevAccess, setGrantingDevAccess] = useState(false);
+  const [grantingAccess, setGrantingAccess] = useState(false);
+  const [grantError, setGrantError] = useState<string | null>(null);
 
   async function checkClaims() {
     if (!user) return;
@@ -52,6 +54,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }
 
+  async function handleGrant() {
+    setGrantingAccess(true);
+    setGrantError(null);
+    try {
+      await grantPlatformAdmin();
+      await user?.getIdToken(true);
+      await checkClaims();
+    } catch (err) {
+      setGrantError((err as { message?: string })?.message ?? "Zugriff verweigert.");
+    } finally {
+      setGrantingAccess(false);
+    }
+  }
+
   if (authLoading || checking) {
     return <div className="flex min-h-screen items-center justify-center text-gray-500">Wird geladen …</div>;
   }
@@ -60,6 +76,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-gray-500">
         <p>Kein Zugriff auf die Plattform-Administration.</p>
+        <Button onClick={handleGrant} disabled={grantingAccess}>
+          {grantingAccess ? "Wird geprüft …" : "Admin-Zugriff anfordern"}
+        </Button>
+        {grantError && <p className="text-sm text-red-600">{grantError}</p>}
         {useEmulators && (
           <Button onClick={handleDevGrant} disabled={grantingDevAccess}>
             {grantingDevAccess
