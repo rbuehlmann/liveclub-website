@@ -6,10 +6,15 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // Cross-service firestore.get()/exists() calls from Storage rules proved
+    // unreliable in production (a real clubAdmin with a correct Firestore
+    // membership doc still got storage/unauthorized) — clubId/role are
+    // mirrored onto the user's ID token as custom claims instead, kept in
+    // sync by createClub/acceptInvitation/syncClubClaims (functions/src).
     function isClubAdmin(clubId) {
       return isSignedIn() &&
-        firestore.exists(/databases/(default)/documents/clubs/$(clubId)/members/$(request.auth.uid)) &&
-        firestore.get(/databases/(default)/documents/clubs/$(clubId)/members/$(request.auth.uid)).data.role == 'clubAdmin';
+        request.auth.token.clubId == clubId &&
+        request.auth.token.role == 'clubAdmin';
     }
 
     // Club logos: readable by anyone (used on public pages/widget),

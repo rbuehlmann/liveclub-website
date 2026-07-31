@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { db } from "../firebaseAdmin";
+import { db, auth } from "../firebaseAdmin";
 
 interface AcceptInvitationRequest {
   invitationId: string;
@@ -17,6 +17,8 @@ export const acceptInvitation = onCall<AcceptInvitationRequest>(async (request) 
   }
 
   const invitationRef = db.collection("invitations").doc(invitationId);
+  let claimsClubId = "";
+  let claimsRole = "";
 
   await db.runTransaction(async (tx) => {
     const invitationSnap = await tx.get(invitationRef);
@@ -54,6 +56,8 @@ export const acceptInvitation = onCall<AcceptInvitationRequest>(async (request) 
     // A member re-invited to more teams keeps their existing role and just
     // gains the new team assignments — never downgrade an existing role.
     const effectiveRole = memberSnap.exists ? memberSnap.data()!.role : invitation.role;
+    claimsClubId = invitation.clubId;
+    claimsRole = effectiveRole;
 
     if (memberSnap.exists) {
       tx.update(memberRef, {
@@ -89,6 +93,11 @@ export const acceptInvitation = onCall<AcceptInvitationRequest>(async (request) 
       acceptedAt: FieldValue.serverTimestamp(),
     });
   });
+
+  // Storage Security Rules read clubId/role off the ID token directly (see
+  // syncClubClaims.ts) — the client forces a token refresh right after this
+  // call returns so the new claims take effect immediately.
+  await auth.setCustomUserClaims(uid, { clubId: claimsClubId, role: claimsRole });
 
   return { ok: true };
 });

@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
-import { db } from "../firebaseAdmin";
+import { db, auth } from "../firebaseAdmin";
 import { generateUniquePublicClubId } from "../lib/publicClubId";
 import { upsertLicense } from "../lib/license";
 
@@ -86,6 +86,11 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
   });
 
   await batch.commit();
+
+  // Storage Security Rules read clubId/role off the ID token directly
+  // (see syncClubClaims.ts for why) — the client forces a token refresh
+  // right after this call returns so the new claims take effect immediately.
+  await auth.setCustomUserClaims(uid, { clubId: clubRef.id, role: "clubAdmin" });
 
   const now = Timestamp.now();
   const validUntil = Timestamp.fromMillis(now.toMillis() + TRIAL_DAYS * 24 * 60 * 60 * 1000);

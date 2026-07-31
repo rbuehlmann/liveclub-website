@@ -31,6 +31,16 @@ export async function createTeam(input: { clubId: string; name: string; shortNam
   return result.data;
 }
 
+export async function syncClubClaims() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<Record<string, never>, { clubId: string | null; role: string | null }>(
+    functions,
+    "syncClubClaims"
+  );
+  const result = await call({});
+  return result.data;
+}
+
 export async function acceptInvitation(invitationId: string) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<{ invitationId: string }, { ok: true }>(
