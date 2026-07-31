@@ -1,17 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  collection,
-  endAt,
-  getDocs,
-  orderBy,
-  query,
-  startAt,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildTeamUrl } from "@/lib/publicRoutes";
 import { Card } from "@/components/ui/Card";
@@ -24,6 +16,7 @@ interface ClubResult {
   publicClubId: string;
   name: string;
   sport: string;
+  country?: string;
   logoUrl: string | null;
 }
 
@@ -38,40 +31,37 @@ export default function Home() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [country, setCountry] = useState("");
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [clubs, setClubs] = useState<ClubResult[]>([]);
+  const [allClubs, setAllClubs] = useState<ClubResult[]>([]);
   const [selectedClub, setSelectedClub] = useState<ClubResult | null>(null);
   const [teams, setTeams] = useState<TeamResult[]>([]);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const term = searchTerm.trim();
-    if (!term) return;
-    setSearching(true);
-    setSearched(true);
-    setSelectedClub(null);
-    setTeams([]);
-    try {
-      const { db } = getFirebaseClient();
-      // Firestore has no full-text search — this is a plain, case-sensitive
-      // prefix match on the club name, good enough at the current scale.
-      const constraints = country
-        ? [where("country", "==", country), orderBy("name"), startAt(term), endAt(term + "")]
-        : [orderBy("name"), startAt(term), endAt(term + "")];
-      const snap = await getDocs(query(collection(db, "publicClubs"), ...constraints));
-      setClubs(
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    // A realtime listener so newly registered clubs show up here without a
+    // page reload — the list is small enough at this stage to hold entirely
+    // client-side and filter/sort locally as the user types.
+    const unsubscribe = onSnapshot(query(collection(db, "publicClubs"), orderBy("name")), (snap) => {
+      setAllClubs(
         snap.docs.map((d) => ({
           publicClubId: d.id,
           name: d.data().name,
           sport: d.data().sport,
+          country: d.data().country ?? undefined,
           logoUrl: d.data().logoUrl ?? null,
         }))
       );
-    } finally {
-      setSearching(false);
-    }
-  }
+    });
+    return unsubscribe;
+  }, []);
+
+  const visibleClubs = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return allClubs.filter((club) => {
+      if (country && club.country !== country) return false;
+      if (term && !club.name.toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }, [allClubs, searchTerm, country]);
 
   async function selectClub(club: ClubResult) {
     setSelectedClub(club);
@@ -113,7 +103,7 @@ export default function Home() {
         </div>
 
         <Card>
-          <form onSubmit={handleSearch} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <TextField
               label="Vereinsname"
               placeholder="z. B. FC Musterhausen"
@@ -135,27 +125,22 @@ export default function Home() {
                 ))}
               </select>
             </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-600 px-5 py-3 text-base font-semibold text-white hover:bg-blue-700 disabled:bg-blue-300"
-              disabled={searching}
-            >
-              {searching ? "Suche läuft…" : "Suchen"}
-            </button>
-          </form>
+          </div>
         </Card>
 
-        {!selectedClub && clubs.length > 0 && (
+        {!selectedClub && (
           <div className="flex flex-col gap-2">
-            {clubs.map((club) => (
+            {visibleClubs.map((club) => (
               <Card
                 key={club.publicClubId}
                 className="flex cursor-pointer items-center gap-3"
                 onClick={() => selectClub(club)}
               >
-                {club.logoUrl && (
+                {club.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={club.logoUrl} alt="" className="h-10 w-10 rounded object-contain" />
+                ) : (
+                  <div className="h-10 w-10 shrink-0 rounded bg-gray-200" />
                 )}
                 <div>
                   <p className="font-medium text-gray-900">{club.name}</p>
@@ -163,11 +148,10 @@ export default function Home() {
                 </div>
               </Card>
             ))}
+            {visibleClubs.length === 0 && (
+              <p className="text-center text-sm text-gray-500">Keine Vereine gefunden.</p>
+            )}
           </div>
-        )}
-
-        {!selectedClub && searched && clubs.length === 0 && !searching && (
-          <p className="text-center text-sm text-gray-500">Keine Vereine gefunden.</p>
         )}
 
         {selectedClub && (
