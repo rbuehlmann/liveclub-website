@@ -23,6 +23,7 @@ export default function EditClubPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!club) return;
@@ -60,23 +61,30 @@ export default function EditClubPage() {
     const file = e.target.files?.[0];
     if (!file || !club) return;
     setUploading(true);
+    setLogoError(null);
     try {
       const { db, storage } = getFirebaseClient();
       const logoRef = ref(storage, `clubs/${club.clubId}/logo/${file.name}`);
       await uploadBytes(logoRef, file);
       const url = await getDownloadURL(logoRef);
       await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: url });
+    } catch (err) {
+      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Logo-Upload fehlgeschlagen.");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
 
   async function handleLogoRemove() {
     if (!club) return;
     setUploading(true);
+    setLogoError(null);
     try {
       const { db } = getFirebaseClient();
       await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: null });
+    } catch (err) {
+      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Entfernen fehlgeschlagen.");
     } finally {
       setUploading(false);
     }
@@ -119,6 +127,8 @@ export default function EditClubPage() {
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploading} />
             <p className="text-xs text-gray-500">Empfehlung: 500×500 px, transparentes PNG.</p>
+            {uploading && <p className="text-xs text-gray-500">Wird hochgeladen …</p>}
+            {logoError && <p className="text-xs text-red-600">Fehler: {logoError}</p>}
           </div>
         )}
         {!readOnly && (
