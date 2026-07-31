@@ -52,7 +52,11 @@
     "name": "Name",
     "shortName": "Kurzname",
     "create": "Mannschaft erstellen",
-    "empty": "Noch keine Mannschaften angelegt."
+    "empty": "Noch keine Mannschaften angelegt.",
+    "edit": "Bearbeiten",
+    "deactivate": "Deaktivieren",
+    "reactivate": "Reaktivieren",
+    "inactive": "Inaktiv"
   },
   "games": {
     "title": "Spiele",

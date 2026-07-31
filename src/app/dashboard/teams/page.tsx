@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
 import { createTeam } from "@/lib/firebase/functionsApi";
@@ -19,6 +19,10 @@ export default function TeamsPage() {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editShortName, setEditShortName] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!club) return;
@@ -57,6 +61,39 @@ export default function TeamsPage() {
     }
   }
 
+  function startEdit(team: Team) {
+    setEditingTeamId(team.teamId);
+    setEditName(team.name);
+    setEditShortName(team.shortName);
+  }
+
+  function cancelEdit() {
+    setEditingTeamId(null);
+  }
+
+  async function handleSave(teamId: string) {
+    if (!club || !editName.trim()) return;
+    setSaving(true);
+    try {
+      const { db } = getFirebaseClient();
+      await updateDoc(doc(db, "clubs", club.clubId, "teams", teamId), {
+        name: editName.trim(),
+        shortName: editShortName.trim(),
+      });
+      setEditingTeamId(null);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleActive(team: Team) {
+    if (!club) return;
+    const { db } = getFirebaseClient();
+    await updateDoc(doc(db, "clubs", club.clubId, "teams", team.teamId), {
+      active: !team.active,
+    });
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
@@ -85,14 +122,61 @@ export default function TeamsPage() {
 
       <div className="flex flex-col gap-3">
         {teams.length === 0 && <p className="text-sm text-gray-500">{t("empty")}</p>}
-        {teams.map((team) => (
-          <Card key={team.teamId} className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">{team.name}</p>
-              <p className="text-sm text-gray-500">{team.shortName}</p>
-            </div>
-          </Card>
-        ))}
+        {teams.map((team) => {
+          const isEditing = editingTeamId === team.teamId;
+          return (
+            <Card key={team.teamId} className={team.active ? "" : "opacity-60"}>
+              {isEditing ? (
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <TextField label={t("name")} value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                  </div>
+                  <div className="w-32">
+                    <TextField
+                      label={t("shortName")}
+                      value={editShortName}
+                      onChange={(e) => setEditShortName(e.target.value)}
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleSave(team.teamId)} disabled={saving}>
+                      {saving ? tCommon("loading") : tCommon("save")}
+                    </Button>
+                    <Button variant="secondary" onClick={cancelEdit} disabled={saving}>
+                      {tCommon("cancel")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {team.name}
+                      {!team.active && (
+                        <span className="ml-2 text-xs font-normal text-gray-500">({t("inactive")})</span>
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-500">{team.shortName}</p>
+                  </div>
+                  {role === "clubAdmin" && (
+                    <div className="flex gap-2">
+                      <Button variant="secondary" onClick={() => startEdit(team)}>
+                        {t("edit")}
+                      </Button>
+                      <Button
+                        variant={team.active ? "danger" : "secondary"}
+                        onClick={() => toggleActive(team)}
+                      >
+                        {team.active ? t("deactivate") : t("reactivate")}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
