@@ -27,20 +27,33 @@ interface TeamResult {
   shortName: string;
 }
 
+// Matches against the flat, globally-readable `publicTeams` mirror (keyed by
+// publicTeamId) — used only to find which club a typed team name belongs to.
+// It only covers teams that already have a publicTeamId assigned; the actual
+// team list shown after picking a club is fetched from that club's own
+// `publicClubs/{id}/teams` subcollection instead, which has no such gap.
+interface TeamNameMatch {
+  publicClubId: string;
+  name: string;
+  shortName: string;
+}
+
 export default function Home() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [country, setCountry] = useState("");
   const [allClubs, setAllClubs] = useState<ClubResult[]>([]);
+  const [teamMatchesByClub, setTeamMatchesByClub] = useState<Record<string, TeamNameMatch[]>>({});
   const [selectedClub, setSelectedClub] = useState<ClubResult | null>(null);
   const [teams, setTeams] = useState<TeamResult[]>([]);
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    // A realtime listener so newly registered clubs show up here without a
-    // page reload — the list is small enough at this stage to hold entirely
-    // client-side and filter/sort locally as the user types.
-    const unsubscribe = onSnapshot(query(collection(db, "publicClubs"), orderBy("name")), (snap) => {
+    // Two realtime listeners so newly registered clubs/teams show up here
+    // without a page reload — both collections are small enough at this
+    // stage to hold entirely client-side and filter/sort locally as the
+    // user types (a real full-text search across club AND team names).
+    const unsubscribeClubs = onSnapshot(query(collection(db, "publicClubs"), orderBy("name")), (snap) => {
       setAllClubs(
         snap.docs.map((d) => ({
           publicClubId: d.id,
@@ -51,17 +64,39 @@ export default function Home() {
         }))
       );
     });
-    return unsubscribe;
+    const unsubscribeTeams = onSnapshot(collection(db, "publicTeams"), (snap) => {
+      const byClub: Record<string, TeamNameMatch[]> = {};
+      snap.docs.forEach((d) => {
+        const publicClubId = d.data().publicClubId;
+        if (!publicClubId) return;
+        (byClub[publicClubId] ??= []).push({
+          publicClubId,
+          name: d.data().name,
+          shortName: d.data().shortName,
+        });
+      });
+      setTeamMatchesByClub(byClub);
+    });
+    return () => {
+      unsubscribeClubs();
+      unsubscribeTeams();
+    };
   }, []);
 
   const visibleClubs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    return allClubs.filter((club) => {
-      if (country && club.country !== country) return false;
-      if (term && !club.name.toLowerCase().includes(term)) return false;
-      return true;
-    });
-  }, [allClubs, searchTerm, country]);
+    return allClubs
+      .map((club) => {
+        if (country && club.country !== country) return null;
+        if (!term) return { club, matchingTeam: null as TeamNameMatch | null };
+        if (club.name.toLowerCase().includes(term)) return { club, matchingTeam: null };
+        const matchingTeam = (teamMatchesByClub[club.publicClubId] ?? []).find(
+          (t) => t.name.toLowerCase().includes(term) || t.shortName.toLowerCase().includes(term)
+        );
+        return matchingTeam ? { club, matchingTeam } : null;
+      })
+      .filter((entry): entry is { club: ClubResult; matchingTeam: TeamNameMatch | null } => entry !== null);
+  }, [allClubs, teamMatchesByClub, searchTerm, country]);
 
   async function selectClub(club: ClubResult) {
     setSelectedClub(club);
@@ -130,7 +165,7 @@ export default function Home() {
 
         {!selectedClub && (
           <div className="flex flex-col gap-2">
-            {visibleClubs.map((club) => (
+            {visibleClubs.map(({ club, matchingTeam }) => (
               <Card
                 key={club.publicClubId}
                 className="flex cursor-pointer items-center gap-3"
@@ -144,7 +179,9 @@ export default function Home() {
                 )}
                 <div>
                   <p className="font-medium text-gray-900">{club.name}</p>
-                  <p className="text-sm text-gray-500">{club.sport}</p>
+                  <p className="text-sm text-gray-500">
+                    {matchingTeam ? `Mannschaft: ${matchingTeam.name}` : club.sport}
+                  </p>
                 </div>
               </Card>
             ))}
