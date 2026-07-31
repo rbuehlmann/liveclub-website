@@ -1,5 +1,6 @@
 export { onGameEventCreate } from "./triggers/onGameEventCreate";
 export { onTeamWrite } from "./triggers/onTeamWrite";
+export { onClubWrite } from "./triggers/onClubWrite";
 export { onInvitationCreate } from "./triggers/onInvitationCreate";
 
 export { createClub } from "./callable/createClub";
