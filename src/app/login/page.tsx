@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { loginWithEmail, resetPassword } from "@/lib/firebase/authApi";
 import { toGermanAuthErrorMessage } from "@/lib/firebase/errorMessages";
 import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
@@ -95,6 +96,7 @@ function LoginForm() {
           </p>
         </Card>
       </main>
+      <PublicFooter />
     </div>
   );
 }

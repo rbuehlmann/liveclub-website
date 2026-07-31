@@ -7,6 +7,7 @@ import { collection, getDocs, onSnapshot, orderBy, query } from "firebase/firest
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildTeamUrl } from "@/lib/publicRoutes";
 import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -225,6 +226,7 @@ export default function Home() {
           </Link>
         </div>
       </div>
+      <PublicFooter />
     </main>
   );
 }

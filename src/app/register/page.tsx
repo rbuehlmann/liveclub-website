@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { registerWithEmail } from "@/lib/firebase/authApi";
 import { toGermanAuthErrorMessage } from "@/lib/firebase/errorMessages";
 import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
@@ -83,6 +84,7 @@ function RegisterForm() {
           </p>
         </Card>
       </main>
+      <PublicFooter />
     </div>
   );
 }

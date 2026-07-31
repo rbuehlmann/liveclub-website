@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useCurrentClub } from "@/lib/hooks/useCurrentClub";
 import { ClubContext } from "@/components/club/ClubContext";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { logout } from "@/lib/firebase/authApi";
 
 const CLUB_ADMIN_LINKS = [
@@ -92,6 +93,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <PublicFooter />
       </div>
     </ClubContext.Provider>
   );

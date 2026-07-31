@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { logout } from "@/lib/firebase/authApi";
 import { devGrantPlatformAdmin, grantPlatformAdmin } from "@/lib/firebase/functionsApi";
 import { Button } from "@/components/ui/Button";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
 
@@ -119,6 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <PublicFooter />
     </div>
   );
 }
