@@ -125,8 +125,11 @@ export default function Home() {
 
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
         <div className="text-center">
-          <h1 className="font-teko text-4xl font-bold text-gray-900">Verein oder Mannschaft finden</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="font-teko text-5xl font-bold text-gray-900">LiveClub</h1>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">
+            Dein Verein. Direkt dabei.
+          </p>
+          <p className="mt-3 text-gray-600">
             Live-Spielstände für kleine und mittlere Sportvereine.
           </p>
         </div>
