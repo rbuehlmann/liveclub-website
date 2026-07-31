@@ -1,5 +1,6 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import { db } from "../firebaseAdmin";
+import { sendMail } from "../lib/mailer";
+import { smtpPassword } from "../lib/secrets";
 
 // Only one domain in production; simplest to hardcode rather than plumb an
 // env var through for a single constant.
@@ -11,13 +12,14 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 /**
- * Sends an invite email via the Firebase "Trigger Email" extension, which
- * watches the `mail` collection for new documents and sends them through
- * the configured SMTP connection. Only fires when the invite has an email
- * address — a "just copy this link" invite never had one.
+ * Sends an invite email directly via SMTP (see lib/mailer.ts) — not the
+ * Firebase "Trigger Email" extension, since Firebase Extensions as a whole
+ * are being sunset (no new installs after March 2027). Only fires when the
+ * invite has an email address — a "just copy this link" invite never had
+ * one.
  */
 export const onInvitationCreate = onDocumentCreated(
-  "invitations/{invitationId}",
+  { document: "invitations/{invitationId}", secrets: [smtpPassword] },
   async (event) => {
     const snap = event.data;
     if (!snap) return;
@@ -29,17 +31,15 @@ export const onInvitationCreate = onDocumentCreated(
     const roleLabel = ROLE_LABELS[invitation.role] ?? invitation.role;
     const clubName = invitation.clubName ?? "einem Verein";
 
-    await db.collection("mail").add({
-      to: [email],
-      message: {
-        subject: `Einladung zu ${clubName} auf LiveClub`,
-        html: `
-          <p>Hallo,</p>
-          <p>Du wurdest als <strong>${roleLabel}</strong> zu <strong>${clubName}</strong> auf LiveClub eingeladen.</p>
-          <p><a href="${inviteUrl}">Einladung annehmen</a></p>
-          <p>Falls der Link nicht funktioniert, kopiere diese Adresse in deinen Browser:<br>${inviteUrl}</p>
-        `,
-      },
+    await sendMail({
+      to: email,
+      subject: `Einladung zu ${clubName} auf LiveClub`,
+      html: `
+        <p>Hallo,</p>
+        <p>Du wurdest als <strong>${roleLabel}</strong> zu <strong>${clubName}</strong> auf LiveClub eingeladen.</p>
+        <p><a href="${inviteUrl}">Einladung annehmen</a></p>
+        <p>Falls der Link nicht funktioniert, kopiere diese Adresse in deinen Browser:<br>${inviteUrl}</p>
+      `,
     });
   }
 );
