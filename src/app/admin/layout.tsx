@@ -14,6 +14,7 @@ const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
 const LINKS = [
   { href: "/admin", label: "Übersicht" },
   { href: "/admin/clubs", label: "Vereine" },
+  { href: "/admin/settings", label: "Einstellungen" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

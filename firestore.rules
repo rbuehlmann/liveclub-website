@@ -24,6 +24,12 @@ service cloud.firestore {
       return isClubMember(clubId) && clubRole(clubId) == 'clubAdmin';
     }
 
+    // Set via the grantPlatformAdmin/devGrantPlatformAdmin callables (custom
+    // claim), not a Firestore-backed role — see functions/src/callable.
+    function isPlatformAdmin() {
+      return isSignedIn() && request.auth.token.platformAdmin == true;
+    }
+
     // Denormalized onto the club doc by Cloud Functions whenever a license
     // is created/changed (trial creation, manual admin action, later Stripe
     // webhook) so this check never needs a scheduled "expire" job.
@@ -169,6 +175,12 @@ service cloud.firestore {
     match /publicTeams/{publicTeamId} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // Platform-wide settings (e.g. invite email templates) — nothing here
+    // is club-specific or public.
+    match /settings/{docId} {
+      allow read, write: if isPlatformAdmin();
     }
   }
 }

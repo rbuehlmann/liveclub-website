@@ -10,3 +10,4 @@ export { adminSetLicense } from "./callable/adminSetLicense";
 export { adminListClubs } from "./callable/adminListClubs";
 export { devGrantPlatformAdmin } from "./callable/devGrantPlatformAdmin";
 export { grantPlatformAdmin } from "./callable/grantPlatformAdmin";
+export { sendTestEmail } from "./callable/sendTestEmail";

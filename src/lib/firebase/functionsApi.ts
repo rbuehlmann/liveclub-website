@@ -102,3 +102,9 @@ export async function grantPlatformAdmin() {
   const call = httpsCallable(functions, "grantPlatformAdmin");
   await call({});
 }
+
+export async function sendTestEmail(input: { to: string; subject: string; html: string }) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "sendTestEmail");
+  await call(input);
+}
