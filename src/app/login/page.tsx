@@ -53,7 +53,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="flex min-h-screen flex-col bg-brand-white">
       <PublicHeader />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
@@ -83,13 +83,13 @@ function LoginForm() {
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-sm text-blue-700 hover:underline"
+              className="text-sm text-brand-red hover:underline"
             >
               {t("forgotPassword")}
             </button>
           </form>
           <p className="mt-4 text-center text-sm text-gray-600">
-            <Link href="/register" className="text-blue-700 hover:underline">
+            <Link href="/register" className="text-brand-red hover:underline">
               {t("noAccount")}
             </Link>
           </p>

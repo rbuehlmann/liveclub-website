@@ -5,12 +5,27 @@
   --foreground: #171717;
 }
 
+/*
+ * LiveClub corporate palette ("Impact Red" brand guide, 2026-07-31):
+ * Racing Red is the single primary/action color (buttons, links, focus
+ * states, "live" indicators); Bone White is the app's page background
+ * (not pure white, so cards/inputs on white still read as a distinct
+ * surface); Pitch Black/Metallic Silver are available for future use
+ * (dark mode, secondary surfaces) but not wired into every neutral yet.
+ * Changing the brand going forward should mean editing only this block.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-teko: var(--font-teko-display);
+
+  --color-brand-red: #f02b22;
+  --color-brand-red-hover: #d0211a;
+  --color-brand-black: #080808;
+  --color-brand-white: #f3efe5;
+  --color-brand-silver: #a7adb2;
 }
 
 /*

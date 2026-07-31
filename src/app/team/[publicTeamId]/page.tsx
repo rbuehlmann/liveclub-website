@@ -107,7 +107,7 @@ export default function PublicTeamPage() {
   const isLive = game && (game.status === "live" || game.status === "paused");
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gray-50 px-4 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-white px-4 text-center">
       {team.clubLogoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={team.clubLogoUrl} alt="" className="h-24 w-24 rounded-full object-contain" />
@@ -120,7 +120,7 @@ export default function PublicTeamPage() {
       {game ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white px-8 py-6">
           {isLive && (
-            <span className="animate-pulse rounded-full bg-red-600 px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
+            <span className="animate-pulse rounded-full bg-brand-red px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
               LIVE
             </span>
           )}
@@ -136,7 +136,7 @@ export default function PublicTeamPage() {
           <p className="text-sm text-gray-500">{STATUS_LABELS[game.status] ?? game.status}</p>
           <Link
             href={buildGameUrl(team.publicClubId, game.gameId)}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-brand-red hover:underline"
           >
             Details öffnen
           </Link>
@@ -148,7 +148,7 @@ export default function PublicTeamPage() {
       <p className="mt-8 text-xs text-gray-400">
         Diese Seite bookmarken, um dieser Mannschaft zu folgen.
       </p>
-      <Link href={buildClubUrl(team.publicClubId)} className="text-xs text-blue-600 hover:underline">
+      <Link href={buildClubUrl(team.publicClubId)} className="text-xs text-brand-red hover:underline">
         Zum ganzen Verein
       </Link>
     </main>

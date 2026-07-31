@@ -54,7 +54,7 @@ export default function PublicLiveGamePage() {
   const isLive = game.status === "live" || game.status === "paused";
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gray-50 px-4 text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-white px-4 text-center">
       {isLive && (
         <span className="animate-pulse rounded-full bg-red-600 px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
           LIVE

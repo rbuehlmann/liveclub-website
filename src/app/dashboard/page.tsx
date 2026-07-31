@@ -53,7 +53,7 @@ export default function DashboardOverviewPage() {
       <Card>
         <h1 className="text-xl font-bold text-gray-900">{club.name}</h1>
         <p className="text-sm text-gray-600">{club.sport}</p>
-        <div className="mt-4 rounded-lg bg-gray-50 p-4">
+        <div className="mt-4 rounded-lg bg-brand-white p-4">
           <p className="text-sm font-medium text-gray-700">
             {isExpired
               ? t("trialExpired")
@@ -102,22 +102,22 @@ export default function DashboardOverviewPage() {
       {role === "clubAdmin" && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Link href="/dashboard/teams">
-            <Card className="hover:border-blue-300">
+            <Card className="hover:border-brand-red/50">
               <h2 className="font-semibold text-gray-900">{t("teams")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/games">
-            <Card className="hover:border-blue-300">
+            <Card className="hover:border-brand-red/50">
               <h2 className="font-semibold text-gray-900">{t("games")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/reporters">
-            <Card className="hover:border-blue-300">
+            <Card className="hover:border-brand-red/50">
               <h2 className="font-semibold text-gray-900">{t("reporters")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/share">
-            <Card className="hover:border-blue-300">
+            <Card className="hover:border-brand-red/50">
               <h2 className="font-semibold text-gray-900">{t("share")}</h2>
             </Card>
           </Link>
@@ -126,7 +126,7 @@ export default function DashboardOverviewPage() {
 
       {role === "reporter" && (
         <Link href="/dashboard/games">
-          <Card className="hover:border-blue-300">
+          <Card className="hover:border-brand-red/50">
             <h2 className="font-semibold text-gray-900">{t("games")}</h2>
           </Card>
         </Link>

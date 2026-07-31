@@ -180,7 +180,7 @@ export default function ReportersPage() {
           </Button>
         </form>
         {lastInviteLink && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-gray-50 p-3">
+          <div className="mt-4 flex items-center gap-2 rounded-lg bg-brand-white p-3">
             <code className="flex-1 truncate text-sm">{lastInviteLink}</code>
             <Button variant="secondary" onClick={() => copyLink(lastInviteLink)}>
               {copied ? tCommon("linkCopied") : tCommon("copyLink")}

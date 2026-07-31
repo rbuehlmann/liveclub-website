@@ -18,7 +18,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       <input
         ref={ref}
         id={inputId}
-        className={`rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 ${className}`}
+        className={`rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 ${className}`}
         {...props}
       />
       {error && <p className="text-sm text-red-600">{error}</p>}

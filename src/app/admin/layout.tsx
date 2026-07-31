@@ -93,7 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-brand-white">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <p className="text-lg font-bold text-gray-900">LiveClub Plattform-Administration</p>
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               key={link.href}
               href={link.href}
               className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                pathname === link.href ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:bg-gray-100"
+                pathname === link.href ? "bg-brand-red/10 text-brand-red" : "text-gray-600 hover:bg-gray-100"
               }`}
             >
               {link.label}

@@ -79,7 +79,7 @@ export default function SharePage() {
       <Card>
         <h2 className="mb-2 font-semibold text-gray-900">{t("publicLink")}</h2>
         <div className="flex items-center gap-2">
-          <code className="flex-1 truncate rounded-lg bg-gray-50 px-3 py-2 text-sm">
+          <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm">
             {publicLink}
           </code>
           <Button variant="secondary" onClick={() => copy("link", publicLink)}>
@@ -110,7 +110,7 @@ export default function SharePage() {
                     <div className="flex-1 min-w-[200px]">
                       <p className="mb-1 font-medium text-gray-900">{team.name}</p>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 truncate rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                        <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm">
                           {teamLink}
                         </code>
                         <Button variant="secondary" onClick={() => copy(team.teamId, teamLink)}>

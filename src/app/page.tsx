@@ -120,7 +120,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-brand-white">
       <PublicHeader />
 
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
@@ -144,7 +144,7 @@ export default function Home() {
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="rounded-lg border border-gray-300 px-4 py-3 text-base"
+                className="rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
               >
                 <option value="">Alle Länder</option>
                 {COUNTRIES.map((c) => (
@@ -190,7 +190,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setSelectedClub(null)}
-              className="self-start text-sm text-blue-700 hover:underline"
+              className="self-start text-sm text-brand-red hover:underline"
             >
               ← Zurück zur Suche
             </button>
@@ -217,7 +217,7 @@ export default function Home() {
               Play Store
             </Button>
           </div>
-          <Link href="/register" className="mt-2 text-sm text-blue-700 hover:underline">
+          <Link href="/register" className="mt-2 text-sm text-brand-red hover:underline">
             Verein registrieren
           </Link>
         </div>

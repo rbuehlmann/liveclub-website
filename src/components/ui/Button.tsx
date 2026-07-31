@@ -3,10 +3,12 @@ import { ButtonHTMLAttributes, forwardRef } from "react";
 type Variant = "primary" | "secondary" | "danger" | "ghost";
 
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300",
-  secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400",
-  danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",
-  ghost: "bg-transparent text-blue-700 hover:bg-blue-50 disabled:text-gray-400",
+  primary: "bg-brand-red text-white hover:bg-brand-red-hover disabled:bg-brand-red/40",
+  secondary: "bg-brand-silver/25 text-gray-900 hover:bg-brand-silver/40 disabled:bg-gray-100 disabled:text-gray-400",
+  // Kept as a plain, muted red distinct from brand-red so destructive
+  // actions never look like the primary "live/action" brand color.
+  danger: "bg-red-800 text-white hover:bg-red-900 disabled:bg-red-300",
+  ghost: "bg-transparent text-brand-red hover:bg-brand-red/10 disabled:text-gray-400",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
