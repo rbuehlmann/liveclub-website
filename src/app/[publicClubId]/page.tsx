@@ -7,6 +7,8 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildGameUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicClub, PublicGame } from "@/lib/types";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -74,9 +76,13 @@ export default function PublicClubPage() {
 
   if (notFound) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-gray-500">
-        Verein wurde nicht gefunden.
-      </main>
+      <div className="flex min-h-screen flex-col bg-brand-white">
+        <PublicHeader />
+        <main className="flex flex-1 items-center justify-center text-gray-500">
+          Verein wurde nicht gefunden.
+        </main>
+        <PublicFooter />
+      </div>
     );
   }
 
@@ -85,7 +91,9 @@ export default function PublicClubPage() {
   const isLive = game && (game.status === "live" || game.status === "paused");
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-white px-4 text-center">
+    <div className="flex min-h-screen flex-col bg-brand-white">
+      <PublicHeader />
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
       {club.logoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={club.logoUrl} alt="" className="h-24 w-24 rounded-full object-contain" />
@@ -123,6 +131,8 @@ export default function PublicClubPage() {
         neuesten Stand.
       </p>
       <p className="text-xs text-gray-400">Bald verfügbar: die LiveClub-App für Fans</p>
-    </main>
+      </main>
+      <PublicFooter />
+    </div>
   );
 }

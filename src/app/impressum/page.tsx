@@ -12,8 +12,11 @@ export default function ImpressumPage() {
 
         <div className="flex flex-col gap-6 text-sm text-gray-700">
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Anbieter</h2>
+            <h2 className="mb-1 font-semibold text-gray-900">Betreiber</h2>
             <p>
+              LiveClub ist ein eigenständiges Angebot und wird betrieben von:
+            </p>
+            <p className="mt-2">
               oryno.dev · Raffael Bühlmann
               <br />
               Luzernerstrasse 5
@@ -30,29 +33,40 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Inhaltliche Verantwortung</h2>
-            <p>Raffael Bühlmann (Anschrift wie oben)</p>
+            <h2 className="mb-1 font-semibold text-gray-900">Verantwortlich für den Inhalt</h2>
+            <p>Raffael Bühlmann, Anschrift wie oben.</p>
+          </section>
+
+          <section>
+            <h2 className="mb-1 font-semibold text-gray-900">Rechtsform</h2>
+            <p>
+              Einzelunternehmen. Kein Handelsregistereintrag, keine Mehrwertsteuerpflicht (Umsatz
+              unterhalb der massgeblichen Schwellenwerte).
+            </p>
           </section>
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900">Haftungsausschluss</h2>
             <p>
               Die Inhalte dieser Website wurden sorgfältig erstellt. Für die Richtigkeit,
-              Vollständigkeit und Aktualität übernehmen wir keine Gewähr. Für externe Links
-              übernehmen wir keine Verantwortung — zum Zeitpunkt der Verlinkung waren keine
-              rechtswidrigen Inhalte erkennbar.
+              Vollständigkeit und Aktualität wird keine Gewähr übernommen. Für Inhalte externer,
+              verlinkter Websites ist ausschliesslich deren Betreiber verantwortlich — im Zeitpunkt
+              der Verlinkung waren keine rechtswidrigen Inhalte erkennbar.
             </p>
           </section>
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900">Urheberrecht</h2>
             <p>
-              Die auf dieser Website veröffentlichten Inhalte unterliegen dem Urheberrecht. Eine
-              Vervielfältigung oder Verbreitung bedarf der schriftlichen Zustimmung des Anbieters.
+              Die auf dieser Website veröffentlichten Inhalte (Texte, Layout, Logo, Software)
+              unterliegen dem Urheberrecht. Jede Vervielfältigung, Verbreitung oder Bearbeitung
+              ausserhalb der engen Grenzen des Urheberrechts bedarf der schriftlichen Zustimmung
+              des Betreibers. Vereine bleiben Eigentümer der von ihnen selbst hochgeladenen Inhalte
+              (z. B. Vereinslogo).
             </p>
           </section>
 
-          <p className="text-xs text-gray-400">Stand: Juli 2026</p>
+          <p className="text-xs text-gray-400">Stand: August 2026</p>
         </div>
       </main>
       <PublicFooter />

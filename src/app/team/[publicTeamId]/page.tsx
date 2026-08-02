@@ -7,6 +7,8 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildClubUrl, buildGameUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicClub, PublicGame, PublicTeamProfile } from "@/lib/types";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -96,9 +98,13 @@ export default function PublicTeamPage() {
 
   if (notFound) {
     return (
-      <main className="flex min-h-screen items-center justify-center text-gray-500">
-        Mannschaft wurde nicht gefunden.
-      </main>
+      <div className="flex min-h-screen flex-col bg-brand-white">
+        <PublicHeader />
+        <main className="flex flex-1 items-center justify-center text-gray-500">
+          Mannschaft wurde nicht gefunden.
+        </main>
+        <PublicFooter />
+      </div>
     );
   }
 
@@ -107,7 +113,9 @@ export default function PublicTeamPage() {
   const isLive = game && (game.status === "live" || game.status === "paused");
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-white px-4 text-center">
+    <div className="flex min-h-screen flex-col bg-brand-white">
+      <PublicHeader />
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
       {team.clubLogoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={team.clubLogoUrl} alt="" className="h-24 w-24 rounded-full object-contain" />
@@ -151,6 +159,8 @@ export default function PublicTeamPage() {
       <Link href={buildClubUrl(team.publicClubId)} className="text-xs text-brand-red hover:underline">
         Zum ganzen Verein
       </Link>
-    </main>
+      </main>
+      <PublicFooter />
+    </div>
   );
 }

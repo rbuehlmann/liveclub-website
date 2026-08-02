@@ -14,7 +14,7 @@ export default function DatenschutzPage() {
           <section>
             <h2 className="mb-1 font-semibold text-gray-900">Verantwortlicher</h2>
             <p>
-              oryno.dev · Raffael Bühlmann
+              LiveClub wird betrieben von oryno.dev · Raffael Bühlmann
               <br />
               Luzernerstrasse 5, 5630 Muri, Schweiz
               <br />
@@ -24,12 +24,7 @@ export default function DatenschutzPage() {
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900">Welche Daten wir erheben</h2>
-            <p>
-              Im Gegensatz zu anderen Angeboten von oryno.dev verarbeitet LiveClub echte
-              personenbezogene Daten, da die Nutzung eines Vereinskontos, das Erfassen von
-              Mannschaften/Spielen und (bei Bezahlvereinen) eine Zahlungsabwicklung ein Konto
-              voraussetzt:
-            </p>
+            <p>Für den Betrieb eines Vereinskontos verarbeitet LiveClub folgende Personendaten:</p>
             <ul className="mt-2 list-disc pl-5">
               <li>Kontodaten: Name, E-Mail-Adresse (Firebase Authentication)</li>
               <li>
@@ -47,10 +42,9 @@ export default function DatenschutzPage() {
             <h2 className="mb-1 font-semibold text-gray-900">Hosting & Auftragsverarbeiter</h2>
             <p>
               Kontodaten, Vereinsdaten und Spieldaten werden über Firebase (Google Ireland Ltd. /
-              Google LLC) gespeichert und verarbeitet. Die Datenbank läuft aktuell in einer
-              nordamerikanischen Google-Cloud-Region — eine Datenübermittlung in die USA findet
-              damit statt. Die Website selbst (dieses Frontend) wird bei Infomaniak (Schweiz)
-              gehostet.
+              Google LLC) gespeichert und verarbeitet. Die Datenbank läuft in einer
+              nordamerikanischen Google-Cloud-Region; es findet eine Datenübermittlung in die USA
+              statt. Die Website selbst (dieses Frontend) wird bei Infomaniak (Schweiz) gehostet.
             </p>
           </section>
 
@@ -95,7 +89,7 @@ export default function DatenschutzPage() {
             </p>
           </section>
 
-          <p className="text-xs text-gray-400">Stand: Juli 2026</p>
+          <p className="text-xs text-gray-400">Stand: August 2026</p>
         </div>
       </main>
       <PublicFooter />

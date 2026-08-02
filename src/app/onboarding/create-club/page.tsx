@@ -10,6 +10,8 @@ import { getFirebaseClient } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -85,8 +87,10 @@ export default function CreateClubPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
-      <Card>
+    <div className="flex min-h-screen flex-col bg-brand-white">
+      <PublicHeader />
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+        <Card>
         <h1 className="mb-2 text-2xl font-bold text-gray-900">{t("title")}</h1>
         <p className="mb-6 text-sm text-gray-600">{t("trialNotice")}</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -152,7 +156,9 @@ export default function CreateClubPage() {
             {submitting ? tCommon("loading") : t("submit")}
           </Button>
         </form>
-      </Card>
-    </main>
+        </Card>
+      </main>
+      <PublicFooter />
+    </div>
   );
 }
