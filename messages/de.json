@@ -75,6 +75,8 @@
     },
     "create": "Spiel erstellen",
     "empty": "Noch keine Spiele angelegt.",
+    "noUpcoming": "Keine kommenden Spiele.",
+    "archiveTitle": "Archiv",
     "openLiveControl": "Live-Steuerung öffnen"
   },
   "live": {
