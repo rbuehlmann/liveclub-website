@@ -5,8 +5,8 @@ import Link from "next/link";
 // than a full marketing footer since the product is "function over design".
 export function PublicFooter() {
   return (
-    <footer className="border-t border-gray-200 bg-white py-6">
-      <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 px-4 text-sm text-gray-500">
+    <footer className="border-t border-brand-silver/30 bg-brand-white py-6 dark:border-white/10 dark:bg-brand-black">
+      <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 px-4 text-sm text-gray-500 dark:text-gray-400">
         <Link href="/impressum" className="hover:text-brand-red hover:underline">
           Impressum
         </Link>

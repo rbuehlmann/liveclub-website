@@ -178,14 +178,14 @@ export default function GamesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
 
       {(role === "clubAdmin" || role === "reporter") && (
         <Card>
-          <h2 className="mb-4 font-semibold text-gray-900">{t("newGame")}</h2>
+          <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("newGame")}</h2>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">{t("team")}</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("team")}</label>
               <select
                 value={teamId}
                 onChange={(e) => setTeamId(e.target.value)}
@@ -202,7 +202,7 @@ export default function GamesPage() {
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={isHomeGame}
@@ -227,7 +227,7 @@ export default function GamesPage() {
                       className="h-6 w-6 rounded-full bg-white object-contain"
                     />
                   ) : (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-500">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-white/10 text-xs font-semibold text-gray-500 dark:text-gray-400">
                       {opponentClub.name.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -241,7 +241,7 @@ export default function GamesPage() {
               )}
               {opponentRequiresTeamPick ? (
                 <div className="flex flex-col gap-1">
-                  <label className="text-sm font-medium text-gray-700">Mannschaft des Gegners</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mannschaft des Gegners</label>
                   <select
                     value={opponentTeamId}
                     onChange={(e) => setOpponentTeamId(e.target.value)}
@@ -283,16 +283,16 @@ export default function GamesPage() {
       )}
 
       <div className="flex flex-col gap-3">
-        {visibleGames.length === 0 && <p className="text-sm text-gray-500">{t("empty")}</p>}
+        {visibleGames.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t("empty")}</p>}
         {visibleGames.map((game) => (
           <Card key={game.gameId} className="flex items-center justify-between gap-4">
             <div>
-              <p className="flex items-center gap-2 font-medium text-gray-900">
+              <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
                 <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
                 {game.homeTeamName} – {game.awayTeamName}
                 <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {formatDateTimeDe(game.scheduledStart)} · {t(`status.${game.status}`)}
                 {game.status !== "draft" && game.status !== "scheduled"
                   ? ` · ${game.score.home}:${game.score.away}`

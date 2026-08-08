@@ -39,7 +39,7 @@ export function TeamIcon({ publicClubId, teamName, size = 40 }: TeamIconProps) {
         src={logoUrl}
         alt=""
         style={style}
-        className="rounded-full object-contain bg-white ring-1 ring-gray-200"
+        className="rounded-full object-contain bg-white ring-1 ring-gray-200 dark:ring-white/10"
       />
     );
   }
@@ -49,7 +49,7 @@ export function TeamIcon({ publicClubId, teamName, size = 40 }: TeamIconProps) {
   return (
     <span
       style={style}
-      className="flex items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-500"
+      className="flex items-center justify-center rounded-full bg-gray-200 font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400"
     >
       {initial}
     </span>

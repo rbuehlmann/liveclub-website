@@ -5,14 +5,14 @@ export const metadata = { title: "Datenschutzerklärung – LiveClub" };
 
 export default function DatenschutzPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12">
-        <h1 className="mb-6 font-teko text-4xl font-bold text-gray-900">Datenschutzerklärung</h1>
+        <h1 className="mb-6 font-teko text-4xl font-bold text-gray-900 dark:text-white">Datenschutzerklärung</h1>
 
-        <div className="flex flex-col gap-6 text-sm text-gray-700">
+        <div className="flex flex-col gap-6 text-sm text-gray-700 dark:text-gray-300">
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Verantwortlicher</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Verantwortlicher</h2>
             <p>
               LiveClub wird betrieben von oryno.dev · Raffael Bühlmann
               <br />
@@ -23,7 +23,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Welche Daten wir erheben</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Welche Daten wir erheben</h2>
             <p>Für den Betrieb eines Vereinskontos verarbeitet LiveClub folgende Personendaten:</p>
             <ul className="mt-2 list-disc pl-5">
               <li>Kontodaten: Name, E-Mail-Adresse (Firebase Authentication)</li>
@@ -39,7 +39,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Hosting & Auftragsverarbeiter</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Hosting & Auftragsverarbeiter</h2>
             <p>
               Kontodaten, Vereinsdaten und Spieldaten werden über Firebase (Google Ireland Ltd. /
               Google LLC) gespeichert und verarbeitet. Die Datenbank läuft in einer
@@ -49,7 +49,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Zahlungsabwicklung</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Zahlungsabwicklung</h2>
             <p>
               Vereins-Abos werden über Stripe abgewickelt. Zahlungs- und Rechnungsdaten (z. B.
               Zahlungsmittel, Rechnungsadresse) werden direkt von Stripe verarbeitet und
@@ -59,7 +59,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">E-Mail-Versand</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">E-Mail-Versand</h2>
             <p>
               Einladungs-E-Mails an Redaktoren werden über einen SMTP-Server bei Infomaniak
               (Schweiz) versendet.
@@ -67,12 +67,12 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Tracking & Analyse</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Tracking & Analyse</h2>
             <p>Diese Website verwendet keine Analytics-Tools, kein Tracking und keine Werbung.</p>
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Öffentliche Spielstände</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Öffentliche Spielstände</h2>
             <p>
               Vereinsname, Mannschaftsnamen, Logo und Live-Spielstände, die ein Verein selbst
               veröffentlicht, sind bewusst öffentlich einsehbar (Vereinssuche, öffentliche
@@ -82,14 +82,14 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Deine Rechte</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Deine Rechte</h2>
             <p>
               Du kannst jederzeit Auskunft, Berichtigung oder Löschung deiner Daten verlangen —
               kontaktiere uns dazu unter hello@oryno.dev.
             </p>
           </section>
 
-          <p className="text-xs text-gray-400">Stand: August 2026</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Stand: August 2026</p>
         </div>
       </main>
       <PublicFooter />

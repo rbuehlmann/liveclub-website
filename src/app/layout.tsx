@@ -44,6 +44,19 @@ export default async function RootLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} ${teko.variable} h-full antialiased`}
     >
+      <head>
+        {/* Applied before hydration so a saved dark preference never flashes
+            light first — kept in sync with ThemeToggle's storage key. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try {
+              if (localStorage.getItem("liveclub-theme") === "dark") {
+                document.documentElement.classList.add("dark");
+              }
+            } catch (e) {}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>{children}</AuthProvider>

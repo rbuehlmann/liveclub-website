@@ -12,7 +12,7 @@ export default function AdminOverviewPage() {
     adminListClubs().then(setClubs);
   }, []);
 
-  if (!clubs) return <p className="text-gray-500">Wird geladen …</p>;
+  if (!clubs) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
 
   const trial = clubs.filter((c) => c.currentLicenseType === "trial").length;
   const active = clubs.filter((c) => c.currentLicenseStatus === "active").length;
@@ -20,23 +20,23 @@ export default function AdminOverviewPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">Übersicht</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Übersicht</h1>
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
-          <p className="text-3xl font-bold text-gray-900">{clubs.length}</p>
-          <p className="text-sm text-gray-500">Vereine</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{clubs.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Vereine</p>
         </Card>
         <Card>
-          <p className="text-3xl font-bold text-gray-900">{active}</p>
-          <p className="text-sm text-gray-500">Aktiv</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{active}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Aktiv</p>
         </Card>
         <Card>
-          <p className="text-3xl font-bold text-gray-900">{trial}</p>
-          <p className="text-sm text-gray-500">Testphase</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{trial}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Testphase</p>
         </Card>
         <Card>
-          <p className="text-3xl font-bold text-gray-900">{expired}</p>
-          <p className="text-sm text-gray-500">Abgelaufen/inaktiv</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{expired}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Abgelaufen/inaktiv</p>
         </Card>
       </div>
       <Link href="/admin/clubs" className="text-sm text-brand-red hover:underline">

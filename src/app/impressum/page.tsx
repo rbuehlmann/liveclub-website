@@ -5,14 +5,14 @@ export const metadata = { title: "Impressum – LiveClub" };
 
 export default function ImpressumPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12">
-        <h1 className="mb-6 font-teko text-4xl font-bold text-gray-900">Impressum</h1>
+        <h1 className="mb-6 font-teko text-4xl font-bold text-gray-900 dark:text-white">Impressum</h1>
 
-        <div className="flex flex-col gap-6 text-sm text-gray-700">
+        <div className="flex flex-col gap-6 text-sm text-gray-700 dark:text-gray-300">
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Betreiber</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Betreiber</h2>
             <p>
               LiveClub ist ein eigenständiges Angebot und wird betrieben von:
             </p>
@@ -28,17 +28,17 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Kontakt</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Kontakt</h2>
             <p>hello@oryno.dev</p>
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Verantwortlich für den Inhalt</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Verantwortlich für den Inhalt</h2>
             <p>Raffael Bühlmann, Anschrift wie oben.</p>
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Rechtsform</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Rechtsform</h2>
             <p>
               Einzelunternehmen. Kein Handelsregistereintrag, keine Mehrwertsteuerpflicht (Umsatz
               unterhalb der massgeblichen Schwellenwerte).
@@ -46,7 +46,7 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Haftungsausschluss</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Haftungsausschluss</h2>
             <p>
               Die Inhalte dieser Website wurden sorgfältig erstellt. Für die Richtigkeit,
               Vollständigkeit und Aktualität wird keine Gewähr übernommen. Für Inhalte externer,
@@ -56,7 +56,7 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900">Urheberrecht</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Urheberrecht</h2>
             <p>
               Die auf dieser Website veröffentlichten Inhalte (Texte, Layout, Logo, Software)
               unterliegen dem Urheberrecht. Jede Vervielfältigung, Verbreitung oder Bearbeitung
@@ -66,7 +66,7 @@ export default function ImpressumPage() {
             </p>
           </section>
 
-          <p className="text-xs text-gray-400">Stand: August 2026</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Stand: August 2026</p>
         </div>
       </main>
       <PublicFooter />

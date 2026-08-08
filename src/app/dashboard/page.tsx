@@ -51,24 +51,24 @@ export default function DashboardOverviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <Card>
-        <h1 className="text-xl font-bold text-gray-900">{club.name}</h1>
-        <p className="text-sm text-gray-600">{club.sport}</p>
-        <div className="mt-4 rounded-lg bg-brand-white p-4">
-          <p className="text-sm font-medium text-gray-700">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{club.name}</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{club.sport}</p>
+        <div className="mt-4 rounded-lg bg-brand-white p-4 dark:bg-white/5">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {isExpired
               ? t("trialExpired")
               : isTrial
                 ? t("trialEndsIn", { days: remaining ?? 0 })
                 : `${t("licenseStatusActive")} · ${club.currentLicenseType}`}
           </p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Gültig bis {formatDateDe(club.currentLicenseValidUntil)}
           </p>
         </div>
 
         {role === "clubAdmin" && isExpired && (
-          <div className="mt-4 flex flex-col gap-2 border-t border-gray-100 pt-4">
-            <p className="text-sm font-medium text-gray-700">Jetzt upgraden</p>
+          <div className="mt-4 flex flex-col gap-2 border-t border-gray-100 dark:border-white/10 pt-4">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Jetzt upgraden</p>
             <div className="flex gap-3">
               <Button onClick={() => handleUpgrade("monthly")} disabled={redirecting !== null}>
                 {redirecting === "monthly" ? "Wird geöffnet …" : "CHF 9.–/Monat"}
@@ -86,7 +86,7 @@ export default function DashboardOverviewPage() {
         )}
 
         {role === "clubAdmin" && isPaid && (
-          <div className="mt-4 border-t border-gray-100 pt-4">
+          <div className="mt-4 border-t border-gray-100 dark:border-white/10 pt-4">
             <Button
               variant="secondary"
               onClick={handleManageSubscription}
@@ -103,22 +103,22 @@ export default function DashboardOverviewPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Link href="/dashboard/teams">
             <Card className="hover:border-brand-red/50">
-              <h2 className="font-semibold text-gray-900">{t("teams")}</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{t("teams")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/games">
             <Card className="hover:border-brand-red/50">
-              <h2 className="font-semibold text-gray-900">{t("games")}</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{t("games")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/reporters">
             <Card className="hover:border-brand-red/50">
-              <h2 className="font-semibold text-gray-900">{t("reporters")}</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{t("reporters")}</h2>
             </Card>
           </Link>
           <Link href="/dashboard/share">
             <Card className="hover:border-brand-red/50">
-              <h2 className="font-semibold text-gray-900">{t("share")}</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{t("share")}</h2>
             </Card>
           </Link>
         </div>
@@ -127,7 +127,7 @@ export default function DashboardOverviewPage() {
       {role === "reporter" && (
         <Link href="/dashboard/games">
           <Card className="hover:border-brand-red/50">
-            <h2 className="font-semibold text-gray-900">{t("games")}</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">{t("games")}</h2>
           </Card>
         </Link>
       )}

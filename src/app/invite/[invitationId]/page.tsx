@@ -89,9 +89,9 @@ export default function InvitePage() {
 
   if (authLoading || loadingInvite) {
     return (
-      <div className="flex min-h-screen flex-col bg-brand-white">
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
-        <main className="flex flex-1 items-center justify-center text-gray-500">Wird geladen …</main>
+        <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">Wird geladen …</main>
         <PublicFooter />
       </div>
     );
@@ -99,12 +99,12 @@ export default function InvitePage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen flex-col bg-brand-white">
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
         <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
           <Card>
-            <h1 className="mb-4 text-xl font-bold text-gray-900">Einladung zu LiveClub</h1>
-            <p className="mb-6 text-sm text-gray-600">
+            <h1 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Einladung zu LiveClub</h1>
+            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
               Bitte melde dich an oder registriere dich, um die Einladung anzunehmen.
             </p>
             <div className="flex flex-col gap-3">
@@ -125,15 +125,15 @@ export default function InvitePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
-          <h1 className="mb-4 text-xl font-bold text-gray-900">Einladung zu LiveClub</h1>
+          <h1 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Einladung zu LiveClub</h1>
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
           {invitation && invitation.status === "pending" && (
             <>
-              <p className="mb-6 text-sm text-gray-700">
+              <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
                 Du wurdest eingeladen, <strong>{invitation.clubName}</strong> als{" "}
                 {invitation.role === "reporter" ? "Redaktor" : "Vereinsadministrator"} beizutreten.
               </p>
@@ -143,7 +143,7 @@ export default function InvitePage() {
             </>
           )}
           {invitation && invitation.status !== "pending" && (
-            <p className="text-sm text-gray-600">Diese Einladung wurde bereits verwendet.</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Diese Einladung wurde bereits verwendet.</p>
           )}
         </Card>
       </main>

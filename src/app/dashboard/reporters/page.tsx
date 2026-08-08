@@ -147,10 +147,10 @@ export default function ReportersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
 
       <Card>
-        <h2 className="mb-4 font-semibold text-gray-900">{t("invite")}</h2>
+        <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("invite")}</h2>
         <form onSubmit={handleInvite} className="flex flex-col gap-4">
           <TextField
             label={t("inviteEmail")}
@@ -160,10 +160,10 @@ export default function ReportersPage() {
           />
           {teams.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">{t("inviteTeams")}</p>
+              <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("inviteTeams")}</p>
               <div className="flex flex-col gap-1">
                 {teams.map((team) => (
-                  <label key={team.teamId} className="flex items-center gap-2 text-sm text-gray-700">
+                  <label key={team.teamId} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <input
                       type="checkbox"
                       checked={inviteTeamIds.includes(team.teamId)}
@@ -180,7 +180,7 @@ export default function ReportersPage() {
           </Button>
         </form>
         {lastInviteLink && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-brand-white p-3">
+          <div className="mt-4 flex items-center gap-2 rounded-lg bg-brand-white p-3 dark:bg-white/5">
             <code className="flex-1 truncate text-sm">{lastInviteLink}</code>
             <Button variant="secondary" onClick={() => copyLink(lastInviteLink)}>
               {copied ? tCommon("linkCopied") : tCommon("copyLink")}
@@ -191,11 +191,11 @@ export default function ReportersPage() {
 
       {invitations.length > 0 && (
         <Card>
-          <h2 className="mb-4 font-semibold text-gray-900">{t("pendingInvites")}</h2>
+          <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("pendingInvites")}</h2>
           <div className="flex flex-col gap-2">
             {invitations.map((inv) => (
               <div key={inv.invitationId} className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">{inv.email ?? "Offener Link"}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{inv.email ?? "Offener Link"}</span>
                 <Button variant="ghost" onClick={() => handleCancelInvite(inv.invitationId)}>
                   {t("remove")}
                 </Button>
@@ -215,9 +215,9 @@ export default function ReportersPage() {
             return (
               <Card key={member.uid} className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">{member.displayName ?? member.email}</p>
-                  <p className="text-sm text-gray-500">{member.email}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-white">{member.displayName ?? member.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : "Keine Mannschaft zugewiesen"}
                   </p>
                 </div>

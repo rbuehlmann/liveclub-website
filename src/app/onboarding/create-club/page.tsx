@@ -87,12 +87,12 @@ export default function CreateClubPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <p className="mb-6 text-sm text-gray-600">{t("trialNotice")}</p>
+        <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
+        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">{t("trialNotice")}</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <TextField
             label={t("clubName")}
@@ -102,7 +102,7 @@ export default function CreateClubPage() {
             onChange={(e) => setName(e.target.value)}
           />
           <div className="flex flex-col gap-1">
-            <label htmlFor="sport" className="text-sm font-medium text-gray-700">
+            <label htmlFor="sport" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("sport")}
             </label>
             <select
@@ -117,10 +117,10 @@ export default function CreateClubPage() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">Weitere Sportarten folgen bald.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Weitere Sportarten folgen bald.</p>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="country" className="text-sm font-medium text-gray-700">
+            <label htmlFor="country" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {t("country")}
             </label>
             <select

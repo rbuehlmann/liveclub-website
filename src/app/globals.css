@@ -1,18 +1,29 @@
 @import "tailwindcss";
 
+/*
+ * Manual light/dark switcher (not prefers-color-scheme): a `dark` class on
+ * <html>, toggled by ThemeToggle and applied pre-hydration by the inline
+ * script in layout.tsx, drives every `dark:` utility below.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
+  --background: #f3efe5;
   --foreground: #171717;
+}
+
+.dark {
+  --background: #080808;
+  --foreground: #f3efe5;
 }
 
 /*
  * LiveClub corporate palette ("Impact Red" brand guide, 2026-07-31):
  * Racing Red is the single primary/action color (buttons, links, focus
- * states, "live" indicators); Bone White is the app's page background
- * (not pure white, so cards/inputs on white still read as a distinct
- * surface); Pitch Black/Metallic Silver are available for future use
- * (dark mode, secondary surfaces) but not wired into every neutral yet.
- * Changing the brand going forward should mean editing only this block.
+ * states, "live" indicators) in both themes; Bone White is the light-mode
+ * page background, Pitch Black the dark-mode one; Metallic Silver is used
+ * for secondary surfaces/borders. Changing the brand going forward should
+ * mean editing only this block.
  */
 @theme inline {
   --color-background: var(--background);
@@ -28,12 +39,6 @@
   --color-brand-silver: #a7adb2;
 }
 
-/*
- * V1 is deliberately "function over design" (see project brief) and every
- * page's own styling (Card, form fields, etc.) assumes a light background.
- * Rather than dark-mode-proof each page individually, keep the whole app on
- * a fixed light theme regardless of the visitor's OS color scheme.
- */
 body {
   background: var(--background);
   color: var(--foreground);

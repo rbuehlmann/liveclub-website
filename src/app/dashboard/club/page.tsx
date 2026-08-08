@@ -92,7 +92,7 @@ export default function EditClubPage() {
 
   return (
     <Card className="max-w-lg">
-      <h1 className="mb-6 text-xl font-bold text-gray-900">{t("title")}</h1>
+      <h1 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <TextField
           label={t("clubName")}
@@ -115,7 +115,7 @@ export default function EditClubPage() {
         />
         {!readOnly && (
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Vereinslogo</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vereinslogo</label>
             {club.logoUrl && (
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,15 +126,15 @@ export default function EditClubPage() {
               </div>
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploading} />
-            <p className="text-xs text-gray-500">Empfehlung: 500×500 px, transparentes PNG.</p>
-            {uploading && <p className="text-xs text-gray-500">Wird hochgeladen …</p>}
+            <p className="text-xs text-gray-500 dark:text-gray-400">Empfehlung: 500×500 px, transparentes PNG.</p>
+            {uploading && <p className="text-xs text-gray-500 dark:text-gray-400">Wird hochgeladen …</p>}
             {logoError && <p className="text-xs text-red-600">Fehler: {logoError}</p>}
           </div>
         )}
         {!readOnly && (
           <div className="flex gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Hauptfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hauptfarbe</label>
               <input
                 type="color"
                 value={primaryColor}
@@ -143,7 +143,7 @@ export default function EditClubPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Nebenfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nebenfarbe</label>
               <input
                 type="color"
                 value={secondaryColor}

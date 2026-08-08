@@ -9,7 +9,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${className}`}
+      className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5 ${className}`}
       onClick={onClick}
     >
       {children}

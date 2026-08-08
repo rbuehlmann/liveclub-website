@@ -76,9 +76,9 @@ export default function PublicClubPage() {
 
   if (notFound) {
     return (
-      <div className="flex min-h-screen flex-col bg-brand-white">
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
-        <main className="flex flex-1 items-center justify-center text-gray-500">
+        <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
           Verein wurde nicht gefunden.
         </main>
         <PublicFooter />
@@ -91,18 +91,18 @@ export default function PublicClubPage() {
   const isLive = game && (game.status === "live" || game.status === "paused");
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
       {club.logoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={club.logoUrl} alt="" className="h-24 w-24 rounded-full object-contain" />
       )}
-      <h1 className="font-teko text-4xl font-bold text-gray-900">{club.name}</h1>
-      <p className="text-sm text-gray-500">{club.sport}</p>
+      <h1 className="font-teko text-4xl font-bold text-gray-900 dark:text-white">{club.name}</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{club.sport}</p>
 
       {game ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white px-8 py-6">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5 px-8 py-6">
           {isLive && (
             <span className="animate-pulse rounded-full bg-brand-red px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
               LIVE
@@ -110,27 +110,27 @@ export default function PublicClubPage() {
           )}
           <div className="flex items-center gap-4">
             <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={40} />
-            <span className="text-lg font-semibold text-gray-900">{game.homeTeamName}</span>
-            <span className="font-teko text-5xl font-bold tabular-nums text-gray-900">
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">{game.homeTeamName}</span>
+            <span className="font-teko text-5xl font-bold tabular-nums text-gray-900 dark:text-white">
               {game.scoreHome}:{game.scoreAway}
             </span>
-            <span className="text-lg font-semibold text-gray-900">{game.awayTeamName}</span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">{game.awayTeamName}</span>
             <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={40} />
           </div>
-          <p className="text-sm text-gray-500">{STATUS_LABELS[game.status] ?? game.status}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{STATUS_LABELS[game.status] ?? game.status}</p>
           <Link href={buildGameUrl(club.publicClubId, game.gameId)} className="text-xs text-brand-red hover:underline">
             Details öffnen
           </Link>
         </div>
       ) : (
-        <p className="text-lg text-gray-600">Momentan läuft kein Spiel.</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400">Momentan läuft kein Spiel.</p>
       )}
 
-      <p className="mt-8 text-xs text-gray-400">
+      <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">
         Diese Seite bookmarken, um deinen Verein zu folgen — beim Aktualisieren siehst du immer den
         neuesten Stand.
       </p>
-      <p className="text-xs text-gray-400">Bald verfügbar: die LiveClub-App für Fans</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500">Bald verfügbar: die LiveClub-App für Fans</p>
       </main>
       <PublicFooter />
     </div>

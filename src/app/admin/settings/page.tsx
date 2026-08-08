@@ -63,22 +63,22 @@ export default function AdminSettingsPage() {
     }
   }
 
-  if (loading) return <p className="text-gray-500">Wird geladen …</p>;
+  if (loading) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">Einstellungen</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Einstellungen</h1>
 
       <Card>
-        <h2 className="mb-2 font-semibold text-gray-900">Einladungs-E-Mail</h2>
-        <p className="mb-4 text-sm text-gray-500">
+        <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Einladungs-E-Mail</h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           Verfügbare Platzhalter: <code>{"{{clubName}}"}</code>, <code>{"{{roleLabel}}"}</code>,{" "}
           <code>{"{{inviteUrl}}"}</code>
         </p>
         <div className="flex flex-col gap-4">
           <TextField label="Betreff" value={subject} onChange={(e) => setSubject(e.target.value)} />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">HTML-Text</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">HTML-Text</label>
             <textarea
               value={html}
               onChange={(e) => setHtml(e.target.value)}
@@ -94,8 +94,8 @@ export default function AdminSettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-2 font-semibold text-gray-900">Test-Mail senden</h2>
-        <p className="mb-4 text-sm text-gray-500">
+        <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Test-Mail senden</h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           Sendet die obige Vorlage (auch ungespeicherte Änderungen) mit Beispieldaten an eine
           beliebige Adresse.
         </p>
@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
             {testSending ? "Wird gesendet …" : "Test-Mail senden"}
           </Button>
         </div>
-        {testMessage && <p className="mt-3 text-sm text-gray-700">{testMessage}</p>}
+        {testMessage && <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">{testMessage}</p>}
       </Card>
     </div>
   );

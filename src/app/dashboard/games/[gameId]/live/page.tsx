@@ -126,12 +126,12 @@ export default function LiveControlPage() {
     <div className="flex flex-col gap-6 pb-24">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">
             {game.homeTeamName} – {game.awayTeamName}
           </h1>
-          <p className="text-sm text-gray-500">{tGames(`status.${game.status}`)}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{tGames(`status.${game.status}`)}</p>
         </div>
-        <p className="text-3xl font-bold tabular-nums text-gray-900">
+        <p className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white">
           {game.score.home}:{game.score.away}
         </p>
       </div>
@@ -238,10 +238,10 @@ export default function LiveControlPage() {
 
       {(game.status === "finished" || game.status === "cancelled") && (
         <Card>
-          <p className="text-center text-lg font-semibold text-gray-900">
+          <p className="text-center text-lg font-semibold text-gray-900 dark:text-white">
             {game.score.home}:{game.score.away}
           </p>
-          <p className="text-center text-sm text-gray-500">{tGames(`status.${game.status}`)}</p>
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">{tGames(`status.${game.status}`)}</p>
         </Card>
       )}
 

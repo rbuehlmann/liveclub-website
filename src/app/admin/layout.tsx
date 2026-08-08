@@ -9,6 +9,7 @@ import { logout } from "@/lib/firebase/authApi";
 import { devGrantPlatformAdmin, grantPlatformAdmin } from "@/lib/firebase/functionsApi";
 import { Button } from "@/components/ui/Button";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
 
@@ -71,12 +72,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (authLoading || checking) {
-    return <div className="flex min-h-screen items-center justify-center text-gray-500">Wird geladen …</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-white text-gray-500 dark:bg-brand-black dark:text-gray-400">
+        Wird geladen …
+      </div>
+    );
   }
 
   if (!isPlatformAdmin) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-gray-500">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-white text-gray-500 dark:bg-brand-black dark:text-gray-400">
         <p>Kein Zugriff auf die Plattform-Administration.</p>
         <Button onClick={handleGrant} disabled={grantingAccess}>
           {grantingAccess ? "Wird geprüft …" : "Admin-Zugriff anfordern"}
@@ -94,16 +99,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-brand-white">
-      <header className="border-b border-gray-200 bg-white">
+    <div className="min-h-screen bg-brand-white dark:bg-brand-black">
+      <header className="border-b border-brand-silver/30 bg-brand-white dark:border-white/10 dark:bg-brand-black">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <p className="text-lg font-bold text-gray-900">LiveClub Plattform-Administration</p>
-          <button
-            onClick={() => logout().then(() => router.push("/login"))}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900"
-          >
-            Abmelden
-          </button>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">LiveClub Plattform-Administration</p>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => logout().then(() => router.push("/login"))}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
+              Abmelden
+            </button>
+          </div>
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 px-4 pb-2">
           {LINKS.map((link) => (
@@ -111,7 +119,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               key={link.href}
               href={link.href}
               className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                pathname === link.href ? "bg-brand-red/10 text-brand-red" : "text-gray-600 hover:bg-gray-100"
+                pathname === link.href
+                  ? "bg-brand-red/10 text-brand-red"
+                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
               }`}
             >
               {link.label}

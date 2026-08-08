@@ -47,9 +47,9 @@ export default function PublicLiveGamePage() {
 
   if (!game) {
     return (
-      <div className="flex min-h-screen flex-col bg-brand-white">
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
-        <main className="flex flex-1 items-center justify-center text-gray-500">
+        <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
           Wird geladen …
         </main>
         <PublicFooter />
@@ -60,7 +60,7 @@ export default function PublicLiveGamePage() {
   const isLive = game.status === "live" || game.status === "paused";
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
         {isLive && (
@@ -68,7 +68,7 @@ export default function PublicLiveGamePage() {
             LIVE
           </span>
         )}
-        <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900">
+        <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900 dark:text-white">
           <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
           <span>{game.homeTeamName}</span>
           <span className="font-teko text-6xl font-bold tabular-nums">
@@ -77,7 +77,7 @@ export default function PublicLiveGamePage() {
           <span>{game.awayTeamName}</span>
           <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={48} />
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {STATUS_LABELS[game.status] ?? game.status}
           {game.status === "paused" ? " (pausiert)" : ""}
         </p>

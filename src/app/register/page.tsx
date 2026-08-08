@@ -39,11 +39,11 @@ function RegisterForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-white">
+    <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
-          <h1 className="mb-6 text-2xl font-bold text-gray-900">{t("registerTitle")}</h1>
+          <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">{t("registerTitle")}</h1>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <TextField
               label={t("displayName")}
@@ -74,7 +74,7 @@ function RegisterForm() {
               {submitting ? tCommon("loading") : t("registerButton")}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-gray-600">
+          <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
             <Link
               href={redirectTarget ? `/login?redirect=${encodeURIComponent(redirectTarget)}` : "/login"}
               className="text-brand-red hover:underline"

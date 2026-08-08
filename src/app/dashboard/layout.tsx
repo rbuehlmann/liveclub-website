@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useCurrentClub } from "@/lib/hooks/useCurrentClub";
 import { ClubContext } from "@/components/club/ClubContext";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { logout } from "@/lib/firebase/authApi";
 
 const CLUB_ADMIN_LINKS = [
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (authLoading || clubState.loading || !user || !clubState.club) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-500">
+      <div className="flex min-h-screen items-center justify-center bg-brand-white text-gray-500 dark:bg-brand-black dark:text-gray-400">
         {t("overview")}…
       </div>
     );
@@ -52,8 +53,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ClubContext.Provider value={clubState}>
-      <div className="min-h-screen bg-brand-white">
-        <header className="border-b border-gray-200 bg-white">
+      <div className="min-h-screen bg-brand-white dark:bg-brand-black">
+        <header className="border-b border-brand-silver/30 bg-brand-white dark:border-white/10 dark:bg-brand-black">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
               {clubState.club.logoUrl && (
@@ -65,16 +66,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 />
               )}
               <div>
-                <p className="font-teko text-xl font-bold text-gray-900">{clubState.club.name}</p>
-                <p className="text-xs text-gray-500">LiveClub</p>
+                <p className="font-teko text-xl font-bold text-gray-900 dark:text-white">{clubState.club.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">LiveClub</p>
               </div>
             </div>
-            <button
-              onClick={() => logout().then(() => router.push("/login"))}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              {tAuth("logoutButton")}
-            </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={() => logout().then(() => router.push("/login"))}
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              >
+                {tAuth("logoutButton")}
+              </button>
+            </div>
           </div>
           <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-2">
             {links.map((link) => (
@@ -84,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${
                   pathname === link.href
                     ? "bg-brand-red/10 text-brand-red"
-                    : "text-gray-600 hover:bg-gray-100"
+                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
                 }`}
               >
                 {t(link.labelKey)}

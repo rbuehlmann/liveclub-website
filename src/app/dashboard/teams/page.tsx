@@ -96,11 +96,11 @@ export default function TeamsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
 
       {role === "clubAdmin" && (
         <Card>
-          <h2 className="mb-4 font-semibold text-gray-900">{t("newTeam")}</h2>
+          <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("newTeam")}</h2>
           <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <TextField label={t("name")} value={name} onChange={(e) => setName(e.target.value)} required />
@@ -121,7 +121,7 @@ export default function TeamsPage() {
       )}
 
       <div className="flex flex-col gap-3">
-        {teams.length === 0 && <p className="text-sm text-gray-500">{t("empty")}</p>}
+        {teams.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t("empty")}</p>}
         {teams.map((team) => {
           const isEditing = editingTeamId === team.teamId;
           return (
@@ -151,13 +151,13 @@ export default function TeamsPage() {
               ) : (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-white">
                       {team.name}
                       {!team.active && (
-                        <span className="ml-2 text-xs font-normal text-gray-500">({t("inactive")})</span>
+                        <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">({t("inactive")})</span>
                       )}
                     </p>
-                    <p className="text-sm text-gray-500">{team.shortName}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{team.shortName}</p>
                   </div>
                   {role === "clubAdmin" && (
                     <div className="flex gap-2">

@@ -121,16 +121,16 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-brand-white">
+    <main className="min-h-screen bg-brand-white dark:bg-brand-black">
       <PublicHeader />
 
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
         <div className="text-center">
-          <h1 className="font-teko text-5xl font-bold text-gray-900">LiveClub</h1>
+          <h1 className="font-teko text-5xl font-bold text-gray-900 dark:text-white">LiveClub</h1>
           <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">
             Dein Verein. Direkt dabei.
           </p>
-          <p className="mt-3 text-gray-600">
+          <p className="mt-3 text-gray-600 dark:text-gray-400">
             Live-Spielstände für kleine und mittlere Sportvereine.
           </p>
         </div>
@@ -144,11 +144,11 @@ export default function Home() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Land</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Land</label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
               >
                 <option value="">Alle Länder</option>
                 {COUNTRIES.map((c) => (
@@ -173,18 +173,18 @@ export default function Home() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={club.logoUrl} alt="" className="h-10 w-10 rounded object-contain" />
                 ) : (
-                  <div className="h-10 w-10 shrink-0 rounded bg-gray-200" />
+                  <div className="h-10 w-10 shrink-0 rounded bg-gray-200 dark:bg-white/10" />
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">{club.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {matchingTeam ? `Mannschaft: ${matchingTeam.name}` : club.sport}
                   </p>
                 </div>
               </Card>
             ))}
             {visibleClubs.length === 0 && (
-              <p className="text-center text-sm text-gray-500">Keine Vereine gefunden.</p>
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">Keine Vereine gefunden.</p>
             )}
           </div>
         )}
@@ -198,21 +198,21 @@ export default function Home() {
             >
               ← Zurück zur Suche
             </button>
-            <p className="text-sm font-medium text-gray-700">Mannschaft von {selectedClub.name}</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Mannschaft von {selectedClub.name}</p>
             {teams.length === 0 && (
-              <p className="text-sm text-gray-500">Noch keine Mannschaften vorhanden.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Noch keine Mannschaften vorhanden.</p>
             )}
             {teams.map((team) => (
               <Card key={team.teamId} className="cursor-pointer" onClick={() => selectTeam(team)}>
-                <p className="font-medium text-gray-900">{team.name}</p>
-                <p className="text-sm text-gray-500">{team.shortName}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{team.shortName}</p>
               </Card>
             ))}
           </div>
         )}
 
-        <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8">
-          <p className="text-xs text-gray-400">Bald verfügbar: die LiveClub-App für Fans</p>
+        <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
+          <p className="text-xs text-gray-400 dark:text-gray-500">Bald verfügbar: die LiveClub-App für Fans</p>
           <div className="flex gap-3">
             <Button variant="secondary" disabled>
               App Store

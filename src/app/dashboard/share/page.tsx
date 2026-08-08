@@ -74,23 +74,23 @@ export default function SharePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
 
       <Card>
-        <h2 className="mb-2 font-semibold text-gray-900">{t("publicLink")}</h2>
+        <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("publicLink")}</h2>
         <div className="flex items-center gap-2">
-          <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm">
+          <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm dark:bg-white/5">
             {publicLink}
           </code>
           <Button variant="secondary" onClick={() => copy("link", publicLink)}>
             {copiedKey === "link" ? tCommon("linkCopied") : tCommon("copyLink")}
           </Button>
         </div>
-        <p className="mt-3 text-sm text-gray-500">{t("shareText")}</p>
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t("shareText")}</p>
       </Card>
 
       <Card>
-        <h2 className="mb-2 font-semibold text-gray-900">{t("qrCode")}</h2>
+        <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("qrCode")}</h2>
         {qrDataUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={qrDataUrl} alt="QR-Code" width={200} height={200} />
@@ -99,7 +99,7 @@ export default function SharePage() {
 
       {teams.filter((team) => team.publicTeamId).length > 0 && (
         <Card>
-          <h2 className="mb-2 font-semibold text-gray-900">Mannschaften teilen</h2>
+          <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Mannschaften teilen</h2>
           <div className="flex flex-col gap-6">
             {teams
               .filter((team) => team.publicTeamId)
@@ -108,9 +108,9 @@ export default function SharePage() {
                 return (
                   <div key={team.teamId} className="flex flex-wrap items-center gap-4">
                     <div className="flex-1 min-w-[200px]">
-                      <p className="mb-1 font-medium text-gray-900">{team.name}</p>
+                      <p className="mb-1 font-medium text-gray-900 dark:text-white">{team.name}</p>
                       <div className="flex items-center gap-2">
-                        <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm">
+                        <code className="flex-1 truncate rounded-lg bg-brand-white px-3 py-2 text-sm dark:bg-white/5">
                           {teamLink}
                         </code>
                         <Button variant="secondary" onClick={() => copy(team.teamId, teamLink)}>
@@ -135,7 +135,7 @@ export default function SharePage() {
       )}
 
       <Card>
-        <h2 className="mb-2 font-semibold text-gray-900">{t("widgetCode")}</h2>
+        <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("widgetCode")}</h2>
         <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100">
           {widgetCode}
         </pre>

@@ -73,20 +73,20 @@ export default function AdminClubsPage() {
     }
   }
 
-  if (!clubs) return <p className="text-gray-500">Wird geladen …</p>;
+  if (!clubs) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900">{t("clubs")}</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("clubs")}</h1>
       <div className="flex flex-col gap-3">
         {clubs.map((club) => (
           <Card key={club.clubId}>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-semibold text-gray-900">
-                  {club.name} <span className="text-gray-400">#{club.publicClubId}</span>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {club.name} <span className="text-gray-400 dark:text-gray-500">#{club.publicClubId}</span>
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {club.sport} · {club.country} · {club.contactEmail}
                 </p>
                 <p className="mt-1 text-sm">
@@ -100,10 +100,10 @@ export default function AdminClubsPage() {
             </div>
 
             {editingClubId === club.clubId && (
-              <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4">
+              <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 dark:border-white/10 pt-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">{t("licenseType")}</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("licenseType")}</label>
                     <select
                       value={type}
                       onChange={(e) => setType(e.target.value as LicenseType)}
@@ -117,7 +117,7 @@ export default function AdminClubsPage() {
                     </select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value as LicenseStatus)}
