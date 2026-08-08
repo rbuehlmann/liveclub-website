@@ -89,16 +89,18 @@ export const onGameEventCreate = onDocumentCreated(
       const teamId = gameData.teamId as string | undefined;
       await db.runTransaction(async (tx) => {
         if (isLive) {
-          tx.set(
-            publicClubRef,
-            {
-              currentLiveGameId: gameId,
-              // Keyed by team so the widget's optional data-team-id filter
-              // never needs its own Firestore query/index.
-              ...(teamId ? { [`currentLiveGameIdByTeam.${teamId}`]: gameId } : {}),
-            },
-            { merge: true }
-          );
+          // Dotted keys are only interpreted as nested paths by update(),
+          // never by set(..., {merge:true}) — that would instead create a
+          // literal field named e.g. "currentLiveGameIdByTeam.abc123" and
+          // the delete branch below could never find it again. publicClubRef
+          // always exists by this point (created alongside the club itself
+          // in createClub.ts), so update() is safe to use unconditionally.
+          tx.update(publicClubRef, {
+            currentLiveGameId: gameId,
+            // Keyed by team so the widget's optional data-team-id filter
+            // never needs its own Firestore query/index.
+            ...(teamId ? { [`currentLiveGameIdByTeam.${teamId}`]: gameId } : {}),
+          });
           return;
         }
         const current = await tx.get(publicClubRef);
@@ -113,7 +115,7 @@ export const onGameEventCreate = onDocumentCreated(
           updates[`currentLiveGameIdByTeam.${teamId}`] = FieldValue.delete();
         }
         if (Object.keys(updates).length > 0) {
-          tx.set(publicClubRef, updates, { merge: true });
+          tx.update(publicClubRef, updates);
         }
       });
     }
