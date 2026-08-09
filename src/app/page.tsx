@@ -214,12 +214,12 @@ export default function Home() {
         <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
           <p className="text-xs text-gray-400 dark:text-gray-500">Bald verfügbar: die LiveClub-App für Fans</p>
           <div className="flex gap-3">
-            <Button variant="secondary" disabled>
-              App Store
-            </Button>
-            <Button variant="secondary" disabled>
-              Play Store
-            </Button>
+            <a href="https://testflight.apple.com/join/VB8bURxn" target="_blank" rel="noopener noreferrer">
+              <Button variant="secondary">App Store</Button>
+            </a>
+            <a href="https://play.google.com/apps/internaltest/4700742118610871712" target="_blank" rel="noopener noreferrer">
+              <Button variant="secondary">Play Store</Button>
+            </a>
           </div>
           <Link href="/register" className="mt-2 text-sm text-brand-red hover:underline">
             Verein registrieren
