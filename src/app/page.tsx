@@ -48,11 +48,15 @@ export default function Home() {
   const [teamMatchesByClub, setTeamMatchesByClub] = useState<Record<string, TeamNameMatch[]>>({});
   const [selectedClub, setSelectedClub] = useState<ClubResult | null>(null);
   const [teams, setTeams] = useState<TeamResult[]>([]);
+  const [gameStatusCounts, setGameStatusCounts] = useState<{ finished: number; live: number }>({
+    finished: 0,
+    live: 0,
+  });
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    // Two realtime listeners so newly registered clubs/teams show up here
-    // without a page reload — both collections are small enough at this
+    // Realtime listeners so newly registered clubs/teams/games show up here
+    // without a page reload — all three collections are small enough at this
     // stage to hold entirely client-side and filter/sort locally as the
     // user types (a real full-text search across club AND team names).
     const unsubscribeClubs = onSnapshot(query(collection(db, "publicClubs"), orderBy("name")), (snap) => {
@@ -79,18 +83,33 @@ export default function Home() {
       });
       setTeamMatchesByClub(byClub);
     });
+    // Powers the homepage's "Live jetzt" / "Gespielte Spiele" stats — counts
+    // only, so it's fine to scan every publicGames doc client-side for now.
+    const unsubscribeGames = onSnapshot(collection(db, "publicGames"), (snap) => {
+      let finished = 0;
+      let live = 0;
+      snap.docs.forEach((d) => {
+        const status = d.data().status;
+        if (status === "finished") finished += 1;
+        else if (status === "live" || status === "paused") live += 1;
+      });
+      setGameStatusCounts({ finished, live });
+    });
     return () => {
       unsubscribeClubs();
       unsubscribeTeams();
+      unsubscribeGames();
     };
   }, []);
 
   const visibleClubs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
+    // No search term yet -> show nothing (the homepage is search-first, it
+    // never dumps the full club list up front).
+    if (!term) return [];
     return allClubs
       .map((club) => {
         if (country && club.country !== country) return null;
-        if (!term) return { club, matchingTeam: null as TeamNameMatch | null };
         if (club.name.toLowerCase().includes(term)) return { club, matchingTeam: null };
         const matchingTeam = (teamMatchesByClub[club.publicClubId] ?? []).find(
           (t) => t.name.toLowerCase().includes(term) || t.shortName.toLowerCase().includes(term)
@@ -133,6 +152,29 @@ export default function Home() {
           <p className="mt-3 text-gray-600 dark:text-gray-400">
             Live-Spielstände für kleine und mittlere Sportvereine.
           </p>
+        </div>
+
+        <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-xl border border-gray-200 bg-white py-4 dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
+          <div className="flex flex-col items-center gap-1">
+            <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{allClubs.length}</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Vereine</p>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">
+              {gameStatusCounts.finished}
+            </p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Gespielte Spiele</p>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <p
+              className={`font-teko text-3xl font-bold ${
+                gameStatusCounts.live > 0 ? "text-brand-red" : "text-gray-900 dark:text-white"
+              }`}
+            >
+              {gameStatusCounts.live}
+            </p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Live jetzt</p>
+          </div>
         </div>
 
         <Card>
@@ -183,7 +225,7 @@ export default function Home() {
                 </div>
               </Card>
             ))}
-            {visibleClubs.length === 0 && (
+            {searchTerm.trim() && visibleClubs.length === 0 && (
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">Keine Vereine gefunden.</p>
             )}
           </div>
@@ -212,7 +254,9 @@ export default function Home() {
         )}
 
         <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
-          <p className="text-xs text-gray-400 dark:text-gray-500">Bald verfügbar: die LiveClub-App für Fans</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            LiveClub-App für Fans — jetzt am Beta-Test teilnehmen
+          </p>
           <div className="flex gap-3">
             <a href="https://testflight.apple.com/join/VB8bURxn" target="_blank" rel="noopener noreferrer">
               <Button variant="secondary">App Store</Button>

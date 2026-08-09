@@ -18,7 +18,7 @@ export function PublicHeader() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Link href="/login">
-            <Button variant="secondary">Anmelden</Button>
+            <Button>GO LIVE</Button>
           </Link>
         </div>
       </div>
