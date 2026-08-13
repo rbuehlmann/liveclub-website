@@ -119,6 +119,7 @@
     "title": "Plattform-Administration",
     "clubs": "Vereine",
     "setLicense": "Lizenz manuell setzen",
+    "deleteClub": "Löschen",
     "licenseType": "Lizenztyp",
     "validUntil": "Gültig bis",
     "notes": "Interner Hinweis",

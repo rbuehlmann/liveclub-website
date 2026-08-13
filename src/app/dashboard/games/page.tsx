@@ -249,7 +249,7 @@ export default function GamesPage() {
             <div className="flex flex-col gap-2">
               <TextField
                 label="Öffentliche Vereins-ID des Gegners (optional)"
-                placeholder="z. B. 563001 — nur falls der Gegner auch LiveClub nutzt"
+                placeholder="z. B. 756-234567 — nur falls der Gegner auch LiveClub nutzt"
                 value={opponentPublicClubId}
                 onChange={(e) => setOpponentPublicClubId(e.target.value)}
               />

@@ -13,6 +13,9 @@ export function PublicFooter() {
         <Link href="/datenschutz" className="hover:text-brand-red hover:underline">
           Datenschutz
         </Link>
+        <Link href="/agb" className="hover:text-brand-red hover:underline">
+          AGB
+        </Link>
         <Link href="/support" className="hover:text-brand-red hover:underline">
           Support
         </Link>

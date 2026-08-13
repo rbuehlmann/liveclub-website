@@ -19,6 +19,13 @@ export const onClubWrite = onDocumentWritten("clubs/{clubId}", async (event) => 
       sport: afterData.sport,
       country: afterData.country ?? null,
       logoUrl: afterData.logoUrl ?? null,
+      // Mirrored so firestore.rules can gate every public read (search,
+      // club/team/live-game pages, embed widget) on license state without
+      // an extra cross-collection lookup — the club's own data stays
+      // intact either way, it just stops being publicly visible (permission
+      // revocation, not deletion, matching the license model elsewhere).
+      licenseStatus: afterData.currentLicenseStatus ?? null,
+      licenseValidUntil: afterData.currentLicenseValidUntil ?? null,
     },
     { merge: true }
   );

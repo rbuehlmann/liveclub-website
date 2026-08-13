@@ -42,7 +42,7 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
   assertNonEmptyString(contactEmail, "contactEmail");
 
   const clubRef = db.collection("clubs").doc();
-  const publicClubId = await generateUniquePublicClubId(db);
+  const publicClubId = await generateUniquePublicClubId(db, country);
 
   const batch = db.batch();
 

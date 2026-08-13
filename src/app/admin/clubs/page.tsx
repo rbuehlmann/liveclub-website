@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { adminListClubs, adminSetLicense, AdminClubListItem } from "@/lib/firebase/functionsApi";
+import { adminDeleteClub, adminListClubs, adminSetLicense, AdminClubListItem } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatDateDe } from "@/lib/date";
 import { LicenseStatus, LicenseType } from "@/lib/types";
 
@@ -37,6 +38,8 @@ export default function AdminClubsPage() {
   const [validUntil, setValidUntil] = useState(inDaysIso(365));
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingClub, setDeletingClub] = useState<AdminClubListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function reload() {
     adminListClubs().then(setClubs);
@@ -73,6 +76,18 @@ export default function AdminClubsPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!deletingClub) return;
+    setDeleting(true);
+    try {
+      await adminDeleteClub(deletingClub.clubId);
+      setDeletingClub(null);
+      reload();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   if (!clubs) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
 
   return (
@@ -94,9 +109,14 @@ export default function AdminClubsPage() {
                   {club.currentLicenseStatus ?? "–"} · bis {formatDateDe(club.currentLicenseValidUntil)}
                 </p>
               </div>
-              <Button variant="secondary" onClick={() => startEdit(club)}>
-                {t("setLicense")}
-              </Button>
+              <div className="flex shrink-0 gap-2">
+                <Button variant="secondary" onClick={() => startEdit(club)}>
+                  {t("setLicense")}
+                </Button>
+                <Button variant="danger" onClick={() => setDeletingClub(club)}>
+                  {t("deleteClub")}
+                </Button>
+              </div>
             </div>
 
             {editingClubId === club.clubId && (
@@ -163,6 +183,15 @@ export default function AdminClubsPage() {
           </Card>
         ))}
       </div>
+      <ConfirmDialog
+        open={!!deletingClub}
+        title={`"${deletingClub?.name}" endgültig löschen?`}
+        body="Alle Mannschaften, Spiele und Mitgliedschaften dieses Vereins werden unwiderruflich gelöscht. Das kann nicht rückgängig gemacht werden."
+        confirmLabel={deleting ? tCommon("loading") : t("deleteClub")}
+        cancelLabel={tCommon("cancel")}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingClub(null)}
+      />
     </div>
   );
 }

@@ -21,29 +21,48 @@ const STATUS_LABELS: Record<string, string> = {
 export default function PublicLiveGamePage() {
   const params = useParams<{ publicClubId: string; gameId: string }>();
   const [game, setGame] = useState<PublicGame | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    return onSnapshot(doc(db, "publicGames", params.gameId), (snap) => {
-      const data = snap.data();
-      if (!data) return;
-      setGame({
-        gameId: snap.id,
-        clubId: data.clubId,
-        publicClubId: data.publicClubId,
-        teamId: data.teamId,
-        homeTeamName: data.homeTeamName,
-        awayTeamName: data.awayTeamName,
-        homeClubPublicId: data.homeClubPublicId ?? null,
-        awayClubPublicId: data.awayClubPublicId ?? null,
-        scoreHome: data.scoreHome ?? 0,
-        scoreAway: data.scoreAway ?? 0,
-        status: data.status,
-        period: data.period,
-        lastEventType: data.lastEventType,
-      });
-    });
+    return onSnapshot(
+      doc(db, "publicGames", params.gameId),
+      (snap) => {
+        const data = snap.data();
+        if (!data) return;
+        setGame({
+          gameId: snap.id,
+          clubId: data.clubId,
+          publicClubId: data.publicClubId,
+          teamId: data.teamId,
+          homeTeamName: data.homeTeamName,
+          awayTeamName: data.awayTeamName,
+          homeClubPublicId: data.homeClubPublicId ?? null,
+          awayClubPublicId: data.awayClubPublicId ?? null,
+          scoreHome: data.scoreHome ?? 0,
+          scoreAway: data.scoreAway ?? 0,
+          status: data.status,
+          period: data.period,
+          lastEventType: data.lastEventType,
+        });
+      },
+      // A club with an expired/cancelled license is denied by
+      // firestore.rules rather than simply missing.
+      () => setUnavailable(true)
+    );
   }, [params.gameId]);
+
+  if (unavailable) {
+    return (
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
+        <PublicHeader />
+        <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
+          Spiel wurde nicht gefunden.
+        </main>
+        <PublicFooter />
+      </div>
+    );
+  }
 
   if (!game) {
     return (

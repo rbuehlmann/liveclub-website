@@ -17,22 +17,29 @@ function EmbedContent() {
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    return onSnapshot(doc(db, "publicClubs", params.publicClubId), (snap) => {
-      const data = snap.data();
-      if (!data) {
-        setClub(null);
-        return;
-      }
-      setClub({
-        publicClubId: snap.id,
-        clubId: data.clubId,
-        name: data.name,
-        sport: data.sport,
-        logoUrl: data.logoUrl ?? null,
-        currentLiveGameId: data.currentLiveGameId ?? null,
-        currentLiveGameIdByTeam: data.currentLiveGameIdByTeam ?? {},
-      });
-    });
+    return onSnapshot(
+      doc(db, "publicClubs", params.publicClubId),
+      (snap) => {
+        const data = snap.data();
+        if (!data) {
+          setClub(null);
+          return;
+        }
+        setClub({
+          publicClubId: snap.id,
+          clubId: data.clubId,
+          name: data.name,
+          sport: data.sport,
+          logoUrl: data.logoUrl ?? null,
+          currentLiveGameId: data.currentLiveGameId ?? null,
+          currentLiveGameIdByTeam: data.currentLiveGameIdByTeam ?? {},
+        });
+      },
+      // A club with an expired/cancelled license is denied by
+      // firestore.rules — the widget just renders blank, same as "not
+      // found", so a third-party site embedding it degrades quietly.
+      () => setClub(null)
+    );
   }, [params.publicClubId]);
 
   const liveGameId = teamId

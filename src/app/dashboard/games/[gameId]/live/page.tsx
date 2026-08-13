@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -30,6 +30,7 @@ interface RecentEvent {
 export default function LiveControlPage() {
   const t = useTranslations("live");
   const tGames = useTranslations("games");
+  const tCommon = useTranslations("common");
   const params = useParams<{ gameId: string }>();
   const { club, role, teamIds } = useClubContext();
   const { user } = useAuth();
@@ -37,6 +38,23 @@ export default function LiveControlPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  // True from the moment an event is submitted until the server-recomputed
+  // game state (score/status/period) actually reflects it — `submitting`
+  // alone only covers the addDoc() write itself, which resolves almost
+  // immediately (Firestore's local-cache optimism), well before the
+  // onGameEventCreate Cloud Function has recomputed and written the new
+  // state back. Without this, a reporter sees no visible change right after
+  // clicking, assumes it didn't register, and clicks "Start" again —
+  // recording the event twice. Falls back to clearing itself after a few
+  // seconds so a slow/failed round trip never leaves the buttons stuck.
+  const [pending, setPending] = useState(false);
+  const pendingBaselineRef = useRef<string | null>(null);
+  // React batches state updates, so two clicks fired in the same tick (a
+  // genuine double-click, or a fast double-tap on mobile) can both read
+  // `pending` as still false before either setPending(true) commits — a
+  // plain state check isn't a reliable re-entrancy guard. A ref updates
+  // synchronously and immediately, so it can't race with itself this way.
+  const submittingRef = useRef(false);
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
@@ -84,6 +102,16 @@ export default function LiveControlPage() {
     };
   }, [club, params.gameId]);
 
+  useEffect(() => {
+    if (!pending || !game) return;
+    const signature = `${game.status}|${game.period}|${game.score.home}|${game.score.away}`;
+    if (pendingBaselineRef.current !== null && signature !== pendingBaselineRef.current) {
+      setPending(false);
+      pendingBaselineRef.current = null;
+      submittingRef.current = false;
+    }
+  }, [game, pending]);
+
   if (!club || !game) return null;
 
   const isAssigned = role === "clubAdmin" || teamIds.includes(game.teamId);
@@ -92,7 +120,11 @@ export default function LiveControlPage() {
   }
 
   async function recordEvent(type: GameEventType, correctionOf: string | null = null) {
-    if (!club || !user) return;
+    if (!club || !user || !game) return;
+    if (submittingRef.current) return; // synchronous guard — see submittingRef above
+    submittingRef.current = true;
+    pendingBaselineRef.current = `${game.status}|${game.period}|${game.score.home}|${game.score.away}`;
+    setPending(true);
     setSubmitting(true);
     try {
       const { db } = getFirebaseClient();
@@ -109,6 +141,11 @@ export default function LiveControlPage() {
     } finally {
       setSubmitting(false);
     }
+    setTimeout(() => {
+      setPending(false);
+      pendingBaselineRef.current = null;
+      submittingRef.current = false;
+    }, 4000);
   }
 
   async function handleCorrectLast() {
@@ -143,8 +180,8 @@ export default function LiveControlPage() {
       )}
 
       {(game.status === "draft" || game.status === "scheduled") && (
-        <Button fullWidth disabled={submitting} onClick={() => recordEvent("gameStarted")}>
-          {t("startGame")}
+        <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("gameStarted")}>
+          {submitting || pending ? tCommon("loading") : t("startGame")}
         </Button>
       )}
 
@@ -152,14 +189,14 @@ export default function LiveControlPage() {
         <>
           <div className="grid grid-cols-2 gap-4">
             <Button
-              disabled={submitting || game.status === "paused"}
+              disabled={submitting || pending || game.status === "paused"}
               onClick={() => recordEvent("goalHome")}
               className="h-24 text-xl"
             >
               {t("goalHome")}
             </Button>
             <Button
-              disabled={submitting || game.status === "paused"}
+              disabled={submitting || pending || game.status === "paused"}
               onClick={() => recordEvent("goalAway")}
               className="h-24 text-xl"
             >
@@ -168,70 +205,35 @@ export default function LiveControlPage() {
           </div>
 
           {game.status === "live" && game.period === "firstHalf" && (
-            <Button variant="secondary" fullWidth disabled={submitting} onClick={() => recordEvent("halfTime")}>
+            <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("halfTime")}>
               {t("halfTime")}
             </Button>
           )}
           {game.status === "live" && game.period === "halftime" && (
-            <Button fullWidth disabled={submitting} onClick={() => recordEvent("secondHalfStarted")}>
+            <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("secondHalfStarted")}>
               {t("startSecondHalf")}
             </Button>
           )}
 
           {game.status === "live" && (
-            <Button variant="secondary" fullWidth disabled={submitting} onClick={() => recordEvent("gamePaused")}>
+            <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("gamePaused")}>
               {t("pauseGame")}
             </Button>
           )}
           {game.status === "paused" && (
-            <Button fullWidth disabled={submitting} onClick={() => recordEvent("gameResumed")}>
+            <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("gameResumed")}>
               {t("resumeGame")}
             </Button>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                disabled={submitting}
-                onClick={() => recordEvent("yellowCardHome")}
-              >
-                🟨 Heim
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={submitting}
-                onClick={() => recordEvent("redCardHome")}
-              >
-                🟥 Heim
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                disabled={submitting}
-                onClick={() => recordEvent("yellowCardAway")}
-              >
-                🟨 Gast
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={submitting}
-                onClick={() => recordEvent("redCardAway")}
-              >
-                🟥 Gast
-              </Button>
-            </div>
-          </div>
-
-          <Button variant="danger" fullWidth disabled={submitting} onClick={() => setConfirmFinish(true)}>
+          <Button variant="danger" fullWidth disabled={submitting || pending} onClick={() => setConfirmFinish(true)}>
             {t("finishGame")}
           </Button>
         </>
       )}
 
       {recentEvents.length > 0 && game.status !== "draft" && (
-        <Button variant="secondary" fullWidth disabled={submitting} onClick={handleCorrectLast}>
+        <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={handleCorrectLast}>
           {t("correctLastEvent")}
         </Button>
       )}

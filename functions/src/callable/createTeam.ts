@@ -41,7 +41,12 @@ export const createTeam = onCall<CreateTeamRequest>(async (request) => {
     throw new HttpsError("permission-denied", "Nur Vereinsadmins dürfen Mannschaften erstellen.");
   }
 
-  const publicTeamId = await generateUniquePublicTeamId(db);
+  const clubPublicClubId = clubSnap.data()?.publicClubId;
+  if (typeof clubPublicClubId !== "string") {
+    throw new HttpsError("failed-precondition", "Verein hat keine öffentliche ID.");
+  }
+  const existingTeamsCount = (await clubRef.collection("teams").count().get()).data().count;
+  const publicTeamId = await generateUniquePublicTeamId(db, clubPublicClubId, existingTeamsCount);
   const teamRef = clubRef.collection("teams").doc();
 
   await teamRef.set({

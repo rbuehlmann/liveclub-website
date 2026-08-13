@@ -21,6 +21,7 @@ function RegisterForm() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agbAccepted, setAgbAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -69,8 +70,24 @@ function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input
+                type="checkbox"
+                required
+                checked={agbAccepted}
+                onChange={(e) => setAgbAccepted(e.target.checked)}
+                className="mt-1"
+              />
+              <span>
+                Ich habe die{" "}
+                <Link href="/agb" target="_blank" className="text-brand-red hover:underline">
+                  AGB
+                </Link>{" "}
+                gelesen und akzeptiere sie.
+              </span>
+            </label>
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" fullWidth disabled={submitting}>
+            <Button type="submit" fullWidth disabled={submitting || !agbAccepted}>
               {submitting ? tCommon("loading") : t("registerButton")}
             </Button>
           </form>

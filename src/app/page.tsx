@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { collection, getDocs, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildTeamUrl } from "@/lib/publicRoutes";
 import { PublicHeader } from "@/components/layout/PublicHeader";
@@ -20,6 +20,18 @@ interface ClubResult {
   sport: string;
   country?: string;
   logoUrl: string | null;
+  licenseStatus: string | null;
+  licenseValidUntil: Timestamp | null;
+}
+
+// Mirrors firestore.rules' clubLicenseOk — Firestore can't gate an
+// unfiltered `list` query per-document (it would deny the whole query the
+// moment any one club is expired, not just hide that club — see the rules
+// file for why), so the homepage instead reads everything and filters here.
+function isClubLicenseOk(club: Pick<ClubResult, "licenseStatus" | "licenseValidUntil">): boolean {
+  if (club.licenseStatus !== "active") return false;
+  if (!club.licenseValidUntil) return true;
+  return club.licenseValidUntil.toMillis() > Date.now();
 }
 
 interface TeamResult {
@@ -48,10 +60,7 @@ export default function Home() {
   const [teamMatchesByClub, setTeamMatchesByClub] = useState<Record<string, TeamNameMatch[]>>({});
   const [selectedClub, setSelectedClub] = useState<ClubResult | null>(null);
   const [teams, setTeams] = useState<TeamResult[]>([]);
-  const [gameStatusCounts, setGameStatusCounts] = useState<{ finished: number; live: number }>({
-    finished: 0,
-    live: 0,
-  });
+  const [rawGames, setRawGames] = useState<{ publicClubId: string; status: string }[]>([]);
 
   useEffect(() => {
     const { db } = getFirebaseClient();
@@ -59,6 +68,9 @@ export default function Home() {
     // without a page reload — all three collections are small enough at this
     // stage to hold entirely client-side and filter/sort locally as the
     // user types (a real full-text search across club AND team names).
+    // Unrestricted reads (firestore.rules can't gate a `list` per-document —
+    // see clubLicenseOk there) — expired/cancelled clubs are filtered out
+    // below instead, once for search and once for the stats strip.
     const unsubscribeClubs = onSnapshot(query(collection(db, "publicClubs"), orderBy("name")), (snap) => {
       setAllClubs(
         snap.docs.map((d) => ({
@@ -67,6 +79,8 @@ export default function Home() {
           sport: d.data().sport,
           country: d.data().country ?? undefined,
           logoUrl: d.data().logoUrl ?? null,
+          licenseStatus: d.data().licenseStatus ?? null,
+          licenseValidUntil: d.data().licenseValidUntil ?? null,
         }))
       );
     });
@@ -84,16 +98,11 @@ export default function Home() {
       setTeamMatchesByClub(byClub);
     });
     // Powers the homepage's "Live jetzt" / "Gespielte Spiele" stats — counts
-    // only, so it's fine to scan every publicGames doc client-side for now.
+    // only, cross-referenced against licensed clubs below.
     const unsubscribeGames = onSnapshot(collection(db, "publicGames"), (snap) => {
-      let finished = 0;
-      let live = 0;
-      snap.docs.forEach((d) => {
-        const status = d.data().status;
-        if (status === "finished") finished += 1;
-        else if (status === "live" || status === "paused") live += 1;
-      });
-      setGameStatusCounts({ finished, live });
+      setRawGames(
+        snap.docs.map((d) => ({ publicClubId: d.data().publicClubId, status: d.data().status }))
+      );
     });
     return () => {
       unsubscribeClubs();
@@ -102,6 +111,22 @@ export default function Home() {
     };
   }, []);
 
+  const licensedClubIds = useMemo(
+    () => new Set(allClubs.filter(isClubLicenseOk).map((c) => c.publicClubId)),
+    [allClubs]
+  );
+
+  const gameStatusCounts = useMemo(() => {
+    let finished = 0;
+    let live = 0;
+    rawGames.forEach((g) => {
+      if (!licensedClubIds.has(g.publicClubId)) return;
+      if (g.status === "finished") finished += 1;
+      else if (g.status === "live" || g.status === "paused") live += 1;
+    });
+    return { finished, live };
+  }, [rawGames, licensedClubIds]);
+
   const visibleClubs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     // No search term yet -> show nothing (the homepage is search-first, it
@@ -109,6 +134,7 @@ export default function Home() {
     if (!term) return [];
     return allClubs
       .map((club) => {
+        if (!licensedClubIds.has(club.publicClubId)) return null;
         if (country && club.country !== country) return null;
         if (club.name.toLowerCase().includes(term)) return { club, matchingTeam: null };
         const matchingTeam = (teamMatchesByClub[club.publicClubId] ?? []).find(
@@ -156,7 +182,7 @@ export default function Home() {
 
         <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-xl border border-gray-200 bg-white py-4 dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-col items-center gap-1">
-            <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{allClubs.length}</p>
+            <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{licensedClubIds.size}</p>
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Vereine</p>
           </div>
           <div className="flex flex-col items-center gap-1">

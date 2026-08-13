@@ -158,24 +158,85 @@ service cloud.firestore {
         isClubAdmin(resource.data.clubId);
     }
 
+    // Mirrored onto publicClubs/{id} by onClubWrite whenever a club's
+    // license changes, so public reads can be gated without a scheduled
+    // "expire" job — same trial/date-comparison model as isClubLicenseActive
+    // above, just evaluated against the public mirror instead of the
+    // private clubs/{clubId} doc.
+    // Uses the map.get(key, default) safe-accessor form throughout — a
+    // plain `clubDoc.data.licenseStatus` throws "Property ... is undefined"
+    // during rule evaluation unless every possible document is statically
+    // guaranteed to carry the field.
+    //
+    // Only gates `get` (single-document reads: direct club/team/game URLs,
+    // the embed widget, TeamIcon lookups), never `list`. Firestore can't
+    // prove a per-document, non-indexed condition true for every possible
+    // match in an unfiltered collection query — it evaluates `list` rules
+    // symbolically against the query itself, not against real documents, so
+    // a `list` rule referencing resource.data here would deny the *entire*
+    // homepage search the moment any club anywhere is expired, not just
+    // hide that one club. The homepage instead filters expired/cancelled
+    // clubs out client-side after an unrestricted list read (see page.tsx).
+    function clubLicenseOk(clubDoc) {
+      let validUntil = clubDoc.data.get('licenseValidUntil', null);
+      return clubDoc.data.get('licenseStatus', null) == 'active' &&
+        (validUntil == null || validUntil > request.time);
+    }
+
     match /publicClubs/{publicClubId} {
-      allow read: if true;
+      allow get: if clubLicenseOk(resource);
+      allow list: if true;
       allow write: if false;
 
       match /teams/{teamId} {
-        allow read: if true;
+        allow read: if clubLicenseOk(get(/databases/$(database)/documents/publicClubs/$(publicClubId)));
         allow write: if false;
       }
     }
 
     match /publicGames/{gameId} {
-      allow read: if true;
+      allow get: if clubLicenseOk(
+        get(/databases/$(database)/documents/publicClubs/$(resource.data.get('publicClubId', '')))
+      );
+      allow list: if true;
       allow write: if false;
     }
 
     match /publicTeams/{publicTeamId} {
-      allow read: if true;
+      allow get: if clubLicenseOk(
+        get(/databases/$(database)/documents/publicClubs/$(resource.data.get('publicClubId', '')))
+      );
+      allow list: if true;
       allow write: if false;
+    }
+
+    // One doc per iOS/Android install (device id is a client-generated
+    // UUID, no auth involved — same open-write trust model as the public
+    // mirrors above). Lets the app register which teams it follows plus
+    // its push tokens — iOS' ActivityKit push-to-start/update tokens, or
+    // Android's single FCM registration token (`fcmToken`; unlike
+    // ActivityKit, FCM doesn't need a separate token per running
+    // activity, since a plain data push reaches the app either way) —
+    // which onPublicGameWrite (functions/src/triggers) reads to drive
+    // Live Activities/Live Updates. No client ever needs to read this
+    // back, only write its own doc.
+    match /deviceFollows/{deviceId} {
+      allow read: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(
+          ['followedTeamIds', 'pushToStartToken', 'activityUpdateTokens', 'fcmToken', 'platform', 'updatedAt']
+        ) &&
+        request.resource.data.platform is string &&
+        (!('followedTeamIds' in request.resource.data) || (
+          request.resource.data.followedTeamIds is list &&
+          request.resource.data.followedTeamIds.size() <= 50
+        )) &&
+        (!('pushToStartToken' in request.resource.data) ||
+          request.resource.data.pushToStartToken is string) &&
+        (!('activityUpdateTokens' in request.resource.data) ||
+          request.resource.data.activityUpdateTokens is map) &&
+        (!('fcmToken' in request.resource.data) ||
+          request.resource.data.fcmToken is string);
+      allow delete: if false;
     }
 
     // Platform-wide settings (e.g. invite email templates) — nothing here

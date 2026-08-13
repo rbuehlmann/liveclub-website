@@ -28,21 +28,27 @@ export default function PublicClubPage() {
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    return onSnapshot(doc(db, "publicClubs", params.publicClubId), (snap) => {
-      if (!snap.exists()) {
-        setNotFound(true);
-        return;
-      }
-      const data = snap.data();
-      setClub({
-        publicClubId: snap.id,
-        clubId: data.clubId,
-        name: data.name,
-        sport: data.sport,
-        logoUrl: data.logoUrl ?? null,
-        currentLiveGameId: data.currentLiveGameId ?? null,
-      });
-    });
+    return onSnapshot(
+      doc(db, "publicClubs", params.publicClubId),
+      (snap) => {
+        if (!snap.exists()) {
+          setNotFound(true);
+          return;
+        }
+        const data = snap.data();
+        setClub({
+          publicClubId: snap.id,
+          clubId: data.clubId,
+          name: data.name,
+          sport: data.sport,
+          logoUrl: data.logoUrl ?? null,
+          currentLiveGameId: data.currentLiveGameId ?? null,
+        });
+      },
+      // A club with an expired/cancelled license is denied by firestore.rules
+      // rather than simply missing, so it needs its own error path here.
+      () => setNotFound(true)
+    );
   }, [params.publicClubId]);
 
   const liveGameId = club?.currentLiveGameId;

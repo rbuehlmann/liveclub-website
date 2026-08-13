@@ -29,24 +29,30 @@ export default function PublicTeamPage() {
 
   useEffect(() => {
     const { db } = getFirebaseClient();
-    return onSnapshot(doc(db, "publicTeams", params.publicTeamId), (snap) => {
-      if (!snap.exists()) {
-        setNotFound(true);
-        return;
-      }
-      const data = snap.data();
-      setTeam({
-        publicTeamId: snap.id,
-        teamId: data.teamId,
-        clubId: data.clubId,
-        publicClubId: data.publicClubId,
-        clubName: data.clubName,
-        clubLogoUrl: data.clubLogoUrl ?? null,
-        name: data.name,
-        shortName: data.shortName,
-        sport: data.sport,
-      });
-    });
+    return onSnapshot(
+      doc(db, "publicTeams", params.publicTeamId),
+      (snap) => {
+        if (!snap.exists()) {
+          setNotFound(true);
+          return;
+        }
+        const data = snap.data();
+        setTeam({
+          publicTeamId: snap.id,
+          teamId: data.teamId,
+          clubId: data.clubId,
+          publicClubId: data.publicClubId,
+          clubName: data.clubName,
+          clubLogoUrl: data.clubLogoUrl ?? null,
+          name: data.name,
+          shortName: data.shortName,
+          sport: data.sport,
+        });
+      },
+      // A club with an expired/cancelled license is denied by
+      // firestore.rules rather than simply missing.
+      () => setNotFound(true)
+    );
   }, [params.publicTeamId]);
 
   useEffect(() => {

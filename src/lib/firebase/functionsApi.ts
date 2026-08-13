@@ -91,6 +91,13 @@ export async function adminListClubs() {
   return result.data.clubs;
 }
 
+export async function adminDeleteClub(clubId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ clubId: string }, { ok: true }>(functions, "adminDeleteClub");
+  const result = await call({ clubId });
+  return result.data;
+}
+
 export async function devGrantPlatformAdmin() {
   const { functions } = getFirebaseClient();
   const call = httpsCallable(functions, "devGrantPlatformAdmin");
