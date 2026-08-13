@@ -10,8 +10,13 @@ import { devGrantPlatformAdmin, grantPlatformAdmin } from "@/lib/firebase/functi
 import { Button } from "@/components/ui/Button";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { formatDateTimeDe } from "@/lib/date";
 
 const useEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
+// Set at build time (see next.config.ts) — lets you check whether the live
+// site is really running the commit you just pushed, without guessing.
+const buildSha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "unknown";
+const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? null;
 
 const LINKS = [
   { href: "/admin", label: "Übersicht" },
@@ -130,6 +135,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <p className="mx-auto max-w-5xl px-4 pb-4 text-xs text-gray-400 dark:text-gray-500">
+        Version {buildSha}
+        {buildTime && ` · gebaut am ${formatDateTimeDe(buildTime)}`}
+      </p>
       <PublicFooter />
     </div>
   );
