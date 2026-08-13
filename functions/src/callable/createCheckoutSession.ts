@@ -4,6 +4,11 @@ import { getStripeClient } from "../lib/stripeClient";
 import { stripeSecretKey, stripePriceIdMonthly, stripePriceIdYearly } from "../lib/secrets";
 
 const SITE_ORIGIN = "https://liveclub.app";
+const RENEWAL_WINDOW_DAYS = 14;
+
+function formatDateDe(date: Date): string {
+  return date.toLocaleDateString("de-CH", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
 
 interface CreateCheckoutSessionRequest {
   clubId: string;
@@ -11,10 +16,16 @@ interface CreateCheckoutSessionRequest {
 }
 
 /**
- * clubAdmin-only: starts a Stripe Checkout subscription for the club's own
- * upgrade. Reuses (or creates once) a Stripe Customer per club, stored as
- * clubs/{clubId}.stripeCustomerId. The actual license change happens later,
- * via onStripeWebhook once payment succeeds — never here.
+ * clubAdmin-only: starts a Stripe Checkout for the club's own purchase.
+ * One-time payment, not a subscription — clubs periodically change
+ * treasurer/board, so an auto-renewing subscription silently charging a
+ * card nobody's watching anymore is exactly what this avoids. A club buys
+ * a fixed block of time (1 or 12 months) and repurchases manually once it
+ * runs out. The actual license change happens later, via onStripeWebhook
+ * once payment succeeds — never here. Reuses (or creates once) a Stripe
+ * Customer per club, stored as clubs/{clubId}.stripeCustomerId, purely for
+ * Stripe's own receipt/customer records — there's no subscription or
+ * billing portal tied to it.
  */
 export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
   { secrets: [stripeSecretKey] },
@@ -38,10 +49,27 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
 
     const memberSnap = await clubRef.collection("members").doc(request.auth.uid).get();
     if (memberSnap.data()?.role !== "clubAdmin") {
-      throw new HttpsError("permission-denied", "Nur Vereinsadmins dürfen ein Abo abschliessen.");
+      throw new HttpsError("permission-denied", "Nur Vereinsadmins dürfen kaufen.");
     }
 
     const club = clubSnap.data()!;
+
+    // Same 14-day-before-expiry rule as the admin's manual grant — can't
+    // buy a new period while the current one still has more than that
+    // much time left.
+    if (club.currentLicenseStatus === "active" && club.currentLicenseValidUntil) {
+      const validUntilMs = (club.currentLicenseValidUntil as { toMillis: () => number }).toMillis();
+      const daysLeft = (validUntilMs - Date.now()) / (24 * 60 * 60 * 1000);
+      if (daysLeft > RENEWAL_WINDOW_DAYS) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Verlängerung erst ab ${formatDateDe(
+            new Date(validUntilMs - RENEWAL_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+          )} möglich (${RENEWAL_WINDOW_DAYS} Tage vor Ablauf).`
+        );
+      }
+    }
+
     const stripe = getStripeClient();
 
     let customerId = club.stripeCustomerId as string | undefined;
@@ -55,21 +83,17 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
       await clubRef.update({ stripeCustomerId: customerId });
     }
 
+    // These must be one-time (non-recurring) Stripe Price objects — a
+    // recurring Price can't be used in Checkout's "payment" mode.
     const priceId =
       interval === "monthly" ? stripePriceIdMonthly.value() : stripePriceIdYearly.value();
 
     const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+      mode: "payment",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: clubId,
-      // Copied onto the created Subscription object itself, so later
-      // customer.subscription.updated/deleted webhook events (which carry
-      // the Subscription, not the Checkout Session) can still be traced
-      // back to a club without an extra Firestore lookup by customer id.
-      subscription_data: {
-        metadata: { clubId },
-      },
+      metadata: { clubId, interval },
       success_url: `${SITE_ORIGIN}/dashboard?checkout=success`,
       cancel_url: `${SITE_ORIGIN}/dashboard?checkout=cancelled`,
     });

@@ -1,38 +1,38 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
-import { upsertLicense, LicenseType, LicenseStatus } from "../lib/license";
+import { upsertLicense } from "../lib/license";
 
-const LICENSE_TYPES: LicenseType[] = [
-  "trial",
-  "paid",
-  "manual",
-  "voucher",
-  "sponsor",
-  "partner",
-];
-const LICENSE_STATUSES: LicenseStatus[] = [
-  "active",
-  "expired",
-  "cancelled",
-  "suspended",
-  "scheduled",
-];
+function formatDateDe(date: Date): string {
+  return date.toLocaleDateString("de-CH", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
+type AdminLicenseAction = "trial" | "activeMonthly" | "activeYearly" | "suspend";
+const ACTIONS: AdminLicenseAction[] = ["trial", "activeMonthly", "activeYearly", "suspend"];
+
+const TRIAL_DAYS = 30;
+const RENEWAL_WINDOW_DAYS = 14;
 
 interface AdminSetLicenseRequest {
   clubId: string;
-  type: LicenseType;
-  status: LicenseStatus;
-  validFrom: string; // ISO date
-  validUntil: string; // ISO date
+  action: AdminLicenseAction;
   notes?: string;
 }
 
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result;
+}
+
 /**
- * Platform-admin-only: create/replace a club's license by hand (pilot club,
- * goodwill extension, manual reactivation after trial expiry, ...). Routes
- * through the same upsertLicense() helper a future Stripe webhook will use,
- * so "how a license gets applied" stays in exactly one place.
+ * Platform-admin-only: grants/changes a club's license through a small,
+ * fixed set of actions rather than a freeform type/status/date form — every
+ * duration and the 14-day-before-expiry renewal rule (same rule the club's
+ * own Stripe purchase flow enforces) is computed here, server-side, so it
+ * can't be bypassed or fat-fingered from the client. Routes through the
+ * same upsertLicense() helper the trial-on-registration flow and the
+ * Stripe webhook use.
  */
 export const adminSetLicense = onCall<AdminSetLicenseRequest>(async (request) => {
   if (!request.auth) {
@@ -42,39 +42,84 @@ export const adminSetLicense = onCall<AdminSetLicenseRequest>(async (request) =>
     throw new HttpsError("permission-denied", "Nur für Plattform-Administratoren.");
   }
 
-  const { clubId, type, status, validFrom, validUntil, notes } = request.data;
-
+  const { clubId, action, notes } = request.data;
   if (typeof clubId !== "string" || !clubId) {
     throw new HttpsError("invalid-argument", "clubId fehlt.");
   }
-  if (!LICENSE_TYPES.includes(type)) {
-    throw new HttpsError("invalid-argument", "Ungültiger Lizenztyp.");
-  }
-  if (!LICENSE_STATUSES.includes(status)) {
-    throw new HttpsError("invalid-argument", "Ungültiger Lizenzstatus.");
-  }
-
-  const validFromDate = new Date(validFrom);
-  const validUntilDate = new Date(validUntil);
-  if (Number.isNaN(validFromDate.getTime()) || Number.isNaN(validUntilDate.getTime())) {
-    throw new HttpsError("invalid-argument", "Ungültiges Datum.");
+  if (!ACTIONS.includes(action)) {
+    throw new HttpsError("invalid-argument", "Ungültige Aktion.");
   }
 
   const clubSnap = await db.collection("clubs").doc(clubId).get();
   if (!clubSnap.exists) {
     throw new HttpsError("not-found", "Verein wurde nicht gefunden.");
   }
+  const clubData = clubSnap.data()!;
+  const now = Timestamp.now();
+
+  if (action === "trial") {
+    const validUntil = Timestamp.fromMillis(now.toMillis() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    const licenseId = await upsertLicense(db, {
+      clubId,
+      type: "trial",
+      status: "active",
+      validFrom: now,
+      validUntil,
+      createdBy: request.auth.uid,
+      source: "platformAdmin",
+      notes: notes ?? "",
+    });
+    return { licenseId };
+  }
+
+  if (action === "suspend") {
+    const licenseId = await upsertLicense(db, {
+      clubId,
+      type: (clubData.currentLicenseType as "trial" | "paid") ?? "trial",
+      status: "suspended",
+      validFrom: now,
+      validUntil: clubData.currentLicenseValidUntil ?? now,
+      createdBy: request.auth.uid,
+      source: "platformAdmin",
+      notes: notes ?? "",
+    });
+    return { licenseId };
+  }
+
+  // activeMonthly / activeYearly — same 14-day renewal window as the
+  // club's own Stripe purchase, so an admin gift can't stack arbitrarily
+  // early on top of an already-active period either.
+  const currentValidUntil = clubData.currentLicenseValidUntil as Timestamp | undefined;
+  const currentlyActive = clubData.currentLicenseStatus === "active";
+  if (currentlyActive && currentValidUntil) {
+    const daysLeft = (currentValidUntil.toMillis() - now.toMillis()) / (24 * 60 * 60 * 1000);
+    if (daysLeft > RENEWAL_WINDOW_DAYS) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Verlängerung erst ab ${formatDateDe(
+          new Date(currentValidUntil.toMillis() - RENEWAL_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+        )} möglich (${RENEWAL_WINDOW_DAYS} Tage vor Ablauf).`
+      );
+    }
+  }
+
+  // A still-active period's remaining time is preserved, not discarded —
+  // renewing early extends from the current end date, not from today.
+  const from =
+    currentlyActive && currentValidUntil && currentValidUntil.toMillis() > now.toMillis()
+      ? currentValidUntil.toDate()
+      : now.toDate();
+  const validUntil = Timestamp.fromDate(addMonths(from, action === "activeMonthly" ? 1 : 12));
 
   const licenseId = await upsertLicense(db, {
     clubId,
-    type,
-    status,
-    validFrom: Timestamp.fromDate(validFromDate),
-    validUntil: Timestamp.fromDate(validUntilDate),
+    type: "paid",
+    status: "active",
+    validFrom: now,
+    validUntil,
     createdBy: request.auth.uid,
     source: "platformAdmin",
     notes: notes ?? "",
   });
-
   return { licenseId };
 });

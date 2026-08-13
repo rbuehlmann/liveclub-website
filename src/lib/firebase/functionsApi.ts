@@ -53,10 +53,7 @@ export async function acceptInvitation(invitationId: string) {
 
 export async function adminSetLicense(input: {
   clubId: string;
-  type: LicenseType;
-  status: LicenseStatus;
-  validFrom: string;
-  validUntil: string;
+  action: "trial" | "activeMonthly" | "activeYearly" | "suspend";
   notes?: string;
 }) {
   const { functions } = getFirebaseClient();
@@ -122,16 +119,6 @@ export async function createCheckoutSession(input: {
 }) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { url: string }>(functions, "createCheckoutSession");
-  const result = await call(input);
-  return result.data;
-}
-
-export async function createBillingPortalSession(input: { clubId: string }) {
-  const { functions } = getFirebaseClient();
-  const call = httpsCallable<typeof input, { url: string }>(
-    functions,
-    "createBillingPortalSession"
-  );
   const result = await call(input);
   return result.data;
 }

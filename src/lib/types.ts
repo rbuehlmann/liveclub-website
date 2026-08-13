@@ -112,20 +112,17 @@ export interface GameEvent {
   createdAt?: string;
 }
 
-export type LicenseType =
-  | "trial"
-  | "paid"
-  | "manual"
-  | "voucher"
-  | "sponsor"
-  | "partner";
+// "paid" covers both a real Stripe purchase and an admin-granted free
+// period (see `source` on the license record for which one) — sponsoring/
+// vouchers/partner deals no longer get their own manual admin type, they'd
+// go through Stripe (e.g. a discount code) like any other purchase.
+export type LicenseType = "trial" | "paid";
 
-export type LicenseStatus =
-  | "active"
-  | "expired"
-  | "cancelled"
-  | "suspended"
-  | "scheduled";
+// "suspended" is the platform-admin "manually deactivated" action (misuse,
+// see the AGB clause) — distinct from "expired"/"cancelled" so the club's
+// own dashboard can tell a reporter "contact support" instead of "please
+// pay", since paying wouldn't fix it.
+export type LicenseStatus = "active" | "expired" | "cancelled" | "suspended";
 
 export interface License {
   licenseId: string;

@@ -4,37 +4,35 @@ import type Stripe from "stripe";
 import { db } from "../firebaseAdmin";
 import { getStripeClient } from "../lib/stripeClient";
 import { stripeSecretKey, stripeWebhookSecret } from "../lib/secrets";
-import { upsertLicense, LicenseStatus } from "../lib/license";
+import { upsertLicense } from "../lib/license";
 
-function mapStatus(stripeStatus: Stripe.Subscription.Status): LicenseStatus {
-  switch (stripeStatus) {
-    case "active":
-    case "trialing":
-      return "active";
-    case "canceled":
-    case "unpaid":
-    case "incomplete_expired":
-      return "cancelled";
-    default:
-      // past_due, incomplete, paused — not confirmed cancelled, but not
-      // paid up either; isClubLicenseActive() should say no either way.
-      return "expired";
-  }
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result;
 }
 
-async function applySubscriptionLicense(clubId: string, subscription: Stripe.Subscription) {
-  // Newer Stripe API versions moved current_period_end from the
-  // subscription itself down to each subscription item.
-  const periodEndSeconds = subscription.items.data[0]?.current_period_end;
-  const validUntil = periodEndSeconds
-    ? Timestamp.fromMillis(periodEndSeconds * 1000)
-    : Timestamp.now();
+async function applyOneTimePurchase(clubId: string, interval: "monthly" | "yearly") {
+  const clubRef = db.collection("clubs").doc(clubId);
+  const clubSnap = await clubRef.get();
+  const club = clubSnap.data();
+  const now = Timestamp.now();
+
+  // A still-active period's remaining time is preserved — buying early
+  // (within the 14-day window createCheckoutSession enforces) extends from
+  // the current end date, not from today.
+  const currentValidUntil = club?.currentLicenseValidUntil as Timestamp | undefined;
+  const from =
+    club?.currentLicenseStatus === "active" && currentValidUntil && currentValidUntil.toMillis() > now.toMillis()
+      ? currentValidUntil.toDate()
+      : now.toDate();
+  const validUntil = Timestamp.fromDate(addMonths(from, interval === "monthly" ? 1 : 12));
 
   await upsertLicense(db, {
     clubId,
     type: "paid",
-    status: mapStatus(subscription.status),
-    validFrom: Timestamp.now(),
+    status: "active",
+    validFrom: now,
     validUntil,
     createdBy: "stripe-webhook",
     source: "stripe",
@@ -43,8 +41,8 @@ async function applySubscriptionLicense(clubId: string, subscription: Stripe.Sub
 
 /**
  * Stripe posts here directly (not through the Callable protocol), signed
- * with STRIPE_WEBHOOK_SECRET. Every license change funnels through the same
- * upsertLicense() helper the trial and manual-admin flows already use.
+ * with STRIPE_WEBHOOK_SECRET. One-time payments only (see
+ * createCheckoutSession) — no subscription lifecycle events to handle.
  */
 export const onStripeWebhook = onRequest(
   { secrets: [stripeSecretKey, stripeWebhookSecret] },
@@ -64,29 +62,13 @@ export const onStripeWebhook = onRequest(
       return;
     }
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const clubId = session.client_reference_id;
-        if (clubId && session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
-          );
-          await applySubscriptionLicense(clubId, subscription);
-        }
-        break;
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const clubId = session.client_reference_id;
+      const interval = session.metadata?.interval;
+      if (session.payment_status === "paid" && clubId && (interval === "monthly" || interval === "yearly")) {
+        await applyOneTimePurchase(clubId, interval);
       }
-      case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-        const clubId = subscription.metadata?.clubId;
-        if (clubId) {
-          await applySubscriptionLicense(clubId, subscription);
-        }
-        break;
-      }
-      default:
-        break;
     }
 
     response.status(200).send({ received: true });

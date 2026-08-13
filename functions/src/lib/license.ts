@@ -1,19 +1,8 @@
 import { Firestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 
-export type LicenseType =
-  | "trial"
-  | "paid"
-  | "manual"
-  | "voucher"
-  | "sponsor"
-  | "partner";
-
-export type LicenseStatus =
-  | "active"
-  | "expired"
-  | "cancelled"
-  | "suspended"
-  | "scheduled";
+// Keep in sync with src/lib/types.ts.
+export type LicenseType = "trial" | "paid";
+export type LicenseStatus = "active" | "expired" | "cancelled" | "suspended";
 
 export interface UpsertLicenseInput {
   clubId: string;
