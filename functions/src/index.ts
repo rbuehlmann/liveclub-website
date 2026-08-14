@@ -15,4 +15,3 @@ export { grantPlatformAdmin } from "./callable/grantPlatformAdmin";
 export { sendTestEmail } from "./callable/sendTestEmail";
 export { createCheckoutSession } from "./callable/createCheckoutSession";
 export { onStripeWebhook } from "./https/onStripeWebhook";
-export { migratePublicIdsToIso3166 } from "./https/migratePublicIdsToIso3166";
