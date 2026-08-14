@@ -94,6 +94,8 @@ export function useCurrentClub(): CurrentClubState {
             currentLicenseId: clubData.currentLicenseId ?? null,
             currentLicenseType: clubData.currentLicenseType ?? null,
             currentLicenseStatus: clubData.currentLicenseStatus ?? null,
+            currentLicenseTier: clubData.currentLicenseTier ?? null,
+            currentMaxTeams: clubData.currentMaxTeams ?? null,
             currentLicenseValidUntil: toIsoOrNull(clubData.currentLicenseValidUntil),
           },
         });

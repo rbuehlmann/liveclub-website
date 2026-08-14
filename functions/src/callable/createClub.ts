@@ -100,6 +100,7 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
     clubId: clubRef.id,
     type: "trial",
     status: "active",
+    tier: "team5",
     validFrom: now,
     validUntil,
     createdBy: uid,

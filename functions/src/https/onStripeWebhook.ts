@@ -4,7 +4,7 @@ import type Stripe from "stripe";
 import { db } from "../firebaseAdmin";
 import { getStripeClient } from "../lib/stripeClient";
 import { stripeSecretKey, stripeWebhookSecret } from "../lib/secrets";
-import { upsertLicense } from "../lib/license";
+import { upsertLicense, LicenseTier } from "../lib/license";
 
 function addMonths(date: Date, months: number): Date {
   const result = new Date(date);
@@ -12,7 +12,7 @@ function addMonths(date: Date, months: number): Date {
   return result;
 }
 
-async function applyOneTimePurchase(clubId: string, interval: "monthly" | "yearly") {
+async function applyOneTimePurchase(clubId: string, tier: LicenseTier, interval: "monthly" | "yearly") {
   const clubRef = db.collection("clubs").doc(clubId);
   const clubSnap = await clubRef.get();
   const club = clubSnap.data();
@@ -32,6 +32,7 @@ async function applyOneTimePurchase(clubId: string, interval: "monthly" | "yearl
     clubId,
     type: "paid",
     status: "active",
+    tier,
     validFrom: now,
     validUntil,
     createdBy: "stripe-webhook",
@@ -65,9 +66,16 @@ export const onStripeWebhook = onRequest(
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const clubId = session.client_reference_id;
+      const tier = session.metadata?.tier;
       const interval = session.metadata?.interval;
-      if (session.payment_status === "paid" && clubId && (interval === "monthly" || interval === "yearly")) {
-        await applyOneTimePurchase(clubId, interval);
+      const validTier = tier === "team5" || tier === "team15" || tier === "unlimited";
+      if (
+        session.payment_status === "paid" &&
+        clubId &&
+        validTier &&
+        (interval === "monthly" || interval === "yearly")
+      ) {
+        await applyOneTimePurchase(clubId, tier as LicenseTier, interval);
       }
     }
 

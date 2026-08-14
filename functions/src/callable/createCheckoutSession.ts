@@ -1,7 +1,16 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { db } from "../firebaseAdmin";
 import { getStripeClient } from "../lib/stripeClient";
-import { stripeSecretKey, stripePriceIdMonthly, stripePriceIdYearly } from "../lib/secrets";
+import {
+  stripeSecretKey,
+  stripePriceIdTeam5Monthly,
+  stripePriceIdTeam5Yearly,
+  stripePriceIdTeam15Monthly,
+  stripePriceIdTeam15Yearly,
+  stripePriceIdUnlimitedMonthly,
+  stripePriceIdUnlimitedYearly,
+} from "../lib/secrets";
+import { LicenseTier } from "../lib/license";
 
 const SITE_ORIGIN = "https://liveclub.app";
 const RENEWAL_WINDOW_DAYS = 14;
@@ -12,6 +21,7 @@ function formatDateDe(date: Date): string {
 
 interface CreateCheckoutSessionRequest {
   clubId: string;
+  tier: LicenseTier;
   interval: "monthly" | "yearly";
 }
 
@@ -20,12 +30,12 @@ interface CreateCheckoutSessionRequest {
  * One-time payment, not a subscription — clubs periodically change
  * treasurer/board, so an auto-renewing subscription silently charging a
  * card nobody's watching anymore is exactly what this avoids. A club buys
- * a fixed block of time (1 or 12 months) and repurchases manually once it
- * runs out. The actual license change happens later, via onStripeWebhook
- * once payment succeeds — never here. Reuses (or creates once) a Stripe
- * Customer per club, stored as clubs/{clubId}.stripeCustomerId, purely for
- * Stripe's own receipt/customer records — there's no subscription or
- * billing portal tied to it.
+ * a fixed block of time (1 or 12 months) at a chosen team-count tier and
+ * repurchases manually once it runs out. The actual license change happens
+ * later, via onStripeWebhook once payment succeeds — never here. Reuses (or
+ * creates once) a Stripe Customer per club, stored as
+ * clubs/{clubId}.stripeCustomerId, purely for Stripe's own receipt/customer
+ * records — there's no subscription or billing portal tied to it.
  */
 export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
   { secrets: [stripeSecretKey] },
@@ -33,9 +43,12 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
     }
-    const { clubId, interval } = request.data;
+    const { clubId, tier, interval } = request.data;
     if (typeof clubId !== "string" || !clubId) {
       throw new HttpsError("invalid-argument", "clubId fehlt.");
+    }
+    if (tier !== "team5" && tier !== "team15" && tier !== "unlimited") {
+      throw new HttpsError("invalid-argument", "Ungültige Stufe.");
     }
     if (interval !== "monthly" && interval !== "yearly") {
       throw new HttpsError("invalid-argument", "Ungültiges Intervall.");
@@ -85,15 +98,22 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
 
     // These must be one-time (non-recurring) Stripe Price objects — a
     // recurring Price can't be used in Checkout's "payment" mode.
-    const priceId =
-      interval === "monthly" ? stripePriceIdMonthly.value() : stripePriceIdYearly.value();
+    const PRICE_IDS: Record<LicenseTier, { monthly: string; yearly: string }> = {
+      team5: { monthly: stripePriceIdTeam5Monthly.value(), yearly: stripePriceIdTeam5Yearly.value() },
+      team15: { monthly: stripePriceIdTeam15Monthly.value(), yearly: stripePriceIdTeam15Yearly.value() },
+      unlimited: {
+        monthly: stripePriceIdUnlimitedMonthly.value(),
+        yearly: stripePriceIdUnlimitedYearly.value(),
+      },
+    };
+    const priceId = PRICE_IDS[tier][interval];
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: clubId,
-      metadata: { clubId, interval },
+      metadata: { clubId, tier, interval },
       success_url: `${SITE_ORIGIN}/dashboard?checkout=success`,
       cancel_url: `${SITE_ORIGIN}/dashboard?checkout=cancelled`,
       // Shows a "Rabattcode" field on the hosted Checkout page — manual

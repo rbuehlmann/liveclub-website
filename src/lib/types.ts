@@ -15,6 +15,8 @@ export interface Club {
   currentLicenseId?: string | null;
   currentLicenseType?: LicenseType | null;
   currentLicenseStatus?: LicenseStatus | null;
+  currentLicenseTier?: LicenseTier | null;
+  currentMaxTeams?: number | null; // null = unlimited
   currentLicenseValidUntil?: string | null; // ISO string on the client
   stripeCustomerId?: string | null;
 }
@@ -124,11 +126,19 @@ export type LicenseType = "trial" | "paid";
 // pay", since paying wouldn't fix it.
 export type LicenseStatus = "active" | "expired" | "cancelled" | "suspended";
 
+// Team-count tiers. "team5" is also every trial's implicit default — same
+// limit as the cheapest paid tier, so buying it doesn't change anything
+// numerically, just extends access past the trial. Keep in sync with
+// functions/src/lib/license.ts's TIER_MAX_TEAMS.
+export type LicenseTier = "team5" | "team15" | "unlimited";
+
 export interface License {
   licenseId: string;
   clubId: string;
   type: LicenseType;
   status: LicenseStatus;
+  tier: LicenseTier;
+  maxTeams: number | null;
   validFrom: string;
   validUntil: string;
   notes?: string;

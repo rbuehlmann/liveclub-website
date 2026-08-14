@@ -22,6 +22,12 @@ export const recaptchaSecretKey = defineSecret("RECAPTCHA_SECRET_KEY");
 // anyway), so they're plain params rather than secrets — set per
 // environment via functions/.env.<project-id> (see Firebase's dotenv
 // convention for 2nd-gen functions params), test-mode IDs for the emulator
-// go in functions/.env.local.
-export const stripePriceIdMonthly = defineString("STRIPE_PRICE_ID_MONTHLY");
-export const stripePriceIdYearly = defineString("STRIPE_PRICE_ID_YEARLY");
+// go in functions/.env.local. One pair per team-count tier (see
+// LicenseTier in lib/license.ts) — team5's pair are the two prices that
+// existed before the tier system, unchanged.
+export const stripePriceIdTeam5Monthly = defineString("STRIPE_PRICE_ID_TEAM5_MONTHLY");
+export const stripePriceIdTeam5Yearly = defineString("STRIPE_PRICE_ID_TEAM5_YEARLY");
+export const stripePriceIdTeam15Monthly = defineString("STRIPE_PRICE_ID_TEAM15_MONTHLY");
+export const stripePriceIdTeam15Yearly = defineString("STRIPE_PRICE_ID_TEAM15_YEARLY");
+export const stripePriceIdUnlimitedMonthly = defineString("STRIPE_PRICE_ID_UNLIMITED_MONTHLY");
+export const stripePriceIdUnlimitedYearly = defineString("STRIPE_PRICE_ID_UNLIMITED_YEARLY");

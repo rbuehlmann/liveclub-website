@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
-import { upsertLicense, LicenseType } from "../lib/license";
+import { upsertLicense, LicenseType, LicenseTier } from "../lib/license";
 import { sendMail, LIVECLUB_TEAM_EMAIL } from "../lib/mailer";
 import { smtpPassword } from "../lib/secrets";
 import { getTemplate, renderTemplate } from "../lib/emailTemplates";
@@ -13,7 +13,18 @@ interface AdminSetLicenseRequest {
   clubId: string;
   action: AdminLicenseAction;
   validUntil?: string; // "YYYY-MM-DD", required for setValidUntil
+  tier?: LicenseTier; // defaults to the club's current tier (or "team5") if omitted
   notes?: string; // internal note; also used as the {{reason}} in the deactivation email
+}
+
+function resolveTier(requested: LicenseTier | undefined, currentTier: unknown): LicenseTier {
+  if (requested === "team5" || requested === "team15" || requested === "unlimited") {
+    return requested;
+  }
+  if (currentTier === "team5" || currentTier === "team15" || currentTier === "unlimited") {
+    return currentTier;
+  }
+  return "team5";
 }
 
 /**
@@ -22,11 +33,11 @@ interface AdminSetLicenseRequest {
  * "setValidUntil" is a free-form admin override of the expiry date — no
  * +1/+12-month presets, no 14-day renewal window (that rule exists to
  * protect the club's own Stripe purchase flow, not to constrain us testing
- * or comping access). Forces status to "active" and preserves the club's
- * current license type; defaults to "trial" if the club never had one.
+ * or comping access). Forces status to "active"; tier defaults to the
+ * club's current tier if not explicitly changed.
  *
  * "suspend" is unchanged in effect (denormalized status flips to
- * "suspended", same as before) but now also emails the club's contact
+ * "suspended", same as before) but also emails the club's contact
  * address — and an internal copy — using the emailTemplates/clubDeactivated
  * template, with `notes` rendered as {{reason}}.
  */
@@ -40,7 +51,7 @@ export const adminSetLicense = onCall<AdminSetLicenseRequest>(
       throw new HttpsError("permission-denied", "Nur für Plattform-Administratoren.");
     }
 
-    const { clubId, action, validUntil, notes } = request.data;
+    const { clubId, action, validUntil, tier, notes } = request.data;
     if (typeof clubId !== "string" || !clubId) {
       throw new HttpsError("invalid-argument", "clubId fehlt.");
     }
@@ -54,6 +65,7 @@ export const adminSetLicense = onCall<AdminSetLicenseRequest>(
     }
     const clubData = clubSnap.data()!;
     const now = Timestamp.now();
+    const resolvedTier = resolveTier(tier, clubData.currentLicenseTier);
 
     if (action === "setValidUntil") {
       if (typeof validUntil !== "string" || !validUntil) {
@@ -73,6 +85,7 @@ export const adminSetLicense = onCall<AdminSetLicenseRequest>(
         clubId,
         type: (clubData.currentLicenseType as LicenseType) ?? "trial",
         status: "active",
+        tier: resolvedTier,
         validFrom: now,
         validUntil: Timestamp.fromDate(parsed),
         createdBy: request.auth.uid,
@@ -88,6 +101,7 @@ export const adminSetLicense = onCall<AdminSetLicenseRequest>(
       clubId,
       type: (clubData.currentLicenseType as LicenseType) ?? "trial",
       status: "suspended",
+      tier: resolvedTier,
       validFrom: now,
       validUntil: clubData.currentLicenseValidUntil ?? now,
       createdBy: request.auth.uid,

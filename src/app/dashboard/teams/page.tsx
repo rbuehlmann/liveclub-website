@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { collection, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import Link from "next/link";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
 import { createTeam } from "@/lib/firebase/functionsApi";
@@ -19,6 +20,7 @@ export default function TeamsPage() {
   const [name, setName] = useState("");
   const [shortName, setShortName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editShortName, setEditShortName] = useState("");
@@ -52,10 +54,13 @@ export default function TeamsPage() {
     e.preventDefault();
     if (!club || !name.trim()) return;
     setCreating(true);
+    setCreateError(null);
     try {
       await createTeam({ clubId: club.clubId, name: name.trim(), shortName: shortName.trim() });
       setName("");
       setShortName("");
+    } catch (err) {
+      setCreateError((err as { message?: string })?.message ?? "Anlegen fehlgeschlagen.");
     } finally {
       setCreating(false);
     }
@@ -94,11 +99,34 @@ export default function TeamsPage() {
     });
   }
 
+  const maxTeams = club.currentMaxTeams ?? null;
+  const atLimit = maxTeams !== null && teams.length >= maxTeams;
+
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {teams.length}/{maxTeams ?? "Unlimited"} Mannschaften
+        </span>
+      </div>
 
-      {role === "clubAdmin" && (
+      {role === "clubAdmin" && atLimit && (
+        <Card className="border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+            Limit von {maxTeams} Mannschaften erreicht.
+          </p>
+          <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+            Für mehr Mannschaften braucht ihr ein Abo der Stufe "15 Teams" oder "Unlimited" —{" "}
+            <Link href="/dashboard" className="underline">
+              jetzt upgraden
+            </Link>
+            .
+          </p>
+        </Card>
+      )}
+
+      {role === "clubAdmin" && !atLimit && (
         <Card>
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("newTeam")}</h2>
           <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -117,6 +145,7 @@ export default function TeamsPage() {
               {creating ? tCommon("loading") : t("create")}
             </Button>
           </form>
+          {createError && <p className="mt-2 text-sm text-red-600">{createError}</p>}
         </Card>
       )}
 

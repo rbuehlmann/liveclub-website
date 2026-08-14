@@ -46,6 +46,17 @@ export const createTeam = onCall<CreateTeamRequest>(async (request) => {
     throw new HttpsError("failed-precondition", "Verein hat keine öffentliche ID.");
   }
   const existingTeamsCount = (await clubRef.collection("teams").count().get()).data().count;
+
+  // null = unlimited. Missing field (pre-tier-system licenses) also means
+  // unlimited — never retroactively blocks a club that predates this limit.
+  const maxTeams = clubSnap.data()?.currentMaxTeams as number | null | undefined;
+  if (typeof maxTeams === "number" && existingTeamsCount >= maxTeams) {
+    throw new HttpsError(
+      "resource-exhausted",
+      `Limit von ${maxTeams} Mannschaften erreicht. Für mehr Mannschaften ist ein Abo der Stufe "15 Teams" oder "Unlimited" nötig.`
+    );
+  }
+
   const publicTeamId = await generateUniquePublicTeamId(db, clubPublicClubId, existingTeamsCount);
   const teamRef = clubRef.collection("teams").doc();
 

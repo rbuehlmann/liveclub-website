@@ -16,9 +16,10 @@ export const adminListClubs = onCall(async (request) => {
 
   const snap = await db.collection("clubs").orderBy("createdAt", "desc").get();
 
-  return {
-    clubs: snap.docs.map((doc) => {
+  const clubs = await Promise.all(
+    snap.docs.map(async (doc) => {
       const data = doc.data();
+      const teamCount = (await doc.ref.collection("teams").count().get()).data().count;
       return {
         clubId: doc.id,
         publicClubId: data.publicClubId,
@@ -28,9 +29,14 @@ export const adminListClubs = onCall(async (request) => {
         contactEmail: data.contactEmail,
         currentLicenseType: data.currentLicenseType ?? null,
         currentLicenseStatus: data.currentLicenseStatus ?? null,
+        currentLicenseTier: data.currentLicenseTier ?? null,
+        currentMaxTeams: data.currentMaxTeams ?? null,
         currentLicenseValidUntil: data.currentLicenseValidUntil?.toDate?.().toISOString() ?? null,
         createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
+        teamCount,
       };
-    }),
-  };
+    })
+  );
+
+  return { clubs };
 });

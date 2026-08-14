@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatDateDe } from "@/lib/date";
+import { LICENSE_TIERS } from "@/lib/licenseTiers";
+import { LicenseTier } from "@/lib/types";
 
 function toDateInputValue(iso: string | null): string {
   if (!iso) return "";
@@ -20,6 +22,7 @@ export default function AdminClubsPage() {
   const [clubs, setClubs] = useState<AdminClubListItem[] | null>(null);
   const [notesByClub, setNotesByClub] = useState<Record<string, string>>({});
   const [validUntilByClub, setValidUntilByClub] = useState<Record<string, string>>({});
+  const [tierByClub, setTierByClub] = useState<Record<string, LicenseTier>>({});
   const [busyClubId, setBusyClubId] = useState<string | null>(null);
   const [errorByClub, setErrorByClub] = useState<Record<string, string>>({});
   const [suspendingClub, setSuspendingClub] = useState<AdminClubListItem | null>(null);
@@ -38,6 +41,15 @@ export default function AdminClubsPage() {
         }
         return next;
       });
+      setTierByClub((prev) => {
+        const next = { ...prev };
+        for (const club of loaded) {
+          if (next[club.clubId] === undefined) {
+            next[club.clubId] = club.currentLicenseTier ?? "team5";
+          }
+        }
+        return next;
+      });
     });
   }
 
@@ -51,7 +63,13 @@ export default function AdminClubsPage() {
     setBusyClubId(clubId);
     setErrorByClub((prev) => ({ ...prev, [clubId]: "" }));
     try {
-      await adminSetLicense({ clubId, action: "setValidUntil", validUntil, notes: notesByClub[clubId] ?? "" });
+      await adminSetLicense({
+        clubId,
+        action: "setValidUntil",
+        validUntil,
+        tier: tierByClub[clubId],
+        notes: notesByClub[clubId] ?? "",
+      });
       reload();
     } catch (err) {
       setErrorByClub((prev) => ({
@@ -112,6 +130,8 @@ export default function AdminClubsPage() {
                 <p className="mt-1 text-sm">
                   Lizenz: <strong>{club.currentLicenseType ?? "–"}</strong> ·{" "}
                   {club.currentLicenseStatus ?? "–"} · bis {formatDateDe(club.currentLicenseValidUntil)}
+                  {" · "}
+                  Teams: <strong>{club.teamCount}/{club.currentMaxTeams ?? "Unlimited"}</strong>
                 </p>
               </div>
 
@@ -124,6 +144,25 @@ export default function AdminClubsPage() {
                   }
                 />
                 <div className="flex flex-wrap items-end gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Stufe</label>
+                    <select
+                      value={tierByClub[club.clubId] ?? "team5"}
+                      onChange={(e) =>
+                        setTierByClub((prev) => ({
+                          ...prev,
+                          [club.clubId]: e.target.value as LicenseTier,
+                        }))
+                      }
+                      className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    >
+                      {LICENSE_TIERS.map((tierInfo) => (
+                        <option key={tierInfo.id} value={tierInfo.id}>
+                          {tierInfo.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Lizenz gültig bis

@@ -2,7 +2,7 @@
 
 import { httpsCallable } from "firebase/functions";
 import { getFirebaseClient } from "./client";
-import { LicenseStatus, LicenseType } from "@/lib/types";
+import { LicenseStatus, LicenseType, LicenseTier } from "@/lib/types";
 
 export async function createClub(input: {
   name: string;
@@ -55,6 +55,7 @@ export async function adminSetLicense(input: {
   clubId: string;
   action: "setValidUntil" | "suspend";
   validUntil?: string;
+  tier?: LicenseTier;
   notes?: string;
 }) {
   const { functions } = getFirebaseClient();
@@ -75,8 +76,11 @@ export interface AdminClubListItem {
   contactEmail: string;
   currentLicenseType: LicenseType | null;
   currentLicenseStatus: LicenseStatus | null;
+  currentLicenseTier: LicenseTier | null;
+  currentMaxTeams: number | null;
   currentLicenseValidUntil: string | null;
   createdAt: string | null;
+  teamCount: number;
 }
 
 export async function adminListClubs() {
@@ -119,6 +123,7 @@ export async function sendTestEmail(input: { to: string; subject: string; html: 
 
 export async function createCheckoutSession(input: {
   clubId: string;
+  tier: LicenseTier;
   interval: "monthly" | "yearly";
 }) {
   const { functions } = getFirebaseClient();
