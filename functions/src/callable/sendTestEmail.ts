@@ -15,6 +15,7 @@ const SAMPLE_VARS = {
   clubName: "FC Beispiel",
   roleLabel: "Redaktor",
   inviteUrl: "https://liveclub.app/invite/beispiel-id",
+  reason: "Testgrund (Beispieltext)",
 };
 
 export const sendTestEmail = onCall<SendTestEmailRequest>(

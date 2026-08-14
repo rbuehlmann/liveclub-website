@@ -239,9 +239,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Platform-wide settings (e.g. invite email templates) — nothing here
-    // is club-specific or public.
+    // Platform-wide settings — nothing here is club-specific or public.
     match /settings/{docId} {
+      allow read, write: if isPlatformAdmin();
+    }
+
+    // Transactional email templates (invite, club deactivated/deleted, and
+    // any future ad-hoc ones added from /admin/mail-templates).
+    match /emailTemplates/{templateId} {
       allow read, write: if isPlatformAdmin();
     }
   }

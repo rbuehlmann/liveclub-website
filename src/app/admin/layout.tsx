@@ -21,7 +21,7 @@ const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? null;
 const LINKS = [
   { href: "/admin", label: "Übersicht" },
   { href: "/admin/clubs", label: "Vereine" },
-  { href: "/admin/settings", label: "Einstellungen" },
+  { href: "/admin/mail-templates", label: "Mail Vorlagen" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

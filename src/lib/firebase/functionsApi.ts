@@ -53,7 +53,8 @@ export async function acceptInvitation(invitationId: string) {
 
 export async function adminSetLicense(input: {
   clubId: string;
-  action: "trial" | "activeMonthly" | "activeYearly" | "suspend";
+  action: "setValidUntil" | "suspend";
+  validUntil?: string;
   notes?: string;
 }) {
   const { functions } = getFirebaseClient();
@@ -88,10 +89,13 @@ export async function adminListClubs() {
   return result.data.clubs;
 }
 
-export async function adminDeleteClub(clubId: string) {
+export async function adminDeleteClub(clubId: string, reason?: string) {
   const { functions } = getFirebaseClient();
-  const call = httpsCallable<{ clubId: string }, { ok: true }>(functions, "adminDeleteClub");
-  const result = await call({ clubId });
+  const call = httpsCallable<{ clubId: string; reason?: string }, { ok: true }>(
+    functions,
+    "adminDeleteClub"
+  );
+  const result = await call({ clubId, reason });
   return result.data;
 }
 

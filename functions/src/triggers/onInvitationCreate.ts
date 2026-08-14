@@ -1,7 +1,8 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { db } from "../firebaseAdmin";
 import { sendMail } from "../lib/mailer";
 import { smtpPassword } from "../lib/secrets";
-import { getInviteTemplate, renderTemplate } from "../lib/emailTemplates";
+import { getTemplate, renderTemplate } from "../lib/emailTemplates";
 
 const SITE_ORIGIN = "https://liveclub.app";
 
@@ -15,8 +16,8 @@ const ROLE_LABELS: Record<string, string> = {
  * Firebase "Trigger Email" extension, since Firebase Extensions as a whole
  * are being sunset (no new installs after March 2027). Only fires when the
  * invite has an email address — a "just copy this link" invite never had
- * one. Subject/HTML come from settings/emailTemplates (editable in
- * /admin/settings), falling back to a built-in default.
+ * one. Subject/HTML come from emailTemplates/invite (editable in
+ * /admin/mail-templates), falling back to a built-in default.
  */
 export const onInvitationCreate = onDocumentCreated(
   { document: "invitations/{invitationId}", secrets: [smtpPassword] },
@@ -33,7 +34,7 @@ export const onInvitationCreate = onDocumentCreated(
       clubName: invitation.clubName ?? "einem Verein",
     };
 
-    const template = await getInviteTemplate();
+    const template = await getTemplate(db, "invite");
     await sendMail({
       to: email,
       subject: renderTemplate(template.subject, vars),

@@ -9,13 +9,17 @@ import { TextField } from "@/components/ui/TextField";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { formatDateDe } from "@/lib/date";
 
-type LicenseAction = "trial" | "activeMonthly" | "activeYearly" | "suspend";
+function toDateInputValue(iso: string | null): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
 
 export default function AdminClubsPage() {
   const t = useTranslations("admin");
   const tCommon = useTranslations("common");
   const [clubs, setClubs] = useState<AdminClubListItem[] | null>(null);
   const [notesByClub, setNotesByClub] = useState<Record<string, string>>({});
+  const [validUntilByClub, setValidUntilByClub] = useState<Record<string, string>>({});
   const [busyClubId, setBusyClubId] = useState<string | null>(null);
   const [errorByClub, setErrorByClub] = useState<Record<string, string>>({});
   const [suspendingClub, setSuspendingClub] = useState<AdminClubListItem | null>(null);
@@ -23,18 +27,47 @@ export default function AdminClubsPage() {
   const [deleting, setDeleting] = useState(false);
 
   function reload() {
-    adminListClubs().then(setClubs);
+    adminListClubs().then((loaded) => {
+      setClubs(loaded);
+      setValidUntilByClub((prev) => {
+        const next = { ...prev };
+        for (const club of loaded) {
+          if (next[club.clubId] === undefined) {
+            next[club.clubId] = toDateInputValue(club.currentLicenseValidUntil);
+          }
+        }
+        return next;
+      });
+    });
   }
 
   useEffect(() => {
     reload();
   }, []);
 
-  async function runAction(clubId: string, action: LicenseAction) {
+  async function runSetValidUntil(clubId: string) {
+    const validUntil = validUntilByClub[clubId];
+    if (!validUntil) return;
     setBusyClubId(clubId);
     setErrorByClub((prev) => ({ ...prev, [clubId]: "" }));
     try {
-      await adminSetLicense({ clubId, action, notes: notesByClub[clubId] ?? "" });
+      await adminSetLicense({ clubId, action: "setValidUntil", validUntil, notes: notesByClub[clubId] ?? "" });
+      reload();
+    } catch (err) {
+      setErrorByClub((prev) => ({
+        ...prev,
+        [clubId]: (err as { message?: string })?.message ?? "Aktion fehlgeschlagen.",
+      }));
+    } finally {
+      setBusyClubId(null);
+    }
+  }
+
+  async function runSuspend(clubId: string) {
+    setBusyClubId(clubId);
+    setErrorByClub((prev) => ({ ...prev, [clubId]: "" }));
+    try {
+      await adminSetLicense({ clubId, action: "suspend", notes: notesByClub[clubId] ?? "" });
       setSuspendingClub(null);
       reload();
     } catch (err) {
@@ -51,7 +84,7 @@ export default function AdminClubsPage() {
     if (!deletingClub) return;
     setDeleting(true);
     try {
-      await adminDeleteClub(deletingClub.clubId);
+      await adminDeleteClub(deletingClub.clubId, notesByClub[deletingClub.clubId] ?? "");
       setDeletingClub(null);
       reload();
     } finally {
@@ -69,48 +102,52 @@ export default function AdminClubsPage() {
           const isBusy = busyClubId === club.clubId;
           return (
             <Card key={club.clubId}>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {club.name} <span className="text-gray-400 dark:text-gray-500">#{club.publicClubId}</span>
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {club.sport} · {club.country} · {club.contactEmail}
-                  </p>
-                  <p className="mt-1 text-sm">
-                    Lizenz: <strong>{club.currentLicenseType ?? "–"}</strong> ·{" "}
-                    {club.currentLicenseStatus ?? "–"} · bis {formatDateDe(club.currentLicenseValidUntil)}
-                  </p>
-                </div>
-                <Button variant="danger" onClick={() => setDeletingClub(club)}>
-                  {t("deleteClub")}
-                </Button>
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  {club.name} <span className="text-gray-400 dark:text-gray-500">#{club.publicClubId}</span>
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {club.sport} · {club.country} · {club.contactEmail}
+                </p>
+                <p className="mt-1 text-sm">
+                  Lizenz: <strong>{club.currentLicenseType ?? "–"}</strong> ·{" "}
+                  {club.currentLicenseStatus ?? "–"} · bis {formatDateDe(club.currentLicenseValidUntil)}
+                </p>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 dark:border-white/10 pt-4">
                 <TextField
-                  label={t("notes")}
+                  label="Notiz / Grund (fliesst als Begründung in die Deaktivierungs-/Lösch-Mail ein)"
                   value={notesByClub[club.clubId] ?? ""}
                   onChange={(e) =>
                     setNotesByClub((prev) => ({ ...prev, [club.clubId]: e.target.value }))
                   }
                 />
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Lizenz gültig bis
+                    </label>
+                    <input
+                      type="date"
+                      value={validUntilByClub[club.clubId] ?? ""}
+                      onChange={(e) =>
+                        setValidUntilByClub((prev) => ({ ...prev, [club.clubId]: e.target.value }))
+                      }
+                      className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    />
+                  </div>
                   <Button
-                    variant="secondary"
-                    disabled={isBusy}
-                    onClick={() => runAction(club.clubId, "trial")}
+                    disabled={isBusy || !validUntilByClub[club.clubId]}
+                    onClick={() => runSetValidUntil(club.clubId)}
                   >
-                    Testphase (30 Tage)
-                  </Button>
-                  <Button disabled={isBusy} onClick={() => runAction(club.clubId, "activeMonthly")}>
-                    Aktiv +1 Monat
-                  </Button>
-                  <Button disabled={isBusy} onClick={() => runAction(club.clubId, "activeYearly")}>
-                    Aktiv +12 Monate
+                    Datum setzen
                   </Button>
                   <Button variant="danger" disabled={isBusy} onClick={() => setSuspendingClub(club)}>
-                    Manuell deaktivieren
+                    Deaktivieren
+                  </Button>
+                  <Button variant="danger" disabled={isBusy} onClick={() => setDeletingClub(club)}>
+                    {t("deleteClub")}
                   </Button>
                 </div>
                 {errorByClub[club.clubId] && (
@@ -124,18 +161,18 @@ export default function AdminClubsPage() {
 
       <ConfirmDialog
         open={!!suspendingClub}
-        title={`"${suspendingClub?.name}" manuell deaktivieren?`}
-        body="Der Verein wird sofort öffentlich unsichtbar (Suche, Vereins-/Mannschaftsseiten, Embed) und im eigenen Dashboard auf 'bitte Support kontaktieren' verwiesen — unabhängig vom Ablaufdatum. Daten bleiben erhalten."
+        title={`"${suspendingClub?.name}" deaktivieren?`}
+        body="Der Verein wird sofort öffentlich unsichtbar (Suche, Vereins-/Mannschaftsseiten, Embed) und im eigenen Dashboard auf 'bitte Support kontaktieren' verwiesen — unabhängig vom Ablaufdatum. Daten bleiben erhalten. Der Vereinsadmin erhält eine Benachrichtigungs-Mail mit dem oben eingetragenen Grund."
         confirmLabel={busyClubId === suspendingClub?.clubId ? tCommon("loading") : "Deaktivieren"}
         cancelLabel={tCommon("cancel")}
-        onConfirm={() => suspendingClub && runAction(suspendingClub.clubId, "suspend")}
+        onConfirm={() => suspendingClub && runSuspend(suspendingClub.clubId)}
         onCancel={() => setSuspendingClub(null)}
       />
 
       <ConfirmDialog
         open={!!deletingClub}
         title={`"${deletingClub?.name}" endgültig löschen?`}
-        body="Alle Mannschaften, Spiele und Mitgliedschaften dieses Vereins werden unwiderruflich gelöscht. Das kann nicht rückgängig gemacht werden."
+        body="Alle Mannschaften, Spiele und Mitgliedschaften dieses Vereins werden unwiderruflich gelöscht. Das kann nicht rückgängig gemacht werden. Der Vereinsadmin erhält eine Bestätigungs-Mail mit dem oben eingetragenen Grund."
         confirmLabel={deleting ? tCommon("loading") : t("deleteClub")}
         cancelLabel={tCommon("cancel")}
         onConfirm={handleDelete}

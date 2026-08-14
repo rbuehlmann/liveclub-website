@@ -6,6 +6,10 @@ const SMTP_PORT = 587;
 const SMTP_USER = "no-reply@liveclub.app";
 const FROM_ADDRESS = "LiveClub <no-reply@liveclub.app>";
 
+// Where internal copies of club-deactivated/club-deleted notifications go.
+// Placeholder single address for now — will move to a real team inbox later.
+export const LIVECLUB_TEAM_EMAIL = "raffael.buehlmann@gmail.com";
+
 export async function sendMail(input: { to: string; subject: string; html: string }) {
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
