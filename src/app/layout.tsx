@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Teko } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { BrandingProvider } from "@/components/layout/BrandingProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -59,7 +60,9 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider>{children}</AuthProvider>
+          <BrandingProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </BrandingProvider>
         </NextIntlClientProvider>
       </body>
     </html>

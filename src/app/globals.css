@@ -7,24 +7,37 @@
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --background: #f3efe5;
-  --foreground: #171717;
-}
-
-.dark {
-  --background: #080808;
-  --foreground: #f3efe5;
-}
-
 /*
  * LiveClub corporate palette ("Impact Red" brand guide, 2026-07-31):
  * Racing Red is the single primary/action color (buttons, links, focus
  * states, "live" indicators) in both themes; Bone White is the light-mode
  * page background, Pitch Black the dark-mode one; Metallic Silver is used
- * for secondary surfaces/borders. Changing the brand going forward should
- * mean editing only this block.
+ * for secondary surfaces/borders.
+ *
+ * These live as plain custom properties (not baked into @theme) so
+ * BrandingProvider can override them at runtime per settings/branding
+ * (admin-editable accent/background colors, e.g. a temporary Halloween
+ * re-skin) by injecting a later style block — @theme inline below just
+ * points every brand-color utility class at these variables instead of
+ * inlining a fixed hex value.
  */
+:root {
+  --background: #f3efe5;
+  --foreground: #171717;
+  --brand-red: #f02b22;
+  --brand-red-hover: #d0211a;
+  --brand-black: #080808;
+  --brand-white: #f3efe5;
+  --brand-silver: #a7adb2;
+}
+
+.dark {
+  --background: #080808;
+  --foreground: #f3efe5;
+  --brand-red: #f02b22;
+  --brand-red-hover: #d0211a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -32,11 +45,11 @@
   --font-mono: var(--font-geist-mono);
   --font-teko: var(--font-teko-display);
 
-  --color-brand-red: #f02b22;
-  --color-brand-red-hover: #d0211a;
-  --color-brand-black: #080808;
-  --color-brand-white: #f3efe5;
-  --color-brand-silver: #a7adb2;
+  --color-brand-red: var(--brand-red);
+  --color-brand-red-hover: var(--brand-red-hover);
+  --color-brand-black: var(--brand-black);
+  --color-brand-white: var(--brand-white);
+  --color-brand-silver: var(--brand-silver);
 }
 
 body {

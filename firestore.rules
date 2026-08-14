@@ -239,6 +239,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Site-wide branding (logo/icon/colors, light+dark) — the one settings
+    // doc every visitor's browser needs to read (rendered on every public
+    // page), unlike the rest of settings/* which stays admin-only. More
+    // specific match wins over the generic settings/{docId} rule below.
+    match /settings/branding {
+      allow read: if true;
+      allow write: if isPlatformAdmin();
+    }
+
     // Platform-wide settings — nothing here is club-specific or public.
     match /settings/{docId} {
       allow read, write: if isPlatformAdmin();

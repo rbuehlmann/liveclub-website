@@ -22,6 +22,7 @@ const LINKS = [
   { href: "/admin", label: "Übersicht" },
   { href: "/admin/clubs", label: "Vereine" },
   { href: "/admin/mail-templates", label: "Mail Vorlagen" },
+  { href: "/admin/settings", label: "Einstellungen" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

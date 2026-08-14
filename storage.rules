@@ -17,11 +17,25 @@ service firebase.storage {
         request.auth.token.role == 'clubAdmin';
     }
 
+    function isPlatformAdmin() {
+      return isSignedIn() && request.auth.token.platformAdmin == true;
+    }
+
     // Club logos: readable by anyone (used on public pages/widget),
     // only writable by the club's own admin.
     match /clubs/{clubId}/logo/{fileName} {
       allow read: if true;
       allow write: if isClubAdmin(clubId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    // Site-wide branding assets (logo/icon, light+dark): readable by
+    // anyone (rendered on every public page), only writable by a platform
+    // admin — see settings/branding in firestore.rules for the matching doc.
+    match /branding/{fileName} {
+      allow read: if true;
+      allow write: if isPlatformAdmin() &&
         request.resource.size < 5 * 1024 * 1024 &&
         request.resource.contentType.matches('image/.*');
     }
