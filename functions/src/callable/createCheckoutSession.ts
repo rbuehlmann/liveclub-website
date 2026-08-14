@@ -96,6 +96,10 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
       metadata: { clubId, interval },
       success_url: `${SITE_ORIGIN}/dashboard?checkout=success`,
       cancel_url: `${SITE_ORIGIN}/dashboard?checkout=cancelled`,
+      // Shows a "Rabattcode" field on the hosted Checkout page — manual
+      // entry only for now (no auto-applied referral code yet, see the
+      // project-liveclub-club-recommendations memory note for that).
+      allow_promotion_codes: true,
     });
 
     if (!session.url) {
