@@ -12,6 +12,22 @@ export interface EmailTemplateContent {
 // there. Ad-hoc templates an admin adds later have no entry here — they
 // simply have no fallback and start out blank.
 export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
+  emailVerification: {
+    label: "E-Mail-Bestätigung",
+    subject: "Bitte bestätige deine E-Mail-Adresse",
+    html: `<p>Hallo {{displayName}},</p>
+<p>Willkommen bei LiveClub! Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiv ist.</p>
+<p><a href="{{verificationUrl}}">E-Mail-Adresse bestätigen</a></p>
+<p>Falls der Link nicht funktioniert, kopiere diese Adresse in deinen Browser:<br>{{verificationUrl}}</p>`,
+  },
+  passwordReset: {
+    label: "Passwort zurücksetzen",
+    subject: "Passwort zurücksetzen",
+    html: `<p>Hallo,</p>
+<p>Du hast angefordert, dein LiveClub-Passwort zurückzusetzen. Klicke auf den folgenden Link, um ein neues Passwort zu vergeben:</p>
+<p><a href="{{resetUrl}}">Passwort zurücksetzen</a></p>
+<p>Falls du das nicht warst, kannst du diese Mail einfach ignorieren — dein Passwort bleibt unverändert.</p>`,
+  },
   invite: {
     label: "Einladung",
     subject: "Einladung zu {{clubName}} auf LiveClub",

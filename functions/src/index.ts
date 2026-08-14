@@ -16,4 +16,6 @@ export { grantPlatformAdmin } from "./callable/grantPlatformAdmin";
 export { sendTestEmail } from "./callable/sendTestEmail";
 export { createCheckoutSession } from "./callable/createCheckoutSession";
 export { submitClubRecommendation } from "./callable/submitClubRecommendation";
+export { sendVerificationEmail } from "./callable/sendVerificationEmail";
+export { sendPasswordResetLink } from "./callable/sendPasswordResetLink";
 export { onStripeWebhook } from "./https/onStripeWebhook";

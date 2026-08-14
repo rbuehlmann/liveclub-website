@@ -1,15 +1,9 @@
 "use client";
 
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  updateProfile,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getFirebaseClient } from "./client";
+import { sendVerificationEmail, sendPasswordResetLink } from "./functionsApi";
 
 export async function registerWithEmail(input: {
   email: string;
@@ -27,7 +21,11 @@ export async function registerWithEmail(input: {
     createdAt: serverTimestamp(),
   });
 
-  await sendEmailVerification(credential.user);
+  // Sent via our own no-reply@liveclub.app SMTP (see
+  // functions/src/callable/sendVerificationEmail.ts) instead of Firebase
+  // Auth's built-in sendEmailVerification, which sends from Firebase's own
+  // domain with a generic English template.
+  await sendVerificationEmail();
   return credential.user;
 }
 
@@ -43,6 +41,7 @@ export async function logout() {
 }
 
 export async function resetPassword(email: string) {
-  const { auth } = getFirebaseClient();
-  await sendPasswordResetEmail(auth, email);
+  // Same reasoning as registerWithEmail — routed through our own SMTP
+  // instead of Firebase Auth's built-in sendPasswordResetEmail.
+  await sendPasswordResetLink(email);
 }

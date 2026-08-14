@@ -13,6 +13,8 @@ import { TextField } from "@/components/ui/TextField";
 // so they always show up here (with sensible starting content) even before
 // anyone has ever opened this page.
 const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
+  { id: "emailVerification", label: "E-Mail-Bestätigung", hint: "{{displayName}}, {{verificationUrl}}" },
+  { id: "passwordReset", label: "Passwort zurücksetzen", hint: "{{resetUrl}}" },
   { id: "invite", label: "Einladung", hint: "{{clubName}}, {{roleLabel}}, {{inviteUrl}}" },
   { id: "clubDeactivated", label: "Verein deaktiviert", hint: "{{clubName}}, {{reason}}" },
   { id: "clubDeleted", label: "Verein gelöscht", hint: "{{clubName}}, {{reason}}" },
@@ -29,6 +31,20 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
 ];
 
 const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
+  emailVerification: {
+    subject: "Bitte bestätige deine E-Mail-Adresse",
+    html: `<p>Hallo {{displayName}},</p>
+<p>Willkommen bei LiveClub! Bitte bestätige deine E-Mail-Adresse, damit dein Konto vollständig aktiv ist.</p>
+<p><a href="{{verificationUrl}}">E-Mail-Adresse bestätigen</a></p>
+<p>Falls der Link nicht funktioniert, kopiere diese Adresse in deinen Browser:<br>{{verificationUrl}}</p>`,
+  },
+  passwordReset: {
+    subject: "Passwort zurücksetzen",
+    html: `<p>Hallo,</p>
+<p>Du hast angefordert, dein LiveClub-Passwort zurückzusetzen. Klicke auf den folgenden Link, um ein neues Passwort zu vergeben:</p>
+<p><a href="{{resetUrl}}">Passwort zurücksetzen</a></p>
+<p>Falls du das nicht warst, kannst du diese Mail einfach ignorieren — dein Passwort bleibt unverändert.</p>`,
+  },
   invite: {
     subject: "Einladung zu {{clubName}} auf LiveClub",
     html: `<p>Hallo,</p>

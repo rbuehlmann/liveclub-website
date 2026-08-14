@@ -138,6 +138,18 @@ export async function sendTestEmail(input: { to: string; subject: string; html: 
   await call(input);
 }
 
+export async function sendVerificationEmail() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<Record<string, never>, { ok: true }>(functions, "sendVerificationEmail");
+  await call({});
+}
+
+export async function sendPasswordResetLink(email: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ email: string }, { ok: true }>(functions, "sendPasswordResetLink");
+  await call({ email });
+}
+
 export async function createCheckoutSession(input: {
   clubId: string;
   tier: LicenseTier;
