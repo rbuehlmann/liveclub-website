@@ -33,6 +33,21 @@ export async function createTeam(input: { clubId: string; name: string; shortNam
   return result.data;
 }
 
+export async function createGame(input: {
+  clubId: string;
+  teamId: string;
+  isHomeGame: boolean;
+  opponentPublicClubId?: string;
+  opponentTeamId?: string;
+  opponentTeamName?: string;
+  scheduledStart?: string;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { gameId: string }>(functions, "createGame");
+  const result = await call(input);
+  return result.data;
+}
+
 export async function syncClubClaims() {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<Record<string, never>, { clubId: string | null; role: string | null }>(

@@ -20,6 +20,8 @@ const SAMPLE_VARS = {
   note: "Testnotiz (Beispieltext)",
   source: "Öffentliches Formular",
   referralCode: "ABCD1234",
+  opponentClubName: "FC Gegenbeispiel",
+  gameDate: "31.12.2026",
 };
 
 export const sendTestEmail = onCall<SendTestEmailRequest>(

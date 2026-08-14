@@ -21,6 +21,11 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
     label: "Vereins-Empfehlung eingegangen",
     hint: "{{clubName}}, {{country}}, {{note}}, {{source}}, {{referralCode}}",
   },
+  {
+    id: "gameSuperseded",
+    label: "Spiel durch Heimverein überholt",
+    hint: "{{clubName}}, {{opponentClubName}}, {{gameDate}}",
+  },
 ];
 
 const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
@@ -54,6 +59,12 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
 <li><strong>Notiz:</strong> {{note}}</li>
 <li><strong>Referral-Code:</strong> {{referralCode}}</li>
 </ul>`,
+  },
+  gameSuperseded: {
+    subject: "Euer Spiel gegen {{opponentClubName}} wurde vom Heimverein erfasst",
+    html: `<p>Hallo,</p>
+<p>Euer Spiel <strong>{{clubName}} vs. {{opponentClubName}}</strong> am {{gameDate}} wurde soeben auch vom Heimverein <strong>{{opponentClubName}}</strong> auf LiveClub erfasst.</p>
+<p>Damit es nicht doppelt geführt wird, wurde euer Eintrag automatisch storniert — der Heimverein führt die Live-Übertragung. Ihr könnt das Spiel auf dessen öffentlicher Seite mitverfolgen.</p>`,
   },
 };
 

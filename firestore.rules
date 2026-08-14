@@ -99,9 +99,12 @@ service cloud.firestore {
 
       match /games/{gameId} {
         allow read: if isClubMember(clubId);
-        allow create: if isTeamRedaktor(clubId, request.resource.data.teamId) &&
-          request.resource.data.status in ['draft', 'scheduled'] &&
-          isClubLicenseActive(clubId);
+        // Creation goes through the createGame Cloud Function now, not a
+        // direct client write — it needs to read the *opponent* club's own
+        // games subcollection for the cross-club duplicate check below,
+        // which a client-side rule can never do (a club can't read another
+        // club's private games).
+        allow create: if false;
         // clubAdmin or a Redaktor of this game's team may edit scheduling
         // info before/around the match, but never the server-computed live
         // state directly.

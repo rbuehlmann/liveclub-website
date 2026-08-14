@@ -5,6 +5,7 @@ export { onInvitationCreate } from "./triggers/onInvitationCreate";
 
 export { createClub } from "./callable/createClub";
 export { createTeam } from "./callable/createTeam";
+export { createGame } from "./callable/createGame";
 export { acceptInvitation } from "./callable/acceptInvitation";
 export { syncClubClaims } from "./callable/syncClubClaims";
 export { adminSetLicense } from "./callable/adminSetLicense";
