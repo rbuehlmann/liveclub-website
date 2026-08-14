@@ -8,11 +8,13 @@ interface AdminDeleteClubRequest {
 }
 
 /**
- * Platform-admin-only: permanently wipes a club and everything that
- * references it. Meant for cleaning up bad/duplicate/spam registrations
+ * Permanently wipes a club and everything that references it. Callable by a
+ * platform admin for any club (cleaning up bad/duplicate/spam registrations
  * before the registration flow has captcha + ToS gating — real, licensed
- * clubs are handled by adminSetLicense's "cancelled" status instead (which
- * only revokes discoverability, never deletes data). This one has no undo.
+ * clubs are otherwise handled by adminSetLicense's "cancelled" status
+ * instead, which only revokes discoverability, never deletes data), or by a
+ * clubAdmin for their own club (self-service "I don't want this club
+ * anymore" deletion). This one has no undo.
  *
  * Firestore alone doesn't cascade-delete: clubs/{clubId} and its
  * subcollections come off via recursiveDelete, but publicClubs (a separate
@@ -30,13 +32,20 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(async (request) =>
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
-  if (request.auth.token.platformAdmin !== true) {
-    throw new HttpsError("permission-denied", "Nur für Plattform-Administratoren.");
-  }
 
   const { clubId } = request.data;
   if (typeof clubId !== "string" || !clubId) {
     throw new HttpsError("invalid-argument", "clubId fehlt.");
+  }
+
+  const isPlatformAdmin = request.auth.token.platformAdmin === true;
+  const isOwnClubAdmin =
+    request.auth.token.clubId === clubId && request.auth.token.role === "clubAdmin";
+  if (!isPlatformAdmin && !isOwnClubAdmin) {
+    throw new HttpsError(
+      "permission-denied",
+      "Nur Plattform-Administratoren oder der Vereins-Admin dieses Vereins."
+    );
   }
 
   const clubRef = db.collection("clubs").doc(clubId);

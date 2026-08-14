@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -9,10 +10,14 @@ import { useClubContext } from "@/components/club/ClubContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { adminDeleteClub } from "@/lib/firebase/functionsApi";
+import { logout } from "@/lib/firebase/authApi";
 
 export default function EditClubPage() {
   const t = useTranslations("clubSetup");
   const tCommon = useTranslations("common");
+  const router = useRouter();
   const { club, role } = useClubContext();
 
   const [name, setName] = useState("");
@@ -24,6 +29,9 @@ export default function EditClubPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!club) return;
@@ -90,8 +98,24 @@ export default function EditClubPage() {
     }
   }
 
+  async function handleDeleteClub() {
+    if (!club) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await adminDeleteClub(club.clubId);
+      await logout();
+      router.push("/");
+    } catch (err) {
+      setDeleteError((err as { message?: string })?.message ?? "Löschen fehlgeschlagen.");
+      setDeleting(false);
+      setConfirmingDelete(false);
+    }
+  }
+
   return (
-    <Card className="max-w-lg">
+    <div className="flex max-w-lg flex-col gap-6">
+    <Card>
       <h1 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <TextField
@@ -161,5 +185,38 @@ export default function EditClubPage() {
         )}
       </form>
     </Card>
+
+    {!readOnly && (
+      <Card className="border-red-200 dark:border-red-500/20">
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Verein löschen</h2>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Damit werden {club.name} und alle zugehörigen Daten — Mannschaften, Spiele, Mitgliedschaften
+          und Einladungen — unwiderruflich gelöscht. Eine laufende Lizenz wird sofort beendet, ohne
+          Rückerstattung bereits bezahlter Zeit. Dieser Schritt lässt sich nicht rückgängig machen.
+        </p>
+        <Button
+          variant="danger"
+          className="mt-4"
+          onClick={() => {
+            setDeleteError(null);
+            setConfirmingDelete(true);
+          }}
+        >
+          Verein endgültig löschen
+        </Button>
+        {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
+      </Card>
+    )}
+
+    <ConfirmDialog
+      open={confirmingDelete}
+      title={`"${club.name}" endgültig löschen?`}
+      body="Alle Mannschaften, Spiele, Mitgliedschaften und Einladungen dieses Vereins werden unwiderruflich gelöscht. Eine laufende Lizenz wird sofort beendet, ohne Rückerstattung. Das kann nicht rückgängig gemacht werden."
+      confirmLabel={deleting ? tCommon("loading") : "Endgültig löschen"}
+      cancelLabel={tCommon("cancel")}
+      onConfirm={handleDeleteClub}
+      onCancel={() => setConfirmingDelete(false)}
+    />
+    </div>
   );
 }
