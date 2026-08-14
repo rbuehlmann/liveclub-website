@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClub } from "@/lib/firebase/functionsApi";
 import { getFirebaseClient } from "@/lib/firebase/client";
@@ -54,8 +55,19 @@ export default function CreateClubPage() {
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [contactName, setContactName] = useState(user?.displayName ?? "");
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
+  const [primaryColor, setPrimaryColor] = useState("#2563eb");
+  const [secondaryColor, setSecondaryColor] = useState("#1e293b");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Set once createClub() succeeds — switches the page to the optional
+  // logo-upload step. Logo can't be collected in step 1: Storage rules
+  // gate clubs/{clubId}/logo/ writes on the clubId/role custom claims,
+  // which only exist once createClub has run and the token is refreshed.
+  const [createdClubId, setCreatedClubId] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   if (!authLoading && !user) {
     router.replace("/login");
@@ -74,16 +86,75 @@ export default function CreateClubPage() {
         language: "de",
         contactName,
         contactEmail,
+        primaryColor,
+        secondaryColor,
       });
       if (user) {
         await waitForClubMembership(user.uid, clubId);
+        await user.getIdToken(true);
       }
-      router.push("/dashboard");
+      setCreatedClubId(clubId);
     } catch (err) {
       setError((err as { message?: string })?.message ?? "Etwas ist schiefgelaufen.");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !createdClubId) return;
+    setUploadingLogo(true);
+    setLogoError(null);
+    try {
+      const { db, storage } = getFirebaseClient();
+      const logoRef = ref(storage, `clubs/${createdClubId}/logo/${file.name}`);
+      await uploadBytes(logoRef, file);
+      const url = await getDownloadURL(logoRef);
+      await updateDoc(doc(db, "clubs", createdClubId), { logoUrl: url });
+      setLogoUrl(url);
+    } catch (err) {
+      setLogoError(
+        (err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Logo-Upload fehlgeschlagen."
+      );
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = "";
+    }
+  }
+
+  function finishOnboarding() {
+    router.push("/dashboard");
+  }
+
+  if (createdClubId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
+        <PublicHeader />
+        <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+          <Card>
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Vereinslogo (optional)</h1>
+            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              Kannst du auch später jederzeit in den Vereinseinstellungen hinzufügen.
+            </p>
+            <div className="flex flex-col gap-4">
+              {logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt="" className="h-20 w-20 rounded object-contain" />
+              )}
+              <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploadingLogo} />
+              <p className="text-xs text-gray-500 dark:text-gray-400">Empfehlung: 500×500 px, transparentes PNG.</p>
+              {uploadingLogo && <p className="text-xs text-gray-500 dark:text-gray-400">Wird hochgeladen …</p>}
+              {logoError && <p className="text-xs text-red-600">Fehler: {logoError}</p>}
+              <Button onClick={finishOnboarding} fullWidth disabled={uploadingLogo}>
+                {logoUrl ? "Fertig" : "Überspringen"}
+              </Button>
+            </div>
+          </Card>
+        </main>
+        <PublicFooter />
+      </div>
+    );
   }
 
   return (
@@ -151,6 +222,26 @@ export default function CreateClubPage() {
             value={contactEmail}
             onChange={(e) => setContactEmail(e.target.value)}
           />
+          <div className="flex gap-6">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Heimfarbe</label>
+              <input
+                type="color"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="h-10 w-16 rounded border border-gray-300"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auswärtsfarbe</label>
+              <input
+                type="color"
+                value={secondaryColor}
+                onChange={(e) => setSecondaryColor(e.target.value)}
+                className="h-10 w-16 rounded border border-gray-300"
+              />
+            </div>
+          </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" fullWidth disabled={submitting}>
             {submitting ? tCommon("loading") : t("submit")}

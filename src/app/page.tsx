@@ -116,6 +116,14 @@ export default function Home() {
     [allClubs]
   );
 
+  const registeredTeamsCount = useMemo(() => {
+    let count = 0;
+    for (const [publicClubId, teams] of Object.entries(teamMatchesByClub)) {
+      if (licensedClubIds.has(publicClubId)) count += teams.length;
+    }
+    return count;
+  }, [teamMatchesByClub, licensedClubIds]);
+
   const gameStatusCounts = useMemo(() => {
     let finished = 0;
     let live = 0;
@@ -180,10 +188,14 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-xl border border-gray-200 bg-white py-4 dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
+        <div className="grid grid-cols-4 divide-x divide-gray-200 rounded-xl border border-gray-200 bg-white py-4 dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-col items-center gap-1">
             <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{licensedClubIds.size}</p>
             <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Vereine</p>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{registeredTeamsCount}</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Teams</p>
           </div>
           <div className="flex flex-col items-center gap-1">
             <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">

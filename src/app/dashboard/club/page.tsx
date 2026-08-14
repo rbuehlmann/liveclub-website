@@ -137,6 +137,12 @@ export default function EditClubPage() {
           disabled={readOnly}
           onChange={(e) => setContactEmail(e.target.value)}
         />
+        <div className="flex flex-col gap-1">
+          <TextField label={t("sport")} value={club.sport} disabled readOnly />
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Sportart kann nach dem Erstellen nicht mehr geändert werden.
+          </p>
+        </div>
         {!readOnly && (
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vereinslogo</label>
@@ -158,7 +164,7 @@ export default function EditClubPage() {
         {!readOnly && (
           <div className="flex gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hauptfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Heimfarbe</label>
               <input
                 type="color"
                 value={primaryColor}
@@ -167,7 +173,7 @@ export default function EditClubPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nebenfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auswärtsfarbe</label>
               <input
                 type="color"
                 value={secondaryColor}

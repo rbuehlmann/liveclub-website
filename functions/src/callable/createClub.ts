@@ -13,6 +13,8 @@ interface CreateClubRequest {
   language: string;
   contactName: string;
   contactEmail: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
@@ -32,7 +34,8 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
   const uid = request.auth.uid;
-  const { name, sport, country, language, contactName, contactEmail } = request.data;
+  const { name, sport, country, language, contactName, contactEmail, primaryColor, secondaryColor } =
+    request.data;
 
   assertNonEmptyString(name, "name");
   assertNonEmptyString(sport, "sport");
@@ -55,6 +58,8 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
     language,
     contactName,
     contactEmail,
+    primaryColor: primaryColor || null,
+    secondaryColor: secondaryColor || null,
     createdBy: uid,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),

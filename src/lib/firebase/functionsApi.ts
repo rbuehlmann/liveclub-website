@@ -11,6 +11,8 @@ export async function createClub(input: {
   language: string;
   contactName: string;
   contactEmail: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { clubId: string; publicClubId: string }>(
