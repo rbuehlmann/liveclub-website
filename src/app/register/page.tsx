@@ -80,7 +80,7 @@ function RegisterForm() {
               />
               <span>
                 Ich habe die{" "}
-                <Link href="/agb" target="_blank" className="text-brand-red hover:underline">
+                <Link href="/terms-of-service" target="_blank" className="text-brand-red hover:underline">
                   AGB
                 </Link>{" "}
                 gelesen und akzeptiere sie.

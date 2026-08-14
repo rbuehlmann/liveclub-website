@@ -10,10 +10,10 @@ export function PublicFooter() {
         <Link href="/impressum" className="hover:text-brand-red hover:underline">
           Impressum
         </Link>
-        <Link href="/datenschutz" className="hover:text-brand-red hover:underline">
+        <Link href="/privacy-policy" className="hover:text-brand-red hover:underline">
           Datenschutz
         </Link>
-        <Link href="/agb" className="hover:text-brand-red hover:underline">
+        <Link href="/terms-of-service" className="hover:text-brand-red hover:underline">
           AGB
         </Link>
         <Link href="/support" className="hover:text-brand-red hover:underline">

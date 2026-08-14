@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BUILD_SHA: gitShortSha(),
     NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
   },
+  // /agb and /datenschutz were the routes' original (German) slugs, already
+  // live in production — permanent redirects so any bookmark/indexed link
+  // to the old URL still lands on the renamed English-slug page.
+  async redirects() {
+    return [
+      { source: "/agb", destination: "/terms-of-service", permanent: true },
+      { source: "/datenschutz", destination: "/privacy-policy", permanent: true },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
