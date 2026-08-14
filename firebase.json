@@ -15,6 +15,11 @@
     "bucket": "liveclub-app.firebasestorage.app",
     "rules": "storage.rules"
   },
+  "hosting": {
+    "site": "liveclub-app",
+    "public": "hosting-auth/public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+  },
   "emulators": {
     "auth": {
       "port": 9099
