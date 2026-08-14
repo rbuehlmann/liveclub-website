@@ -69,12 +69,62 @@ export const onGameEventCreate = onDocumentCreated(
       updates.actualEnd = FieldValue.serverTimestamp();
     }
 
-    const publicClubId = gameData.publicClubId;
+    const publicClubId = gameData.publicClubId as string | undefined;
     const publicGameRef = db.collection("publicGames").doc(gameId);
     const teamId = gameData.teamId as string | undefined;
+    const isLive = state.status === "live" || state.status === "paused";
 
-    // These three writes each derive purely from `state`/`gameData` above,
-    // never from each other, so — same reasoning as the parallel reads —
+    // The opposing club, when it's a real linked LiveClub club rather than a
+    // plain typed name (see createGame.ts) — its own public page/widget/app
+    // should mirror this same game too, so its followers can watch along,
+    // even though only the club whose `events` subcollection this is can
+    // ever administer it (start/goal/etc. only ever get reported here).
+    const ownIsHome = gameData.homeClubPublicId === publicClubId;
+    const opponentClubPublicId = (ownIsHome ? gameData.awayClubPublicId : gameData.homeClubPublicId) as
+      | string
+      | null
+      | undefined;
+    const opponentTeamId = (ownIsHome ? gameData.awayTeamId : gameData.homeTeamId) as string | null | undefined;
+
+    async function syncPublicClub(clubPublicId: string, forTeamId: string | undefined) {
+      const publicClubRef = db.collection("publicClubs").doc(clubPublicId);
+      await db.runTransaction(async (tx) => {
+        if (isLive) {
+          // Dotted keys are only interpreted as nested paths by
+          // update(), never by set(..., {merge:true}) — that would
+          // instead create a literal field named e.g.
+          // "currentLiveGameIdByTeam.abc123" and the delete branch
+          // below could never find it again. publicClubRef always
+          // exists by this point (created alongside the club itself in
+          // createClub.ts), so update() is safe to use unconditionally.
+          tx.update(publicClubRef, {
+            currentLiveGameId: gameId,
+            // Keyed by team so the widget's optional data-team-id
+            // filter never needs its own Firestore query/index.
+            ...(forTeamId ? { [`currentLiveGameIdByTeam.${forTeamId}`]: gameId } : {}),
+          });
+          return;
+        }
+        const current = await tx.get(publicClubRef);
+        const currentData = current.data();
+        const clubUpdates: Record<string, unknown> = {};
+        // Don't clobber a different game that's currently live for this
+        // club (e.g. a youth team match still running while this one
+        // finishes).
+        if (currentData?.currentLiveGameId === gameId) {
+          clubUpdates.currentLiveGameId = FieldValue.delete();
+        }
+        if (forTeamId && currentData?.currentLiveGameIdByTeam?.[forTeamId] === gameId) {
+          clubUpdates[`currentLiveGameIdByTeam.${forTeamId}`] = FieldValue.delete();
+        }
+        if (Object.keys(clubUpdates).length > 0) {
+          tx.update(publicClubRef, clubUpdates);
+        }
+      });
+    }
+
+    // These writes each derive purely from `state`/`gameData` above, never
+    // from each other, so — same reasoning as the parallel reads earlier —
     // they go out together instead of one round trip at a time.
     await Promise.all([
       gameRef.update(updates),
@@ -99,42 +149,9 @@ export const onGameEventCreate = onDocumentCreated(
         },
         { merge: true }
       ),
-      publicClubId
-        ? db.runTransaction(async (tx) => {
-            const publicClubRef = db.collection("publicClubs").doc(publicClubId);
-            const isLive = state.status === "live" || state.status === "paused";
-            if (isLive) {
-              // Dotted keys are only interpreted as nested paths by
-              // update(), never by set(..., {merge:true}) — that would
-              // instead create a literal field named e.g.
-              // "currentLiveGameIdByTeam.abc123" and the delete branch
-              // below could never find it again. publicClubRef always
-              // exists by this point (created alongside the club itself in
-              // createClub.ts), so update() is safe to use unconditionally.
-              tx.update(publicClubRef, {
-                currentLiveGameId: gameId,
-                // Keyed by team so the widget's optional data-team-id
-                // filter never needs its own Firestore query/index.
-                ...(teamId ? { [`currentLiveGameIdByTeam.${teamId}`]: gameId } : {}),
-              });
-              return;
-            }
-            const current = await tx.get(publicClubRef);
-            const currentData = current.data();
-            const clubUpdates: Record<string, unknown> = {};
-            // Don't clobber a different game that's currently live for this
-            // club (e.g. a youth team match still running while this one
-            // finishes).
-            if (currentData?.currentLiveGameId === gameId) {
-              clubUpdates.currentLiveGameId = FieldValue.delete();
-            }
-            if (teamId && currentData?.currentLiveGameIdByTeam?.[teamId] === gameId) {
-              clubUpdates[`currentLiveGameIdByTeam.${teamId}`] = FieldValue.delete();
-            }
-            if (Object.keys(clubUpdates).length > 0) {
-              tx.update(publicClubRef, clubUpdates);
-            }
-          })
+      publicClubId ? syncPublicClub(publicClubId, teamId) : Promise.resolve(),
+      opponentClubPublicId && opponentClubPublicId !== publicClubId
+        ? syncPublicClub(opponentClubPublicId, opponentTeamId ?? undefined)
         : Promise.resolve(),
     ]);
   }
