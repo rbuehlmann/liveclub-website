@@ -10,6 +10,14 @@ export const smtpPassword = defineSecret("SMTP_PASSWORD");
 export const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 export const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 
+// Set via `firebase functions:secrets:set RECAPTCHA_SECRET_KEY` — the
+// server-side key from a reCAPTCHA v3 site
+// (https://www.google.com/recaptcha/admin), used to verify tokens the
+// client widget produces (see lib/recaptcha.ts). The matching site key is
+// NOT secret (embedded in client JS either way) — plain param instead.
+export const recaptchaSecretKey = defineSecret("RECAPTCHA_SECRET_KEY");
+export const recaptchaSiteKey = defineString("RECAPTCHA_SITE_KEY");
+
 // Price IDs aren't sensitive (they're visible in Stripe Checkout URLs
 // anyway), so they're plain params rather than secrets — set per
 // environment via functions/.env.<project-id> (see Firebase's dotenv

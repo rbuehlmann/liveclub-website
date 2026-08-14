@@ -28,6 +28,17 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
 <p><strong>Grund:</strong> {{reason}}</p>
 <p>Bitte kontaktiere unseren <a href="https://liveclub.app/support">Support</a>, falls du das klären möchtest.</p>`,
   },
+  clubRecommendation: {
+    label: "Vereins-Empfehlung eingegangen",
+    subject: "Neue Vereins-Empfehlung: {{clubName}}",
+    html: `<p>Neue Empfehlung über {{source}}:</p>
+<ul>
+<li><strong>Verein:</strong> {{clubName}}</li>
+<li><strong>Land:</strong> {{country}}</li>
+<li><strong>Notiz:</strong> {{note}}</li>
+<li><strong>Referral-Code:</strong> {{referralCode}}</li>
+</ul>`,
+  },
   clubDeleted: {
     label: "Verein gelöscht",
     subject: "Dein Verein {{clubName}} wurde gelöscht",

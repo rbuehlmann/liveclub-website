@@ -16,6 +16,11 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
   { id: "invite", label: "Einladung", hint: "{{clubName}}, {{roleLabel}}, {{inviteUrl}}" },
   { id: "clubDeactivated", label: "Verein deaktiviert", hint: "{{clubName}}, {{reason}}" },
   { id: "clubDeleted", label: "Verein gelöscht", hint: "{{clubName}}, {{reason}}" },
+  {
+    id: "clubRecommendation",
+    label: "Vereins-Empfehlung eingegangen",
+    hint: "{{clubName}}, {{country}}, {{note}}, {{source}}, {{referralCode}}",
+  },
 ];
 
 const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
@@ -39,6 +44,16 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
 <p>Der Verein <strong>{{clubName}}</strong> wurde soeben unwiderruflich gelöscht — alle Mannschaften, Spiele und Mitgliedschaften wurden entfernt. Eine laufende Lizenz wurde ohne Rückerstattung sofort beendet.</p>
 <p><strong>Grund:</strong> {{reason}}</p>
 <p>Falls das nicht beabsichtigt war, kontaktiere bitte umgehend unseren <a href="https://liveclub.app/support">Support</a>.</p>`,
+  },
+  clubRecommendation: {
+    subject: "Neue Vereins-Empfehlung: {{clubName}}",
+    html: `<p>Neue Empfehlung über {{source}}:</p>
+<ul>
+<li><strong>Verein:</strong> {{clubName}}</li>
+<li><strong>Land:</strong> {{country}}</li>
+<li><strong>Notiz:</strong> {{note}}</li>
+<li><strong>Referral-Code:</strong> {{referralCode}}</li>
+</ul>`,
   },
 };
 

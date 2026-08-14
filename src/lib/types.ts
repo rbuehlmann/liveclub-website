@@ -202,6 +202,29 @@ export interface PublicTeamProfile {
   sport: string;
 }
 
+// clubRecommendations/{id} — "tell us about a club we're missing", from
+// either the public /verein-empfehlen form or the game-creation opponent
+// flow. Write-only from the client (via the submitClubRecommendation
+// callable, reCAPTCHA-gated); read is platform-admin only. referralCode
+// doubles as a Stripe promotion code once a Stripe coupon mechanic is
+// wired in (see project-liveclub-club-recommendations memory).
+export type ClubRecommendationSource = "publicSearch" | "gameOpponent";
+export type ClubRecommendationStatus = "new" | "converted";
+
+export interface ClubRecommendation {
+  id: string;
+  clubName: string;
+  country?: string | null;
+  note?: string | null;
+  recommenderName?: string | null;
+  recommenderEmail?: string | null;
+  source: ClubRecommendationSource;
+  referringClubId?: string | null;
+  referralCode: string;
+  status: ClubRecommendationStatus;
+  createdAt: string;
+}
+
 // settings/branding — publicly readable, platform-admin writable (see
 // firestore.rules). All fields optional: an unset field just falls back to
 // the static default in globals.css/favicon.ico. iconLight/iconDark are

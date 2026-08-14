@@ -258,5 +258,13 @@ service cloud.firestore {
     match /emailTemplates/{templateId} {
       allow read, write: if isPlatformAdmin();
     }
+
+    // "Tell us about a club we're missing" leads — write-only via the
+    // submitClubRecommendation callable (Admin SDK, bypasses these rules
+    // entirely), never directly from a client. Read is platform-admin only.
+    match /clubRecommendations/{id} {
+      allow read: if isPlatformAdmin();
+      allow write: if false;
+    }
   }
 }

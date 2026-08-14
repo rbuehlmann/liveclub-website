@@ -252,7 +252,15 @@ export default function Home() {
               </Card>
             ))}
             {searchTerm.trim() && visibleClubs.length === 0 && (
-              <p className="text-center text-sm text-gray-500 dark:text-gray-400">Keine Vereine gefunden.</p>
+              <div className="flex flex-col items-center gap-1 py-2 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Keine Vereine gefunden.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Vermisst du deinen Verein?{" "}
+                  <Link href="/verein-empfehlen" className="text-brand-red hover:underline">
+                    Sag uns Bescheid
+                  </Link>
+                </p>
+              </div>
             )}
           </div>
         )}

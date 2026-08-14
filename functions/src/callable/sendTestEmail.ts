@@ -16,6 +16,10 @@ const SAMPLE_VARS = {
   roleLabel: "Redaktor",
   inviteUrl: "https://liveclub.app/invite/beispiel-id",
   reason: "Testgrund (Beispieltext)",
+  country: "Schweiz",
+  note: "Testnotiz (Beispieltext)",
+  source: "Öffentliches Formular",
+  referralCode: "ABCD1234",
 };
 
 export const sendTestEmail = onCall<SendTestEmailRequest>(

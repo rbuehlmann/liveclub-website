@@ -126,3 +126,22 @@ export async function createCheckoutSession(input: {
   const result = await call(input);
   return result.data;
 }
+
+export async function submitClubRecommendation(input: {
+  clubName: string;
+  country?: string;
+  note?: string;
+  recommenderName?: string;
+  recommenderEmail?: string;
+  source: "publicSearch" | "gameOpponent";
+  referringClubId?: string;
+  recaptchaToken: string;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { referralCode: string }>(
+    functions,
+    "submitClubRecommendation"
+  );
+  const result = await call(input);
+  return result.data;
+}
