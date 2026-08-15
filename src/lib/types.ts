@@ -75,6 +75,11 @@ export interface Game {
   actualStart?: string | null;
   actualEnd?: string | null;
   status: GameStatus;
+  // Set when createGame.ts auto-cancels this club's own entry because the
+  // opponent (a real linked club) already registered the same fixture as
+  // home — surfaced in the UI so the away club knows why, instead of the
+  // game just silently vanishing into the archive.
+  cancelledReason?: string | null;
   period?: GamePeriod;
   score: { home: number; away: number };
   cards?: {

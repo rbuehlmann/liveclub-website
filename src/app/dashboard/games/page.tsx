@@ -71,6 +71,7 @@ export default function GamesPage() {
               isHomeGame: data.isHomeGame,
               scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
               status: data.status,
+              cancelledReason: data.cancelledReason ?? null,
               score: data.score ?? { home: 0, away: 0 },
             } as Game;
           })
@@ -142,10 +143,16 @@ export default function GamesPage() {
   const visibleGames =
     role === "reporter" ? games.filter((g) => myTeamIds.includes(g.teamId)) : games;
 
+  // A cancellation caused by the opponent already having registered the
+  // same fixture (see createGame.ts) is worth surfacing where the club is
+  // actually looking — the upcoming list — rather than silently dropping
+  // into the collapsed archive like an ordinary cancellation.
+  const isSupersededCancellation = (g: Game) => g.status === "cancelled" && !!g.cancelledReason;
+
   // Soonest game next; live/paused games jump to the very top since
   // they need attention right now, ahead of anything merely scheduled.
   const upcomingGames = visibleGames
-    .filter((g) => UPCOMING_STATUSES.has(g.status))
+    .filter((g) => UPCOMING_STATUSES.has(g.status) || isSupersededCancellation(g))
     .sort((a, b) => {
       const aLive = a.status === "live" || a.status === "paused";
       const bLive = b.status === "live" || b.status === "paused";
@@ -156,7 +163,7 @@ export default function GamesPage() {
     });
   // Archive: most recently finished first.
   const archivedGames = visibleGames
-    .filter((g) => !UPCOMING_STATUSES.has(g.status))
+    .filter((g) => !UPCOMING_STATUSES.has(g.status) && !isSupersededCancellation(g))
     .sort((a, b) => {
       const aTime = a.scheduledStart ? new Date(a.scheduledStart).getTime() : 0;
       const bTime = b.scheduledStart ? new Date(b.scheduledStart).getTime() : 0;
@@ -181,7 +188,7 @@ export default function GamesPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!club || !teamId || !opponentDisplayName) return;
+    if (!club || !teamId || !opponentDisplayName || !scheduledStart) return;
     setCreating(true);
     setCreateError(null);
     try {
@@ -322,11 +329,12 @@ export default function GamesPage() {
             <TextField
               label={t("kickoff")}
               type="datetime-local"
+              required
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />
             {createError && <p className="text-sm text-red-600">{createError}</p>}
-            <Button type="submit" disabled={creating || !opponentDisplayName}>
+            <Button type="submit" disabled={creating || !opponentDisplayName || !scheduledStart}>
               {creating ? tCommon("loading") : t("create")}
             </Button>
           </form>
@@ -367,31 +375,42 @@ function GameCard({
   game: Game;
   t: ReturnType<typeof useTranslations>;
 }) {
+  const superseded = game.status === "cancelled" && !!game.cancelledReason;
+
   return (
-    <Card className="flex items-center justify-between gap-4">
-      <div>
-        <div className="mb-1">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${STATUS_BADGE_CLASSES[game.status]}`}
-          >
-            {t(`status.${game.status}`)}
-          </span>
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="mb-1">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${STATUS_BADGE_CLASSES[game.status]}`}
+            >
+              {t(`status.${game.status}`)}
+            </span>
+          </div>
+          <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
+            <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
+            {game.homeTeamName} – {game.awayTeamName}
+            <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {formatDateTimeDe(game.scheduledStart)}
+            {game.status !== "draft" && game.status !== "scheduled"
+              ? ` · ${game.score.home}:${game.score.away}`
+              : ""}
+          </p>
         </div>
-        <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
-          <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={24} />
-          {game.homeTeamName} – {game.awayTeamName}
-          <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
-        </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {formatDateTimeDe(game.scheduledStart)}
-          {game.status !== "draft" && game.status !== "scheduled"
-            ? ` · ${game.score.home}:${game.score.away}`
-            : ""}
-        </p>
+        {!superseded && (
+          <Link href={buildGameLiveUrl(game.gameId)}>
+            <Button variant="secondary">{t("openLiveControl")}</Button>
+          </Link>
+        )}
       </div>
-      <Link href={buildGameLiveUrl(game.gameId)}>
-        <Button variant="secondary">{t("openLiveControl")}</Button>
-      </Link>
+      {superseded && (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          {game.cancelledReason}
+        </p>
+      )}
     </Card>
   );
 }
