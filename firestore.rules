@@ -148,11 +148,13 @@ service cloud.firestore {
 
     match /invitations/{invitationId} {
       // Fetching a single invitation by its (unguessable) id is how the
-      // accept-invitation page previews it before the user accepts.
-      // Listing/querying the collection is restricted to that club's admin,
-      // so a stranger can't enumerate pending invites + email addresses by
-      // just knowing a clubId.
-      allow get: if isSignedIn();
+      // accept-invitation page previews it — including before the invited
+      // person is signed in at all, so it can offer a "set your password"
+      // form pre-filled with the invited email instead of the generic
+      // registration page. Listing/querying the collection is restricted
+      // to that club's admin, so a stranger can't enumerate pending
+      // invites + email addresses by just knowing a clubId.
+      allow get: if true;
       allow list: if isSignedIn() && isClubAdmin(resource.data.clubId);
       allow create: if isSignedIn() && isClubAdmin(request.resource.data.clubId);
       allow update: if false;

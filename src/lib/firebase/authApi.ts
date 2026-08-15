@@ -24,8 +24,11 @@ export async function registerWithEmail(input: {
   // Sent via our own no-reply@liveclub.app SMTP (see
   // functions/src/callable/sendVerificationEmail.ts) instead of Firebase
   // Auth's built-in sendEmailVerification, which sends from Firebase's own
-  // domain with a generic English template.
-  await sendVerificationEmail();
+  // domain with a generic English template. Non-fatal: the account above
+  // is already created at this point, so a transient SMTP hiccup shouldn't
+  // surface as a failed registration — the user can still request
+  // verification again later.
+  await sendVerificationEmail().catch(() => undefined);
   return credential.user;
 }
 
