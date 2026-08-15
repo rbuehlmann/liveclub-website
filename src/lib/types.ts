@@ -238,14 +238,15 @@ export interface ClubRecommendation {
 // settings/branding — publicly readable, platform-admin writable (see
 // firestore.rules). All fields optional: an unset field just falls back to
 // the static default in globals.css/favicon.ico. iconLight/iconDark are
-// stored for future use but not yet consumed anywhere (browser favicon
-// caching makes a live swap unreliable) — see the
-// project-liveclub-dynamic-branding-settings memory note.
+// stored for future use but not yet consumed anywhere; favicon IS applied
+// live (see BrandingProvider.tsx's applyFavicon), best-effort only since
+// browsers cache favicons aggressively.
 export interface BrandingSettings {
   logoLight?: string | null;
   logoDark?: string | null;
   iconLight?: string | null;
   iconDark?: string | null;
+  favicon?: string | null;
   backgroundColorLight?: string | null;
   backgroundColorDark?: string | null;
   accentColorLight?: string | null;

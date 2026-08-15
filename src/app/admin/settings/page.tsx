@@ -137,8 +137,14 @@ export default function AdminSettingsPage() {
             <ImageField label="Icon (Dark Mode)" fieldKey="iconDark" value={branding.iconDark} onChange={update} />
           </div>
           <p className="-mt-4 text-xs text-gray-400 dark:text-gray-500">
-            Icon wird gespeichert, aber aktuell nirgends verwendet (Browser cachen Favicons zu
-            aggressiv für einen zuverlässigen Live-Swap) — reserviert für später.
+            Icon wird gespeichert, aber aktuell nirgends verwendet — reserviert für später.
+          </p>
+
+          <ImageField label="Favicon (Browser-Tab-Icon)" fieldKey="favicon" value={branding.favicon} onChange={update} />
+          <p className="-mt-4 text-xs text-gray-400 dark:text-gray-500">
+            Wird als Browser-Tab-Icon eingebunden. Browser cachen Favicons teils sehr aggressiv —
+            ein bereits offener Tab oder ein wiederkehrender Besucher sieht die Änderung
+            eventuell erst nach einem harten Reload oder etwas Zeit.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">

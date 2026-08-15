@@ -46,6 +46,30 @@ function applyOverrides(branding: BrandingSettings) {
     document.head.appendChild(styleTag);
   }
   styleTag.textContent = `${rootCss} ${darkCss}`;
+
+  applyFavicon(branding.favicon);
+}
+
+// Next.js's own app/favicon.ico convention already renders a <link
+// rel="icon"> for the static default — this tag is appended after it, so
+// it wins as the last (and only override-time) icon link in <head>.
+// Browsers still cache favicons aggressively regardless of DOM order, so
+// this is a best-effort swap, not a guaranteed one (see the note in
+// /admin/settings) — already-open tabs or repeat visitors may not see the
+// change until a hard reload or some time passes.
+function applyFavicon(url: string | null | undefined) {
+  let link = document.getElementById("branding-favicon") as HTMLLinkElement | null;
+  if (!url) {
+    link?.remove();
+    return;
+  }
+  if (!link) {
+    link = document.createElement("link");
+    link.id = "branding-favicon";
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.href = url;
 }
 
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
