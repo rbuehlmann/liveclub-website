@@ -330,6 +330,7 @@ export default function GamesPage() {
               label={t("kickoff")}
               type="datetime-local"
               required
+              autoComplete="off"
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />

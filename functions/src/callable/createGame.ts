@@ -130,8 +130,15 @@ export const createGame = onCall<CreateGameRequest>(
     if (!opponentDisplayName) {
       throw new HttpsError("invalid-argument", "Gegner fehlt.");
     }
+    // Enforced here too, not just as a `required` field client-side — the
+    // duplicate check below silently no-ops without a scheduledStart on
+    // both sides, so a client bug (or a bypassed/stale form) must never be
+    // able to slip a game through without one.
+    if (!scheduledStart) {
+      throw new HttpsError("invalid-argument", "Anstoss fehlt.");
+    }
 
-    const scheduledStartTs = scheduledStart ? Timestamp.fromDate(new Date(scheduledStart)) : null;
+    const scheduledStartTs = Timestamp.fromDate(new Date(scheduledStart));
 
     const homeTeamName = isHomeGame ? ownTeamName : opponentDisplayName;
     const awayTeamName = isHomeGame ? opponentDisplayName : ownTeamName;
@@ -156,7 +163,7 @@ export const createGame = onCall<CreateGameRequest>(
       const match = opponentGamesSnap.docs.find((d) => {
         const data = d.data();
         if (data.status === "cancelled") return false;
-        if (!scheduledStartTs || !data.scheduledStart) return false;
+        if (!data.scheduledStart) return false;
         const diff = Math.abs(
           (data.scheduledStart as Timestamp).toMillis() - scheduledStartTs.toMillis()
         );
@@ -183,7 +190,7 @@ export const createGame = onCall<CreateGameRequest>(
           const vars = {
             clubName: awayClubSnap.data()?.name ?? "",
             opponentClubName: club.name,
-            gameDate: scheduledStartTs ? formatDateDe(scheduledStartTs.toDate()) : "–",
+            gameDate: formatDateDe(scheduledStartTs.toDate()),
           };
           const template = await getTemplate(db, "gameSuperseded");
           await sendMail({
