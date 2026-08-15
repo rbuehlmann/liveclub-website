@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { acceptInvitation } from "@/lib/firebase/functionsApi";
+import { logout } from "@/lib/firebase/authApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PublicHeader } from "@/components/layout/PublicHeader";
@@ -17,6 +18,7 @@ interface InvitationPreview {
   clubName: string;
   role: string;
   status: string;
+  email: string | null;
 }
 
 function sleep(ms: number) {
@@ -44,6 +46,7 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [loadingInvite, setLoadingInvite] = useState(true);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -63,6 +66,7 @@ export default function InvitePage() {
           clubName: data.clubName,
           role: data.role,
           status: data.status,
+          email: data.email ?? null,
         });
       })
       .catch(() => setError("Diese Einladung konnte nicht geladen werden."))
@@ -70,6 +74,18 @@ export default function InvitePage() {
   }, [authLoading, user, params.invitationId]);
 
   const redirectTarget = `/invite/${params.invitationId}`;
+
+  const emailMismatch =
+    !!invitation?.email && !!user?.email && invitation.email.toLowerCase() !== user.email.toLowerCase();
+
+  async function handleSwitchAccount() {
+    setSwitchingAccount(true);
+    try {
+      await logout();
+    } finally {
+      setSwitchingAccount(false);
+    }
+  }
 
   async function handleAccept() {
     setAccepting(true);
@@ -131,7 +147,18 @@ export default function InvitePage() {
         <Card>
           <h1 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">Einladung zu LiveClub</h1>
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
-          {invitation && invitation.status === "pending" && (
+          {invitation && invitation.status === "pending" && emailMismatch && (
+            <>
+              <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
+                Diese Einladung ist für <strong>{invitation.email}</strong> bestimmt. Du bist aktuell als{" "}
+                <strong>{user?.email}</strong> eingeloggt.
+              </p>
+              <Button fullWidth onClick={handleSwitchAccount} disabled={switchingAccount}>
+                {switchingAccount ? "Wird abgemeldet …" : "Abmelden und mit anderem Konto fortfahren"}
+              </Button>
+            </>
+          )}
+          {invitation && invitation.status === "pending" && !emailMismatch && (
             <>
               <p className="mb-6 text-sm text-gray-700 dark:text-gray-300">
                 Du wurdest eingeladen, <strong>{invitation.clubName}</strong> als{" "}
