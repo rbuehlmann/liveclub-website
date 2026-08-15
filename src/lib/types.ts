@@ -75,11 +75,13 @@ export interface Game {
   actualStart?: string | null;
   actualEnd?: string | null;
   status: GameStatus;
-  // Set when createGame.ts auto-cancels this club's own entry because the
-  // opponent (a real linked club) already registered the same fixture as
-  // home — surfaced in the UI so the away club knows why, instead of the
-  // game just silently vanishing into the archive.
-  cancelledReason?: string | null;
+  // Set when createGame.ts marks this club's own entry "cancelled" because
+  // the opponent (a real linked club) already registered the same fixture
+  // as home — NOT a real cancellation, the match is still happening, just
+  // administered via the home club's entry instead. Surfaced distinctly in
+  // the UI (see games/page.tsx's isSupersededCancellation) rather than as
+  // an ordinary cancellation.
+  supersededReason?: string | null;
   period?: GamePeriod;
   score: { home: number; away: number };
   cards?: {

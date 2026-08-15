@@ -178,10 +178,18 @@ export const createGame = onCall<CreateGameRequest>(
             `Der Heimverein ${opponentClubName} hat dieses Spiel bereits erfasst.`
           );
         }
-        // We're home — proceed, and cancel the away club's earlier entry.
+        // We're home — proceed. The away club's earlier entry is marked
+        // "cancelled" purely so it stops being an actionable draft on
+        // their side (no live-control UI, doesn't block a future real
+        // fixture) — NOT a real cancellation: the match itself is still
+        // happening, just administered via our entry instead of theirs.
+        // Their own dashboard (games/page.tsx) renders this distinctly
+        // from an actual cancellation and links out to their own club's
+        // public page, which still shows the game live (see
+        // onGameEventCreate.ts's mirror-to-opponent logic).
         await match.ref.update({
           status: "cancelled",
-          cancelledReason: "Automatisch storniert — der Heimverein hat dieses Spiel bereits erfasst.",
+          supersededReason: "Der Heimverein übernimmt die Erfassung dieses Spiels.",
           updatedAt: FieldValue.serverTimestamp(),
         });
         const awayClubSnap = await db.collection("clubs").doc(opponentClubRealId).get();

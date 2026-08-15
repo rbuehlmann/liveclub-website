@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Game, PublicTeamProfile, Team } from "@/lib/types";
 import { formatDateTimeDe } from "@/lib/date";
-import { buildGameLiveUrl } from "@/lib/publicRoutes";
+import { buildClubUrl, buildGameLiveUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
 
 // Games still to be played (or being played) always sort above the
@@ -71,7 +71,7 @@ export default function GamesPage() {
               isHomeGame: data.isHomeGame,
               scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
               status: data.status,
-              cancelledReason: data.cancelledReason ?? null,
+              supersededReason: data.supersededReason ?? null,
               score: data.score ?? { home: 0, away: 0 },
             } as Game;
           })
@@ -147,7 +147,7 @@ export default function GamesPage() {
   // same fixture (see createGame.ts) is worth surfacing where the club is
   // actually looking — the upcoming list — rather than silently dropping
   // into the collapsed archive like an ordinary cancellation.
-  const isSupersededCancellation = (g: Game) => g.status === "cancelled" && !!g.cancelledReason;
+  const isSupersededCancellation = (g: Game) => g.status === "cancelled" && !!g.supersededReason;
 
   // Soonest game next; live/paused games jump to the very top since
   // they need attention right now, ahead of anything merely scheduled.
@@ -348,7 +348,7 @@ export default function GamesPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("noUpcoming")}</p>
         )}
         {upcomingGames.map((game) => (
-          <GameCard key={game.gameId} game={game} t={t} />
+          <GameCard key={game.gameId} game={game} t={t} ownPublicClubId={club.publicClubId} />
         ))}
       </div>
 
@@ -362,7 +362,10 @@ export default function GamesPage() {
             {t("archiveTitle")} ({archivedGames.length})
             <span>{showArchive ? "▲" : "▼"}</span>
           </button>
-          {showArchive && archivedGames.map((game) => <GameCard key={game.gameId} game={game} t={t} />)}
+          {showArchive &&
+            archivedGames.map((game) => (
+              <GameCard key={game.gameId} game={game} t={t} ownPublicClubId={club.publicClubId} />
+            ))}
         </div>
       )}
     </div>
@@ -372,11 +375,13 @@ export default function GamesPage() {
 function GameCard({
   game,
   t,
+  ownPublicClubId,
 }: {
   game: Game;
   t: ReturnType<typeof useTranslations>;
+  ownPublicClubId: string;
 }) {
-  const superseded = game.status === "cancelled" && !!game.cancelledReason;
+  const superseded = game.status === "cancelled" && !!game.supersededReason;
 
   return (
     <Card className="flex flex-col gap-3">
@@ -384,9 +389,13 @@ function GameCard({
         <div>
           <div className="mb-1">
             <span
-              className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${STATUS_BADGE_CLASSES[game.status]}`}
+              className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
+                superseded
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"
+                  : STATUS_BADGE_CLASSES[game.status]
+              }`}
             >
-              {t(`status.${game.status}`)}
+              {superseded ? "Heimverein administriert" : t(`status.${game.status}`)}
             </span>
           </div>
           <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
@@ -401,15 +410,19 @@ function GameCard({
               : ""}
           </p>
         </div>
-        {!superseded && (
+        {superseded ? (
+          <Link href={buildClubUrl(ownPublicClubId)} target="_blank">
+            <Button variant="secondary">Live mitverfolgen</Button>
+          </Link>
+        ) : (
           <Link href={buildGameLiveUrl(game.gameId)}>
             <Button variant="secondary">{t("openLiveControl")}</Button>
           </Link>
         )}
       </div>
       {superseded && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-          {game.cancelledReason}
+        <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+          {game.supersededReason} Ihr könnt es auf eurer eigenen Vereinsseite trotzdem live mitverfolgen.
         </p>
       )}
     </Card>

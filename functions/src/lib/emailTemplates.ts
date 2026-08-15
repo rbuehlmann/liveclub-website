@@ -57,10 +57,10 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
   },
   gameSuperseded: {
     label: "Spiel durch Heimverein überholt",
-    subject: "Euer Spiel gegen {{opponentClubName}} wurde vom Heimverein erfasst",
+    subject: "Euer Spiel gegen {{opponentClubName}} wird vom Heimverein administriert",
     html: `<p>Hallo,</p>
 <p>Euer Spiel <strong>{{clubName}} vs. {{opponentClubName}}</strong> am {{gameDate}} wurde soeben auch vom Heimverein <strong>{{opponentClubName}}</strong> auf LiveClub erfasst.</p>
-<p>Damit es nicht doppelt geführt wird, wurde euer Eintrag automatisch storniert — der Heimverein führt die Live-Übertragung. Ihr könnt das Spiel auf dessen öffentlicher Seite mitverfolgen.</p>`,
+<p>Damit es nicht doppelt geführt wird, übernimmt der Heimverein die Erfassung — euer Eintrag bleibt bestehen, wird aber nicht mehr administriert. Ihr könnt das Spiel weiterhin live mitverfolgen, ganz normal auf eurer eigenen Vereinsseite.</p>`,
   },
   clubDeleted: {
     label: "Verein gelöscht",
