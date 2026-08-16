@@ -30,7 +30,7 @@ export default function AgbPage() {
               begleiten (Tore, Spielstand, Status) und die Ergebnisse öffentlich zu veröffentlichen
               (Vereinssuche, Vereins-/Mannschaftsseiten, Einbettungs-Widget). Neue Vereinskonten
               erhalten eine kostenlose Testphase; danach ist die Weiternutzung kostenpflichtig
-              (siehe Ziffer 5).
+              (siehe Ziffer 6).
             </p>
           </section>
 
@@ -59,18 +59,38 @@ export default function AgbPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">5. Preise & Zahlung</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">5. Redaktoren & Spielverwaltung</h2>
+            <p>
+              Für jedes erfasste Spiel gibt es zu jedem Zeitpunkt genau eine verantwortliche Person
+              (Hauptredaktor), die den Spielverlauf (Start, Tore, Spielstand) erfasst. Wer ein Spiel
+              als Hauptredaktor erstellt oder übernimmt, ist für die Richtigkeit der erfassten Daten
+              verantwortlich. Nutzende können in ihrem Profil einen frei wählbaren öffentlichen
+              Anzeigenamen hinterlegen, der bei einem laufenden Spiel als "Redaktor: [Name]"
+              angezeigt wird und keine Rückschlüsse auf die reale Identität zulassen muss.
+            </p>
+            <p className="mt-2">
+              Die Verantwortung für ein Spiel kann jederzeit an eine andere berechtigte Person
+              desselben Vereins oder — sofern beide beteiligten Vereine LiveClub nutzen — des
+              gegnerischen Vereins übertragen werden. Jede Übernahme und Übergabe wird protokolliert.
+              Nutzende erhalten hierzu automatische E-Mail-Benachrichtigungen (z. B. bei einer
+              Einladung zur Übernahme, bei erfolgter Übernahme oder Übergabe), die sich in den
+              persönlichen Profileinstellungen einzeln deaktivieren lassen.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">6. Preise & Zahlung</h2>
             <p>
               Die Testphase ist kostenlos und zeitlich befristet. Für die Weiternutzung danach
               gelten die auf liveclub.app angezeigten Preise; die Zahlungsabwicklung erfolgt über
               Stripe. Läuft eine Testphase oder ein Abo ohne Zahlung ab, werden Vereins- und
               Mannschaftsdaten nicht gelöscht, aber öffentlich nicht mehr angezeigt (siehe Ziffer
-              6) — der Zugriff über das eigene Konto bleibt weiterhin möglich.
+              7) — der Zugriff über das eigene Konto bleibt weiterhin möglich.
             </p>
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">6. Laufzeit & Kündigung</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">7. Laufzeit & Kündigung</h2>
             <p>
               Ein Abo kann jederzeit gekündigt werden und läuft bis zum Ende der bezahlten Periode
               weiter. Bei Ablauf ohne Verlängerung sowie bei einer Sperrung nach Ziffer 3 werden
@@ -81,7 +101,7 @@ export default function AgbPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">7. Haftung</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">8. Haftung</h2>
             <p>
               LiveClub wird mit Sorgfalt betrieben, es kann jedoch keine Gewähr für ständige
               Verfügbarkeit, Fehlerfreiheit oder Richtigkeit der angezeigten Spielstände übernommen
@@ -91,7 +111,7 @@ export default function AgbPage() {
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">8. Änderungen dieser AGB</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">9. Änderungen dieser AGB</h2>
             <p>
               Diese AGB können bei Bedarf angepasst werden, etwa wenn sich das Angebot
               weiterentwickelt. Massgeblich ist jeweils die zum Zeitpunkt der Nutzung aktuelle
@@ -101,7 +121,7 @@ export default function AgbPage() {
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">
-              9. Anwendbares Recht & Gerichtsstand
+              10. Anwendbares Recht & Gerichtsstand
             </h2>
             <p>
               Es gilt Schweizer Recht. Gerichtsstand ist, soweit gesetzlich zulässig, der Sitz des

@@ -55,12 +55,24 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
 <li><strong>Referral-Code:</strong> {{referralCode}}</li>
 </ul>`,
   },
-  gameSuperseded: {
-    label: "Spiel durch Heimverein überholt",
-    subject: "Euer Spiel gegen {{opponentClubName}} wird vom Heimverein administriert",
+  gameTakeoverInvite: {
+    label: "Einladung zur Spielübernahme",
+    subject: "Einladung: {{homeTeamName}} vs. {{awayTeamName}} am {{gameDate}}",
     html: `<p>Hallo,</p>
-<p>Euer Spiel <strong>{{clubName}} vs. {{opponentClubName}}</strong> am {{gameDate}} wurde soeben auch vom Heimverein <strong>{{opponentClubName}}</strong> auf LiveClub erfasst.</p>
-<p>Damit es nicht doppelt geführt wird, übernimmt der Heimverein die Erfassung — euer Eintrag bleibt bestehen, wird aber nicht mehr administriert. Ihr könnt das Spiel weiterhin live mitverfolgen, ganz normal auf eurer eigenen Vereinsseite.</p>`,
+<p>Das Spiel <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> am {{gameDate}} wurde auf LiveClub erfasst. Du bist berechtigt, die Administration (Start, Tore, Spielstand) zu übernehmen.</p>
+<p>Öffne LiveClub und wähle "Übernehmen" beim Spiel, um loszulegen.</p>`,
+  },
+  gameTakenOver: {
+    label: "Spiel übernommen",
+    subject: "Du administrierst jetzt: {{homeTeamName}} vs. {{awayTeamName}}",
+    html: `<p>Hallo,</p>
+<p>Du hast die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> übernommen. Start, Tore und der Spielstand laufen ab jetzt über dein Konto.</p>`,
+  },
+  gameHandedOff: {
+    label: "Spiel abgegeben",
+    subject: "Übertragen: {{homeTeamName}} vs. {{awayTeamName}}",
+    html: `<p>Hallo,</p>
+<p>Die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> wurde an eine andere Person übertragen. Du musst dich nicht mehr darum kümmern — das Spiel kannst du weiterhin live mitverfolgen.</p>`,
   },
   clubDeleted: {
     label: "Verein gelöscht",

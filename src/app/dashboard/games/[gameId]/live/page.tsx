@@ -32,7 +32,7 @@ export default function LiveControlPage() {
   const tGames = useTranslations("games");
   const tCommon = useTranslations("common");
   const params = useParams<{ gameId: string }>();
-  const { club, role, teamIds } = useClubContext();
+  const { club } = useClubContext();
   const { user } = useAuth();
 
   const [game, setGame] = useState<Game | null>(null);
@@ -61,28 +61,30 @@ export default function LiveControlPage() {
   useEffect(() => {
     if (!club) return;
     const { db } = getFirebaseClient();
-    const gameRef = doc(db, "clubs", club.clubId, "games", params.gameId);
+    const gameRef = doc(db, "games", params.gameId);
     const unsubGame = onSnapshot(gameRef, (snap) => {
       const data = snap.data();
       if (!data) return;
       setGame({
         gameId: snap.id,
-        clubId: club.clubId,
-        publicClubId: club.publicClubId,
-        teamId: data.teamId,
         homeTeamName: data.homeTeamName,
         awayTeamName: data.awayTeamName,
-        isHomeGame: data.isHomeGame,
+        homeClubId: data.homeClubId ?? null,
+        awayClubId: data.awayClubId ?? null,
+        createdByClubId: data.createdByClubId,
         scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
         status: data.status,
         period: data.period,
         score: data.score ?? { home: 0, away: 0 },
         cards: data.cards,
+        mainEditorUid: data.mainEditorUid,
+        mainEditorClubId: data.mainEditorClubId,
+        eligibleEditorUids: data.eligibleEditorUids ?? [],
       });
     });
 
     const eventsQuery = query(
-      collection(db, "clubs", club.clubId, "games", params.gameId, "events"),
+      collection(db, "games", params.gameId, "events"),
       orderBy("createdAt", "desc"),
       limit(10)
     );
@@ -114,8 +116,13 @@ export default function LiveControlPage() {
 
   if (!club || !game) return null;
 
-  const isAssigned = role === "clubAdmin" || teamIds.includes(game.teamId);
-  if (!isAssigned) {
+  // Exactly one uid may ever administer a game at a time (see the
+  // 2026-08-15 "Spiel- und Redaktorenlogik" design) — this replaces the old
+  // team-membership check entirely. firestore.rules enforces the same
+  // check server-side on the actual event writes below, this is only the
+  // UI gate.
+  const isMainEditor = user?.uid === game.mainEditorUid;
+  if (!isMainEditor) {
     return <p className="text-sm text-red-600">{t("noReporterAccess")}</p>;
   }
 
@@ -128,8 +135,7 @@ export default function LiveControlPage() {
     setSubmitting(true);
     try {
       const { db } = getFirebaseClient();
-      await addDoc(collection(db, "clubs", club.clubId, "games", params.gameId, "events"), {
-        clubId: club.clubId,
+      await addDoc(collection(db, "games", params.gameId, "events"), {
         gameId: params.gameId,
         type,
         createdByUid: user.uid,

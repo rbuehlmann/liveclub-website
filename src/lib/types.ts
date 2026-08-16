@@ -52,36 +52,32 @@ export type GameStatus =
 
 export type GamePeriod = "notStarted" | "firstHalf" | "halftime" | "secondHalf" | "finished";
 
+// A fixture exists exactly once, at the top level (games/{gameId}) — not
+// nested under either club — so both the home and away club (when both use
+// LiveClub) read and administer the very same document instead of each
+// keeping their own copy. See project_liveclub_game_editor_model memory /
+// the 2026-08-15 "Überarbeitung der Spiel- und Redaktorenlogik" design for
+// the full reasoning.
 export interface Game {
   gameId: string;
-  clubId: string;
-  publicClubId: string;
-  teamId: string;
   homeTeamName: string;
   awayTeamName: string;
-  // Set automatically for "our own" side; set optionally by the reporting
-  // club for the opponent's side if that club also uses LiveClub — lets the
-  // UI show the opponent's real logo instead of a placeholder.
+  // clubId is set only when that side is a real LiveClub club (vs. a plain
+  // typed opponent name); publicClubId/teamId follow the same rule.
+  homeClubId?: string | null;
+  awayClubId?: string | null;
   homeClubPublicId?: string | null;
   awayClubPublicId?: string | null;
-  // The scoring team's id within its own club's teams collection — set for
-  // "our" side always, and for the opponent's side only if a specific one of
-  // their teams was picked (vs. a plain typed name).
   homeTeamId?: string | null;
   awayTeamId?: string | null;
-  isHomeGame: boolean;
+  // Which club actually created this record — informational (e.g. for
+  // "already exists" messaging), not an access-control field.
+  createdByClubId: string;
   venue?: string;
   scheduledStart: string | null;
   actualStart?: string | null;
   actualEnd?: string | null;
   status: GameStatus;
-  // Set when createGame.ts marks this club's own entry "cancelled" because
-  // the opponent (a real linked club) already registered the same fixture
-  // as home — NOT a real cancellation, the match is still happening, just
-  // administered via the home club's entry instead. Surfaced distinctly in
-  // the UI (see games/page.tsx's isSupersededCancellation) rather than as
-  // an ordinary cancellation.
-  supersededReason?: string | null;
   period?: GamePeriod;
   score: { home: number; away: number };
   cards?: {
@@ -91,6 +87,33 @@ export interface Game {
     redAway: number;
   };
   lastEventType?: string | null;
+  // Exactly one uid may administer (start/score/etc.) this game at a time —
+  // enforced in firestore.rules on the events subcollection, not just in
+  // the UI. See requestGameTransfer/acceptGameTransfer.
+  mainEditorUid: string;
+  mainEditorClubId: string;
+  // Snapshot of users/{mainEditorUid}.publicDisplayName — denormalized here
+  // because the client can only ever read its own users/{uid} doc, never
+  // another user's (see firestore.rules), so this can't be looked up
+  // directly by whoever's viewing the game.
+  mainEditorDisplayName?: string | null;
+  // Anyone eligible to become mainEditor: clubAdmin/reporter (scoped to the
+  // relevant team) of either involved club, recomputed at creation time.
+  eligibleEditorUids: string[];
+  pendingTransfer?: {
+    toUid: string;
+    requestedByUid: string;
+    requestedAt: string;
+    kind: "direct" | "broadcast";
+  } | null;
+}
+
+export interface GameEditorHistoryEntry {
+  id: string;
+  action: "created" | "takeoverInviteSent" | "accepted" | "declined" | "handedOff";
+  byUid?: string | null;
+  atUid?: string | null;
+  timestamp: string | null;
 }
 
 export type GameEventType =

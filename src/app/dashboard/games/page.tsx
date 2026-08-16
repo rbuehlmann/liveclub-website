@@ -3,21 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
-import { createGame } from "@/lib/firebase/functionsApi";
+import {
+  createGame,
+  acceptGameTransfer,
+  declineGameTransfer,
+  requestGameTransfer,
+} from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { Game, PublicTeamProfile, Team } from "@/lib/types";
+import { Game, Member, PublicTeamProfile, Team } from "@/lib/types";
 import { formatDateTimeDe } from "@/lib/date";
 import { buildClubUrl, buildGameLiveUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
 
-// Games still to be played (or being played) always sort above the
-// archive — a finished/cancelled game is done and shouldn't compete with
-// "what's next" for attention.
+// A fixture is a single shared record now (see functions/src/callable/
+// createGame.ts) — a club's own "Spiele" list is everything where it's
+// either the home or away side, not a subcollection it owns exclusively.
 const UPCOMING_STATUSES = new Set<Game["status"]>(["draft", "scheduled", "live", "paused"]);
 
 const STATUS_BADGE_CLASSES: Record<Game["status"], string> = {
@@ -31,13 +37,40 @@ const STATUS_BADGE_CLASSES: Record<Game["status"], string> = {
 
 const MAX_SEARCH_RESULTS = 8;
 
+function mapGameDoc(id: string, data: Record<string, unknown>): Game {
+  const scheduledStart = data.scheduledStart as { toDate?: () => Date } | undefined;
+  return {
+    gameId: id,
+    homeTeamName: data.homeTeamName as string,
+    awayTeamName: data.awayTeamName as string,
+    homeClubId: (data.homeClubId as string | null) ?? null,
+    awayClubId: (data.awayClubId as string | null) ?? null,
+    homeClubPublicId: (data.homeClubPublicId as string | null) ?? null,
+    awayClubPublicId: (data.awayClubPublicId as string | null) ?? null,
+    homeTeamId: (data.homeTeamId as string | null) ?? null,
+    awayTeamId: (data.awayTeamId as string | null) ?? null,
+    createdByClubId: data.createdByClubId as string,
+    scheduledStart: scheduledStart?.toDate?.().toISOString() ?? null,
+    status: data.status as Game["status"],
+    score: (data.score as Game["score"]) ?? { home: 0, away: 0 },
+    mainEditorUid: data.mainEditorUid as string,
+    mainEditorClubId: data.mainEditorClubId as string,
+    mainEditorDisplayName: (data.mainEditorDisplayName as string | null) ?? null,
+    eligibleEditorUids: (data.eligibleEditorUids as string[]) ?? [],
+    pendingTransfer: (data.pendingTransfer as Game["pendingTransfer"]) ?? null,
+  };
+}
+
 export default function GamesPage() {
   const t = useTranslations("games");
   const tCommon = useTranslations("common");
+  const { user } = useAuth();
   const { club, role, teamIds: myTeamIds } = useClubContext();
 
-  const [games, setGames] = useState<Game[]>([]);
+  const [homeGames, setHomeGames] = useState<Game[]>([]);
+  const [awayGames, setAwayGames] = useState<Game[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [allPublicTeams, setAllPublicTeams] = useState<PublicTeamProfile[]>([]);
 
   const [teamId, setTeamId] = useState("");
@@ -48,35 +81,19 @@ export default function GamesPage() {
   const [scheduledStart, setScheduledStart] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [createNotice, setCreateNotice] = useState<string | null>(null);
   const [showArchive, setShowArchive] = useState(false);
 
   useEffect(() => {
     if (!club) return;
     const { db } = getFirebaseClient();
-    const unsubGames = onSnapshot(
-      query(collection(db, "clubs", club.clubId, "games"), orderBy("scheduledStart", "desc")),
-      (snap) => {
-        setGames(
-          snap.docs.map((d) => {
-            const data = d.data();
-            return {
-              gameId: d.id,
-              clubId: club.clubId,
-              publicClubId: club.publicClubId,
-              teamId: data.teamId,
-              homeTeamName: data.homeTeamName,
-              awayTeamName: data.awayTeamName,
-              homeClubPublicId: data.homeClubPublicId ?? null,
-              awayClubPublicId: data.awayClubPublicId ?? null,
-              isHomeGame: data.isHomeGame,
-              scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
-              status: data.status,
-              supersededReason: data.supersededReason ?? null,
-              score: data.score ?? { home: 0, away: 0 },
-            } as Game;
-          })
-        );
-      }
+    const unsubHome = onSnapshot(
+      query(collection(db, "games"), where("homeClubId", "==", club.clubId)),
+      (snap) => setHomeGames(snap.docs.map((d) => mapGameDoc(d.id, d.data())))
+    );
+    const unsubAway = onSnapshot(
+      query(collection(db, "games"), where("awayClubId", "==", club.clubId)),
+      (snap) => setAwayGames(snap.docs.map((d) => mapGameDoc(d.id, d.data())))
     );
     const unsubTeams = onSnapshot(collection(db, "clubs", club.clubId, "teams"), (snap) => {
       setTeams(
@@ -90,9 +107,20 @@ export default function GamesPage() {
         }))
       );
     });
+    const unsubMembers = onSnapshot(collection(db, "clubs", club.clubId, "members"), (snap) => {
+      setMembers(
+        snap.docs.map((d) => ({
+          uid: d.id,
+          role: d.data().role,
+          teamIds: d.data().teamIds ?? [],
+          email: d.data().email ?? null,
+          displayName: d.data().displayName ?? null,
+        }))
+      );
+    });
     // Flat, complete team index (name/shortName/publicTeamId/publicClubId +
-    // denormalized club name/logo) — used for the opponent full-text
-    // search below, no per-keystroke queries needed.
+    // denormalized club name/logo) — used for the opponent full-text search
+    // below, no per-keystroke queries needed.
     const unsubPublicTeams = onSnapshot(collection(db, "publicTeams"), (snap) => {
       setAllPublicTeams(
         snap.docs.map((d) => ({
@@ -109,11 +137,19 @@ export default function GamesPage() {
       );
     });
     return () => {
-      unsubGames();
+      unsubHome();
+      unsubAway();
       unsubTeams();
+      unsubMembers();
       unsubPublicTeams();
     };
   }, [club]);
+
+  const games = useMemo(() => {
+    const byId = new Map<string, Game>();
+    for (const g of [...homeGames, ...awayGames]) byId.set(g.gameId, g);
+    return Array.from(byId.values());
+  }, [homeGames, awayGames]);
 
   const opponentSearchResults = useMemo(() => {
     const term = opponentSearchTerm.trim().toLowerCase();
@@ -131,28 +167,26 @@ export default function GamesPage() {
       .slice(0, MAX_SEARCH_RESULTS);
   }, [allPublicTeams, opponentSearchTerm, club]);
 
-  if (!club) return null;
+  if (!club || !user) return null;
 
-  const opponentDisplayName = selectedOpponent
-    ? selectedOpponent.name
-    : manualOpponentName.trim();
+  const opponentDisplayName = selectedOpponent ? selectedOpponent.name : manualOpponentName.trim();
 
   // A Redaktor (reporter) only manages the team(s) they're assigned to;
-  // clubAdmin manages every team.
-  const selectableTeams = role === "clubAdmin" ? teams : teams.filter((t) => myTeamIds.includes(t.teamId));
+  // clubAdmin manages every team. A game's "own team" depends on which side
+  // (home/away) this club is on — there's no single teamId on the game
+  // itself anymore now that a fixture is one shared record (see
+  // functions/src/callable/createGame.ts).
+  const selectableTeams = role === "clubAdmin" ? teams : teams.filter((tm) => myTeamIds.includes(tm.teamId));
   const visibleGames =
-    role === "reporter" ? games.filter((g) => myTeamIds.includes(g.teamId)) : games;
+    role === "reporter"
+      ? games.filter((g) => {
+          const ownTeamId = g.homeClubId === club.clubId ? g.homeTeamId : g.awayTeamId;
+          return !!ownTeamId && myTeamIds.includes(ownTeamId);
+        })
+      : games;
 
-  // A cancellation caused by the opponent already having registered the
-  // same fixture (see createGame.ts) is worth surfacing where the club is
-  // actually looking — the upcoming list — rather than silently dropping
-  // into the collapsed archive like an ordinary cancellation.
-  const isSupersededCancellation = (g: Game) => g.status === "cancelled" && !!g.supersededReason;
-
-  // Soonest game next; live/paused games jump to the very top since
-  // they need attention right now, ahead of anything merely scheduled.
-  const upcomingGames = visibleGames
-    .filter((g) => UPCOMING_STATUSES.has(g.status) || isSupersededCancellation(g))
+  const upcomingGames = [...visibleGames]
+    .filter((g) => UPCOMING_STATUSES.has(g.status))
     .sort((a, b) => {
       const aLive = a.status === "live" || a.status === "paused";
       const bLive = b.status === "live" || b.status === "paused";
@@ -161,9 +195,8 @@ export default function GamesPage() {
       const bTime = b.scheduledStart ? new Date(b.scheduledStart).getTime() : Infinity;
       return aTime - bTime;
     });
-  // Archive: most recently finished first.
-  const archivedGames = visibleGames
-    .filter((g) => !UPCOMING_STATUSES.has(g.status) && !isSupersededCancellation(g))
+  const archivedGames = [...visibleGames]
+    .filter((g) => !UPCOMING_STATUSES.has(g.status))
     .sort((a, b) => {
       const aTime = a.scheduledStart ? new Date(a.scheduledStart).getTime() : 0;
       const bTime = b.scheduledStart ? new Date(b.scheduledStart).getTime() : 0;
@@ -191,8 +224,9 @@ export default function GamesPage() {
     if (!club || !teamId || !opponentDisplayName || !scheduledStart) return;
     setCreating(true);
     setCreateError(null);
+    setCreateNotice(null);
     try {
-      await createGame({
+      const result = await createGame({
         clubId: club.clubId,
         teamId,
         isHomeGame,
@@ -201,6 +235,11 @@ export default function GamesPage() {
         opponentTeamName: selectedOpponent ? undefined : manualOpponentName.trim(),
         scheduledStart: scheduledStart ? new Date(scheduledStart).toISOString() : undefined,
       });
+      if (result.alreadyExisted) {
+        setCreateNotice(
+          "Dieses Spiel wurde bereits von der anderen Seite erfasst — es erscheint unten in eurer Liste."
+        );
+      }
       clearOpponent();
       setManualOpponentName("");
       setScheduledStart("");
@@ -230,19 +269,15 @@ export default function GamesPage() {
                 <option value="" disabled>
                   –
                 </option>
-                {selectableTeams.map((team) => (
-                  <option key={team.teamId} value={team.teamId}>
-                    {team.name}
+                {selectableTeams.map((tm) => (
+                  <option key={tm.teamId} value={tm.teamId}>
+                    {tm.name}
                   </option>
                 ))}
               </select>
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                checked={isHomeGame}
-                onChange={(e) => setIsHomeGame(e.target.checked)}
-              />
+              <input type="checkbox" checked={isHomeGame} onChange={(e) => setIsHomeGame(e.target.checked)} />
               Heimspiel
             </label>
             <div className="flex flex-col gap-2">
@@ -335,6 +370,7 @@ export default function GamesPage() {
               onChange={(e) => setScheduledStart(e.target.value)}
             />
             {createError && <p className="text-sm text-red-600">{createError}</p>}
+            {createNotice && <p className="text-sm text-blue-700 dark:text-blue-400">{createNotice}</p>}
             <Button type="submit" disabled={creating || !opponentDisplayName || !scheduledStart}>
               {creating ? tCommon("loading") : t("create")}
             </Button>
@@ -348,7 +384,15 @@ export default function GamesPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t("noUpcoming")}</p>
         )}
         {upcomingGames.map((game) => (
-          <GameCard key={game.gameId} game={game} t={t} ownPublicClubId={club.publicClubId} />
+          <GameCard
+            key={game.gameId}
+            game={game}
+            t={t}
+            ownClubId={club.clubId}
+            ownPublicClubId={club.publicClubId}
+            userUid={user.uid}
+            members={members}
+          />
         ))}
       </div>
 
@@ -364,7 +408,15 @@ export default function GamesPage() {
           </button>
           {showArchive &&
             archivedGames.map((game) => (
-              <GameCard key={game.gameId} game={game} t={t} ownPublicClubId={club.publicClubId} />
+              <GameCard
+                key={game.gameId}
+                game={game}
+                t={t}
+                ownClubId={club.clubId}
+                ownPublicClubId={club.publicClubId}
+                userUid={user.uid}
+                members={members}
+              />
             ))}
         </div>
       )}
@@ -375,13 +427,48 @@ export default function GamesPage() {
 function GameCard({
   game,
   t,
+  ownClubId,
   ownPublicClubId,
+  userUid,
+  members,
 }: {
   game: Game;
   t: ReturnType<typeof useTranslations>;
+  ownClubId: string;
   ownPublicClubId: string;
+  userUid: string;
+  members: Member[];
 }) {
-  const superseded = game.status === "cancelled" && !!game.supersededReason;
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [showTransferPicker, setShowTransferPicker] = useState(false);
+  const [transferTargetUid, setTransferTargetUid] = useState("");
+
+  const isMainEditor = game.mainEditorUid === userUid;
+  const pendingTransferTargetsMe = game.pendingTransfer?.toUid === userUid;
+  const crossClubClaimable =
+    !isMainEditor &&
+    !game.pendingTransfer &&
+    game.eligibleEditorUids.includes(userUid) &&
+    ownClubId !== game.mainEditorClubId;
+  // Only own-club colleagues can be named as a direct handoff target — the
+  // opposing club's members aren't readable client-side (privacy, see
+  // firestore.rules), so they self-claim instead (crossClubClaimable above).
+  const ownColleagues = members.filter(
+    (m) => game.eligibleEditorUids.includes(m.uid) && m.uid !== userUid
+  );
+
+  async function runAction(fn: () => Promise<unknown>) {
+    setBusy(true);
+    setActionError(null);
+    try {
+      await fn();
+    } catch (err) {
+      setActionError((err as { message?: string })?.message ?? "Aktion fehlgeschlagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Card className="flex flex-col gap-3">
@@ -389,13 +476,9 @@ function GameCard({
         <div>
           <div className="mb-1">
             <span
-              className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-                superseded
-                  ? "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"
-                  : STATUS_BADGE_CLASSES[game.status]
-              }`}
+              className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${STATUS_BADGE_CLASSES[game.status]}`}
             >
-              {superseded ? "Heimverein administriert" : t(`status.${game.status}`)}
+              {t(`status.${game.status}`)}
             </span>
           </div>
           <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-white">
@@ -409,22 +492,103 @@ function GameCard({
               ? ` · ${game.score.home}:${game.score.away}`
               : ""}
           </p>
+          {UPCOMING_STATUSES.has(game.status) && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Hauptredaktor: {game.mainEditorDisplayName ?? (isMainEditor ? "Du" : "—")}
+            </p>
+          )}
         </div>
-        {superseded ? (
-          <Link href={buildClubUrl(ownPublicClubId)} target="_blank">
-            <Button variant="secondary">Live mitverfolgen</Button>
-          </Link>
-        ) : (
+        {isMainEditor ? (
           <Link href={buildGameLiveUrl(game.gameId)}>
             <Button variant="secondary">{t("openLiveControl")}</Button>
           </Link>
+        ) : (
+          <Link href={buildClubUrl(ownPublicClubId)} target="_blank">
+            <Button variant="secondary">Live mitverfolgen</Button>
+          </Link>
         )}
       </div>
-      {superseded && (
-        <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-          {game.supersededReason} Ihr könnt es auf eurer eigenen Vereinsseite trotzdem live mitverfolgen.
-        </p>
+
+      {pendingTransferTargetsMe && (
+        <div className="flex flex-col gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+          <p>Du wurdest eingeladen, dieses Spiel zu übernehmen.</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              disabled={busy}
+              onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
+            >
+              Übernehmen
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy}
+              onClick={() => runAction(() => declineGameTransfer(game.gameId))}
+            >
+              Ablehnen
+            </Button>
+          </div>
+        </div>
       )}
+
+      {crossClubClaimable && (
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
+          <span>Aktuell administriert die andere Seite — du bist berechtigt zu übernehmen.</span>
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
+          >
+            Übernehmen
+          </Button>
+        </div>
+      )}
+
+      {isMainEditor && ownColleagues.length > 0 && UPCOMING_STATUSES.has(game.status) && (
+        <div className="flex flex-col gap-2">
+          {showTransferPicker ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={transferTargetUid}
+                onChange={(e) => setTransferTargetUid(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
+              >
+                <option value="">Person wählen …</option>
+                {ownColleagues.map((m) => (
+                  <option key={m.uid} value={m.uid}>
+                    {m.displayName ?? m.email ?? m.uid}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy || !transferTargetUid}
+                onClick={() =>
+                  runAction(async () => {
+                    await requestGameTransfer({ gameId: game.gameId, toUid: transferTargetUid });
+                    setShowTransferPicker(false);
+                    setTransferTargetUid("");
+                  })
+                }
+              >
+                Anfragen
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowTransferPicker(true)}
+              className="self-start text-sm text-brand-red hover:underline"
+            >
+              Verantwortung übertragen …
+            </button>
+          )}
+        </div>
+      )}
+
+      {actionError && <p className="text-sm text-red-600">{actionError}</p>}
     </Card>
   );
 }

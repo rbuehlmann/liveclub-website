@@ -68,12 +68,18 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     const clubData = clubSnap.data()!;
     const publicClubId: string | undefined = clubData.publicClubId;
 
-    const [membersSnap, teamsSnap, gamesSnap, invitationsSnap] = await Promise.all([
+    const [membersSnap, teamsSnap, homeGamesSnap, awayGamesSnap, invitationsSnap] = await Promise.all([
       clubRef.collection("members").get(),
       clubRef.collection("teams").get(),
-      clubRef.collection("games").get(),
+      // Games are a single top-level collection now (see createGame.ts) — a
+      // club can appear as either side, never nested under it.
+      db.collection("games").where("homeClubId", "==", clubId).get(),
+      db.collection("games").where("awayClubId", "==", clubId).get(),
       db.collection("invitations").where("clubId", "==", clubId).get(),
     ]);
+    const gameDocs = [...homeGamesSnap.docs, ...awayGamesSnap.docs].filter(
+      (doc, i, all) => all.findIndex((d) => d.id === doc.id) === i
+    );
 
     // Storage logo — filename is whatever the clubAdmin originally uploaded,
     // so list the prefix rather than assume a fixed object name.
@@ -85,7 +91,7 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     // subcollections (games share their id with publicGames; teams carry
     // their own publicTeamId for the publicTeams mirror).
     const batch = db.batch();
-    gamesSnap.docs.forEach((gameDoc) => {
+    gameDocs.forEach((gameDoc) => {
       batch.delete(db.collection("publicGames").doc(gameDoc.id));
     });
     teamsSnap.docs.forEach((teamDoc) => {
@@ -94,6 +100,14 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     });
     invitationsSnap.docs.forEach((invDoc) => batch.delete(invDoc.ref));
     await batch.commit();
+
+    // Each game doc has its own events/editorHistory subcollections, so a
+    // plain batch delete would orphan them — needs recursiveDelete per doc,
+    // same reasoning as publicClubs/clubRef below. A deleted club is gone
+    // either way, and the fixture can no longer be administered by anyone
+    // once one of its two sides no longer exists, so the whole record goes
+    // rather than trying to keep a half-orphaned game around.
+    await Promise.all(gameDocs.map((gameDoc) => db.recursiveDelete(gameDoc.ref)));
 
     if (publicClubId) {
       await db.recursiveDelete(db.collection("publicClubs").doc(publicClubId));
@@ -136,7 +150,8 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
       await sendMail({ to: LIVECLUB_TEAM_EMAIL, subject: `[Kopie] ${subject}`, html }).catch(() => undefined);
     }
 
-    // clubs/{clubId} + members/teams/games/games-events/licenses subcollections.
+    // clubs/{clubId} + members/teams/licenses subcollections (games are
+    // handled separately above, being top-level now).
     await db.recursiveDelete(clubRef);
 
     return { ok: true };

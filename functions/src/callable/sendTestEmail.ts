@@ -22,6 +22,8 @@ const SAMPLE_VARS = {
   referralCode: "ABCD1234",
   opponentClubName: "FC Gegenbeispiel",
   gameDate: "31.12.2026",
+  homeTeamName: "FC Beispiel 1",
+  awayTeamName: "FC Gegenbeispiel 1",
   displayName: "Max Muster",
   verificationUrl: "https://liveclub-app.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=beispiel",
   resetUrl: "https://liveclub-app.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=beispiel",

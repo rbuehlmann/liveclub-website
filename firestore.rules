@@ -39,18 +39,13 @@ service cloud.firestore {
         club.data.currentLicenseValidUntil > request.time;
     }
 
-    // A "Redaktor" (reporter) is scoped to one or more teams (Member.teamIds)
-    // rather than assigned per-game — full game-management rights within
-    // those teams, no access outside them. clubAdmin is never team-scoped.
-    function isTeamRedaktor(clubId, teamId) {
-      return isClubMember(clubId) &&
-        (clubRole(clubId) == 'clubAdmin' ||
-         (clubRole(clubId) == 'reporter' && teamId in memberDoc(clubId).data.teamIds));
-    }
-
-    function isTeamRedaktorForGame(clubId, gameId) {
-      let game = get(/databases/$(database)/documents/clubs/$(clubId)/games/$(gameId));
-      return isTeamRedaktor(clubId, game.data.teamId);
+    // A fixture is a single top-level document (games/{gameId}), read by
+    // whichever of the two involved clubs actually use LiveClub — never
+    // nested under either club, so this checks membership in either side
+    // rather than a single fixed clubId.
+    function isGameParty(gameData) {
+      return (gameData.get('homeClubId', null) != null && isClubMember(gameData.homeClubId)) ||
+        (gameData.get('awayClubId', null) != null && isClubMember(gameData.awayClubId));
     }
 
     // Fields that are only ever written by Cloud Functions (Admin SDK),
@@ -97,51 +92,58 @@ service cloud.firestore {
         allow update, delete: if isClubAdmin(clubId);
       }
 
-      match /games/{gameId} {
-        allow read: if isClubMember(clubId);
-        // Creation goes through the createGame Cloud Function now, not a
-        // direct client write — it needs to read the *opponent* club's own
-        // games subcollection for the cross-club duplicate check below,
-        // which a client-side rule can never do (a club can't read another
-        // club's private games).
-        allow create: if false;
-        // clubAdmin or a Redaktor of this game's team may edit scheduling
-        // info before/around the match, but never the server-computed live
-        // state directly.
-        allow update: if isTeamRedaktor(clubId, resource.data.teamId) &&
-          unchangedOrAbsent('score') &&
-          unchangedOrAbsent('status') &&
-          unchangedOrAbsent('period') &&
-          unchangedOrAbsent('actualStart') &&
-          unchangedOrAbsent('actualEnd');
-        allow delete: if false;
-
-        match /events/{eventId} {
-          allow read: if isClubMember(clubId);
-          allow create: if isTeamRedaktorForGame(clubId, gameId) &&
-            request.resource.data.clubId == clubId &&
-            request.resource.data.gameId == gameId &&
-            request.resource.data.createdByUid == request.auth.uid &&
-            request.resource.data.type in [
-              'gameStarted', 'goalHome', 'goalAway', 'goalCorrection',
-              'yellowCardHome', 'yellowCardAway', 'redCardHome', 'redCardAway',
-              'halfTime', 'secondHalfStarted', 'gamePaused', 'gameResumed',
-              'gameFinished', 'gameCancelled', 'manualCorrection'
-            ] &&
-            // A club with an expired/inactive license can no longer start a
-            // new match; already-running games may still be played to a
-            // finish so a lapse mid-game doesn't strand the reporter.
-            (request.resource.data.type != 'gameStarted' || isClubLicenseActive(clubId));
-          // Events are immutable audit records; corrections are new events.
-          allow update: if false;
-          allow delete: if false;
-        }
-      }
-
       match /licenses/{licenseId} {
         allow read: if isClubMember(clubId);
         // Licenses are only ever created/changed via Cloud Functions
         // (manual admin action today, Stripe webhook later).
+        allow write: if false;
+      }
+    }
+
+    // A fixture exists exactly once — top-level, not nested under either
+    // club — so both the home and away club (when both use LiveClub) read
+    // and administer the very same document. All writes go through Cloud
+    // Functions (createGame, requestGameTransfer, acceptGameTransfer,
+    // declineGameTransfer): computing eligibleEditorUids and validating a
+    // transfer needs cross-club member reads a client-side rule can't do.
+    match /games/{gameId} {
+      allow get: if isGameParty(resource.data);
+      // Provable per Firestore's query-constraint rule evaluation: the app
+      // only ever queries this collection filtered by an exact
+      // homeClubId/awayClubId equality match (two separate queries, not a
+      // combined or()), so resource.data.homeClubId/awayClubId here is
+      // exactly the query's own constraint value.
+      allow list: if isGameParty(resource.data);
+      allow create, update, delete: if false;
+
+      match /events/{eventId} {
+        allow read: if isGameParty(get(/databases/$(database)/documents/games/$(gameId)).data);
+        // Exactly one uid may ever administer a game at a time — this IS
+        // the concurrency guard (see the 2026-08-15 editor-model design):
+        // no separate locking primitive needed, since only the current
+        // mainEditorUid ever passes this check.
+        allow create: if isSignedIn() &&
+          request.auth.uid == get(/databases/$(database)/documents/games/$(gameId)).data.mainEditorUid &&
+          request.resource.data.gameId == gameId &&
+          request.resource.data.createdByUid == request.auth.uid &&
+          request.resource.data.type in [
+            'gameStarted', 'goalHome', 'goalAway', 'goalCorrection',
+            'yellowCardHome', 'yellowCardAway', 'redCardHome', 'redCardAway',
+            'halfTime', 'secondHalfStarted', 'gamePaused', 'gameResumed',
+            'gameFinished', 'gameCancelled', 'manualCorrection'
+          ] &&
+          // A club with an expired/inactive license can no longer start a
+          // new match; already-running games may still be played to a
+          // finish so a lapse mid-game doesn't strand the reporter.
+          (request.resource.data.type != 'gameStarted' ||
+            isClubLicenseActive(get(/databases/$(database)/documents/games/$(gameId)).data.mainEditorClubId));
+        // Events are immutable audit records; corrections are new events.
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /editorHistory/{entryId} {
+        allow read: if isGameParty(get(/databases/$(database)/documents/games/$(gameId)).data);
         allow write: if false;
       }
     }

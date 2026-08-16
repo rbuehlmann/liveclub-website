@@ -43,8 +43,32 @@ export async function createGame(input: {
   scheduledStart?: string;
 }) {
   const { functions } = getFirebaseClient();
-  const call = httpsCallable<typeof input, { gameId: string }>(functions, "createGame");
+  const call = httpsCallable<typeof input, { gameId: string; alreadyExisted: boolean }>(
+    functions,
+    "createGame"
+  );
   const result = await call(input);
+  return result.data;
+}
+
+export async function requestGameTransfer(input: { gameId: string; toUid: string }) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "requestGameTransfer");
+  const result = await call(input);
+  return result.data;
+}
+
+export async function acceptGameTransfer(gameId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ gameId: string }, { ok: true }>(functions, "acceptGameTransfer");
+  const result = await call({ gameId });
+  return result.data;
+}
+
+export async function declineGameTransfer(gameId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ gameId: string }, { ok: true }>(functions, "declineGameTransfer");
+  const result = await call({ gameId });
   return result.data;
 }
 

@@ -4,15 +4,15 @@ import { db } from "../firebaseAdmin";
 import { computeGameState, GameEventRecord } from "../lib/score";
 
 export const onGameEventCreate = onDocumentCreated(
-  "clubs/{clubId}/games/{gameId}/events/{eventId}",
+  "games/{gameId}/events/{eventId}",
   async (event) => {
-    const { clubId, gameId, eventId } = event.params;
+    const { gameId, eventId } = event.params;
     const snap = event.data;
     if (!snap) return;
 
     const eventRef = snap.ref;
     const serverTimestamp = Timestamp.now();
-    const gameRef = db.collection("clubs").doc(clubId).collection("games").doc(gameId);
+    const gameRef = db.collection("games").doc(gameId);
     // The three reads/writes below don't depend on each other's *results* —
     // only on `serverTimestamp`, which is already known locally — so they
     // can all go out over the wire at once instead of one round trip at a
@@ -69,24 +69,25 @@ export const onGameEventCreate = onDocumentCreated(
       updates.actualEnd = FieldValue.serverTimestamp();
     }
 
-    const publicClubId = gameData.publicClubId as string | undefined;
-    const publicGameRef = db.collection("publicGames").doc(gameId);
-    const teamId = gameData.teamId as string | undefined;
+    const homeClubPublicId = gameData.homeClubPublicId as string | null | undefined;
+    const awayClubPublicId = gameData.awayClubPublicId as string | null | undefined;
+    const homeTeamId = gameData.homeTeamId as string | null | undefined;
+    const awayTeamId = gameData.awayTeamId as string | null | undefined;
     const isLive = state.status === "live" || state.status === "paused";
 
-    // The opposing club, when it's a real linked LiveClub club rather than a
-    // plain typed name (see createGame.ts) — its own public page/widget/app
-    // should mirror this same game too, so its followers can watch along,
-    // even though only the club whose `events` subcollection this is can
-    // ever administer it (start/goal/etc. only ever get reported here).
-    const ownIsHome = gameData.homeClubPublicId === publicClubId;
-    const opponentClubPublicId = (ownIsHome ? gameData.awayClubPublicId : gameData.homeClubPublicId) as
-      | string
-      | null
-      | undefined;
-    const opponentTeamId = (ownIsHome ? gameData.awayTeamId : gameData.homeTeamId) as string | null | undefined;
+    // A fixture is a single shared record now (see createGame.ts) — both
+    // clubs' own pages/widgets/apps mirror it symmetrically, not just
+    // whichever one happens to be administering it. The administering
+    // side (mainEditorClubId) still gets its own clubId/publicClubId/teamId
+    // written onto publicGames, purely for backward compatibility with
+    // onPublicGameWrite.ts's existing "own vs. opponent" resolution logic.
+    const administeringIsHome = gameData.homeClubId === gameData.mainEditorClubId;
+    const administeringPublicClubId = administeringIsHome ? homeClubPublicId : awayClubPublicId;
+    const administeringTeamId = administeringIsHome ? homeTeamId : awayTeamId;
 
-    async function syncPublicClub(clubPublicId: string, forTeamId: string | undefined) {
+    const publicGameRef = db.collection("publicGames").doc(gameId);
+
+    async function syncPublicClub(clubPublicId: string, forTeamId: string | undefined | null) {
       const publicClubRef = db.collection("publicClubs").doc(clubPublicId);
       await db.runTransaction(async (tx) => {
         if (isLive) {
@@ -131,15 +132,15 @@ export const onGameEventCreate = onDocumentCreated(
       publicGameRef.set(
         {
           gameId,
-          clubId,
-          publicClubId,
-          teamId: gameData.teamId,
+          clubId: gameData.mainEditorClubId ?? null,
+          publicClubId: administeringPublicClubId ?? null,
+          teamId: administeringTeamId ?? null,
           homeTeamName: gameData.homeTeamName,
           awayTeamName: gameData.awayTeamName,
-          homeClubPublicId: gameData.homeClubPublicId ?? null,
-          awayClubPublicId: gameData.awayClubPublicId ?? null,
-          homeTeamId: gameData.homeTeamId ?? null,
-          awayTeamId: gameData.awayTeamId ?? null,
+          homeClubPublicId: homeClubPublicId ?? null,
+          awayClubPublicId: awayClubPublicId ?? null,
+          homeTeamId: homeTeamId ?? null,
+          awayTeamId: awayTeamId ?? null,
           scoreHome: state.scoreHome,
           scoreAway: state.scoreAway,
           status: state.status,
@@ -149,10 +150,8 @@ export const onGameEventCreate = onDocumentCreated(
         },
         { merge: true }
       ),
-      publicClubId ? syncPublicClub(publicClubId, teamId) : Promise.resolve(),
-      opponentClubPublicId && opponentClubPublicId !== publicClubId
-        ? syncPublicClub(opponentClubPublicId, opponentTeamId ?? undefined)
-        : Promise.resolve(),
+      homeClubPublicId ? syncPublicClub(homeClubPublicId, homeTeamId) : Promise.resolve(),
+      awayClubPublicId ? syncPublicClub(awayClubPublicId, awayTeamId) : Promise.resolve(),
     ]);
   }
 );

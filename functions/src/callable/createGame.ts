@@ -4,8 +4,9 @@ import { db } from "../firebaseAdmin";
 import { sendMail } from "../lib/mailer";
 import { smtpPassword } from "../lib/secrets";
 import { getTemplate, renderTemplate } from "../lib/emailTemplates";
+import { editorDisplayName, eligibleEditorsForTeam, sendToEditorIfOptedIn } from "../lib/gameEditors";
 
-// A "duplicate" only counts if the two clubs' games are within this many
+// A "same fixture" match only counts if the two entries are within this many
 // hours of each other — wide enough to cover both sides entering slightly
 // different kickoff times for the same real match, narrow enough that two
 // genuinely separate fixtures between the same two clubs (different
@@ -19,7 +20,7 @@ interface CreateGameRequest {
   opponentPublicClubId?: string;
   opponentTeamId?: string;
   opponentTeamName?: string;
-  scheduledStart?: string; // ISO string, optional
+  scheduledStart?: string; // ISO string
 }
 
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
@@ -33,19 +34,20 @@ function formatDateDe(date: Date): string {
 }
 
 /**
- * Creates a game, replacing the previous direct client-side `addDoc` — that
- * write path is now blocked in firestore.rules (`allow create: if false`)
- * because a trustworthy duplicate check needs a server-side cross-club
- * read, which Firestore rules can't do (a club can't read another club's
- * private games subcollection, by design).
+ * Creates a game — or, if the same fixture (same two clubs, kickoff within
+ * DUPLICATE_WINDOW_HOURS) was already created by the other side, returns
+ * that existing record instead. A fixture exists exactly once, ever (see
+ * the 2026-08-15 "Spiel- und Redaktorenlogik" design) — this replaces the
+ * previous per-club-duplicate-with-cancellation model entirely.
  *
- * When the opponent is a *linked* real LiveClub club (not just a typed
- * name), checks whether that club already has a matching game against us
- * within DUPLICATE_WINDOW_HOURS. If so: the home club's entry always wins
- * (they're the one with the actual stadium announcer running the live
- * score) — the away side's create is rejected if the home side already
- * exists, or the away side's earlier entry gets auto-cancelled (with a
- * notification email) if the home side creates afterwards.
+ * The creator becomes mainEditor automatically. When the opponent is a real
+ * linked LiveClub club, eligibleEditorUids is computed from *both* clubs'
+ * clubAdmin/reporters for the relevant team — either side can eventually
+ * administer, subject to requestGameTransfer/acceptGameTransfer. If we're
+ * creating as the away side against a real linked home club, every eligible
+ * home-side editor is emailed a takeover invite immediately (scenario 4 in
+ * the design doc) — they can accept it directly via acceptGameTransfer, no
+ * separate request/approval step needed for that specific case.
  */
 export const createGame = onCall<CreateGameRequest>(
   { secrets: [smtpPassword] },
@@ -106,7 +108,6 @@ export const createGame = onCall<CreateGameRequest>(
 
     // Resolve the opponent — a real linked club+team, or just a plain name.
     let opponentDisplayName = opponentTeamName?.trim() || "";
-    let opponentClubName = opponentDisplayName;
     let opponentClubPublicId: string | null = null;
     let opponentClubRealId: string | null = null;
     let opponentTeamIdToStore: string | null = null;
@@ -117,7 +118,6 @@ export const createGame = onCall<CreateGameRequest>(
         const publicClubData = publicClubSnap.data()!;
         opponentClubPublicId = opponentPublicClubId.trim();
         opponentClubRealId = publicClubData.clubId;
-        opponentClubName = publicClubData.name;
         if (opponentTeamId?.trim()) {
           const publicTeamSnap = await publicClubSnap.ref.collection("teams").doc(opponentTeamId.trim()).get();
           if (publicTeamSnap.exists) {
@@ -131,9 +131,9 @@ export const createGame = onCall<CreateGameRequest>(
       throw new HttpsError("invalid-argument", "Gegner fehlt.");
     }
     // Enforced here too, not just as a `required` field client-side — the
-    // duplicate check below silently no-ops without a scheduledStart on
-    // both sides, so a client bug (or a bypassed/stale form) must never be
-    // able to slip a game through without one.
+    // "same fixture" check below silently no-ops without a scheduledStart,
+    // so a client bug (or a bypassed/stale form) must never be able to slip
+    // a game through without one.
     if (!scheduledStart) {
       throw new HttpsError("invalid-argument", "Anstoss fehlt.");
     }
@@ -142,93 +142,99 @@ export const createGame = onCall<CreateGameRequest>(
 
     const homeTeamName = isHomeGame ? ownTeamName : opponentDisplayName;
     const awayTeamName = isHomeGame ? opponentDisplayName : ownTeamName;
+    const homeClubId = isHomeGame ? clubId : opponentClubRealId;
+    const awayClubId = isHomeGame ? opponentClubRealId : clubId;
     const homeClubPublicId = isHomeGame ? club.publicClubId : opponentClubPublicId;
     const awayClubPublicId = isHomeGame ? opponentClubPublicId : club.publicClubId;
     const homeTeamIdField = isHomeGame ? teamId : opponentTeamIdToStore;
     const awayTeamIdField = isHomeGame ? opponentTeamIdToStore : teamId;
 
-    // Duplicate check — only possible when the opponent is a real linked
-    // club, since that's the only case where we know which club's games
-    // subcollection to look in.
+    // A fixture exists exactly once — only possible to detect when the
+    // opponent is a real linked club, since that's the only case where both
+    // sides could ever have created the same record independently.
     if (opponentClubRealId && homeClubPublicId && awayClubPublicId) {
-      const opponentGamesSnap = await db
-        .collection("clubs")
-        .doc(opponentClubRealId)
+      const existingSnap = await db
         .collection("games")
         .where("homeClubPublicId", "==", homeClubPublicId)
         .where("awayClubPublicId", "==", awayClubPublicId)
         .get();
 
       const windowMs = DUPLICATE_WINDOW_HOURS * 60 * 60 * 1000;
-      const match = opponentGamesSnap.docs.find((d) => {
+      const match = existingSnap.docs.find((d) => {
         const data = d.data();
-        if (data.status === "cancelled") return false;
         if (!data.scheduledStart) return false;
-        const diff = Math.abs(
-          (data.scheduledStart as Timestamp).toMillis() - scheduledStartTs.toMillis()
-        );
+        const diff = Math.abs((data.scheduledStart as Timestamp).toMillis() - scheduledStartTs.toMillis());
         return diff <= windowMs;
       });
-
       if (match) {
-        if (!isHomeGame) {
-          // We're away, home already has it — home wins, we don't create.
-          throw new HttpsError(
-            "already-exists",
-            `Der Heimverein ${opponentClubName} hat dieses Spiel bereits erfasst.`
-          );
-        }
-        // We're home — proceed. The away club's earlier entry is marked
-        // "cancelled" purely so it stops being an actionable draft on
-        // their side (no live-control UI, doesn't block a future real
-        // fixture) — NOT a real cancellation: the match itself is still
-        // happening, just administered via our entry instead of theirs.
-        // Their own dashboard (games/page.tsx) renders this distinctly
-        // from an actual cancellation and links out to their own club's
-        // public page, which still shows the game live (see
-        // onGameEventCreate.ts's mirror-to-opponent logic).
-        await match.ref.update({
-          status: "cancelled",
-          supersededReason: "Der Heimverein übernimmt die Erfassung dieses Spiels.",
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        const awayClubSnap = await db.collection("clubs").doc(opponentClubRealId).get();
-        const awayClubContactEmail = awayClubSnap.data()?.contactEmail as string | undefined;
-        if (awayClubContactEmail) {
-          const vars = {
-            clubName: awayClubSnap.data()?.name ?? "",
-            opponentClubName: club.name,
-            gameDate: formatDateDe(scheduledStartTs.toDate()),
-          };
-          const template = await getTemplate(db, "gameSuperseded");
-          await sendMail({
-            to: awayClubContactEmail,
-            subject: renderTemplate(template.subject, vars),
-            html: renderTemplate(template.html, vars),
-          }).catch(() => undefined);
-        }
+        return { gameId: match.id, alreadyExisted: true };
       }
     }
 
-    const gameRef = clubRef.collection("games").doc();
+    // eligibleEditorUids: our own club's clubAdmin/reporters for this team,
+    // plus (if the opponent is a real linked club) theirs too.
+    const ownEligible = await eligibleEditorsForTeam(clubId, teamId);
+    const opponentEligible =
+      opponentClubRealId && opponentTeamIdToStore
+        ? await eligibleEditorsForTeam(opponentClubRealId, opponentTeamIdToStore)
+        : [];
+    const eligibleEditorUids = Array.from(new Set([...ownEligible, ...opponentEligible]));
+    const mainEditorDisplayName = await editorDisplayName(uid);
+
+    const gameRef = db.collection("games").doc();
     await gameRef.set({
-      clubId,
-      publicClubId: club.publicClubId,
-      teamId,
       homeTeamName,
       awayTeamName,
-      homeClubPublicId,
-      awayClubPublicId,
+      homeClubId: homeClubId ?? null,
+      awayClubId: awayClubId ?? null,
+      homeClubPublicId: homeClubPublicId ?? null,
+      awayClubPublicId: awayClubPublicId ?? null,
       homeTeamId: homeTeamIdField,
       awayTeamId: awayTeamIdField,
-      isHomeGame,
+      createdByClubId: clubId,
       scheduledStart: scheduledStartTs,
       status: "scheduled",
       score: { home: 0, away: 0 },
+      mainEditorUid: uid,
+      mainEditorClubId: clubId,
+      mainEditorDisplayName,
+      eligibleEditorUids,
+      pendingTransfer: null,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    await gameRef.collection("editorHistory").add({
+      action: "created",
+      byUid: uid,
+      timestamp: FieldValue.serverTimestamp(),
+    });
 
-    return { gameId: gameRef.id };
+    // Scenario 4: creating as the away side against a real linked home club
+    // — proactively invite every eligible home-side editor to take over,
+    // since the home club usually runs the actual live coverage.
+    if (!isHomeGame && opponentClubRealId && opponentEligible.length > 0) {
+      const opponentClubSnap = await db.collection("clubs").doc(opponentClubRealId).get();
+      const template = await getTemplate(db, "gameTakeoverInvite");
+      const vars = {
+        clubName: opponentClubSnap.data()?.name ?? "",
+        opponentClubName: club.name,
+        gameDate: formatDateDe(scheduledStartTs.toDate()),
+        homeTeamName,
+        awayTeamName,
+      };
+      const subject = renderTemplate(template.subject, vars);
+      const html = renderTemplate(template.html, vars);
+      await Promise.all(
+        opponentEligible.map((editorUid) =>
+          sendToEditorIfOptedIn(editorUid, "gameTakeoverInvite", subject, html)
+        )
+      );
+      await gameRef.collection("editorHistory").add({
+        action: "takeoverInviteSent",
+        timestamp: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { gameId: gameRef.id, alreadyExisted: false };
   }
 );

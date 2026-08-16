@@ -18,9 +18,14 @@ const CLUB_ADMIN_LINKS = [
   { href: "/dashboard/games", labelKey: "games" },
   { href: "/dashboard/reporters", labelKey: "reporters" },
   { href: "/dashboard/share", labelKey: "share" },
+  { href: "/dashboard/profile", labelKey: "profile" },
 ] as const;
 
-const REPORTER_LINKS = [{ href: "/dashboard", labelKey: "overview" }, { href: "/dashboard/games", labelKey: "games" }] as const;
+const REPORTER_LINKS = [
+  { href: "/dashboard", labelKey: "overview" },
+  { href: "/dashboard/games", labelKey: "games" },
+  { href: "/dashboard/profile", labelKey: "profile" },
+] as const;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations("dashboard");
