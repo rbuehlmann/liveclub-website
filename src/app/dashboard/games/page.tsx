@@ -57,6 +57,7 @@ function mapGameDoc(id: string, data: Record<string, unknown>): Game {
     mainEditorClubId: data.mainEditorClubId as string,
     mainEditorDisplayName: (data.mainEditorDisplayName as string | null) ?? null,
     eligibleEditorUids: (data.eligibleEditorUids as string[]) ?? [],
+    hasBeenTransferred: (data.hasBeenTransferred as boolean | undefined) ?? false,
     pendingTransfer: (data.pendingTransfer as Game["pendingTransfer"]) ?? null,
   };
 }
@@ -445,18 +446,29 @@ function GameCard({
   const [transferTargetUid, setTransferTargetUid] = useState("");
 
   const isMainEditor = game.mainEditorUid === userUid;
-  const pendingTransferTargetsMe = game.pendingTransfer?.toUid === userUid;
+  const pendingTransferTargetsMe = game.pendingTransfer?.kind === "direct" && game.pendingTransfer.toUid === userUid;
+  // Free, no-invitation-needed self-claim is only available while nobody's
+  // ever taken administration away from the club that created the fixture
+  // — once a transfer has happened once, the other side can no longer just
+  // click it back; only the current editor can hand it over again (see
+  // acceptGameTransfer.ts). The "clubBroadcast" case covers the current
+  // editor explicitly asking to hand back to the opponent club (any of
+  // their eligible editors may accept it).
   const crossClubClaimable =
     !isMainEditor &&
-    !game.pendingTransfer &&
     game.eligibleEditorUids.includes(userUid) &&
-    ownClubId !== game.mainEditorClubId;
+    ownClubId !== game.mainEditorClubId &&
+    ((!game.pendingTransfer && !game.hasBeenTransferred) || game.pendingTransfer?.kind === "clubBroadcast");
   // Only own-club colleagues can be named as a direct handoff target — the
   // opposing club's members aren't readable client-side (privacy, see
-  // firestore.rules), so they self-claim instead (crossClubClaimable above).
+  // firestore.rules), so a handback to the opponent club is a broadcast to
+  // "whoever's eligible over there" instead (see the button below).
   const ownColleagues = members.filter(
     (m) => game.eligibleEditorUids.includes(m.uid) && m.uid !== userUid
   );
+  const opponentClubLinked = !!game.homeClubId && !!game.awayClubId;
+  const opponentTeamName = ownClubId === game.homeClubId ? game.awayTeamName : game.homeTeamName;
+  const clubBroadcastPending = game.pendingTransfer?.kind === "clubBroadcast";
 
   async function runAction(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -545,44 +557,64 @@ function GameCard({
         </div>
       )}
 
-      {isMainEditor && ownColleagues.length > 0 && UPCOMING_STATUSES.has(game.status) && (
+      {isMainEditor && clubBroadcastPending && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Warte auf Rückmeldung von {opponentTeamName} …
+        </p>
+      )}
+
+      {isMainEditor && !game.pendingTransfer && UPCOMING_STATUSES.has(game.status) && (
         <div className="flex flex-col gap-2">
-          {showTransferPicker ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={transferTargetUid}
-                onChange={(e) => setTransferTargetUid(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
-              >
-                <option value="">Person wählen …</option>
-                {ownColleagues.map((m) => (
-                  <option key={m.uid} value={m.uid}>
-                    {m.displayName ?? m.email ?? m.uid}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={busy || !transferTargetUid}
-                onClick={() =>
-                  runAction(async () => {
-                    await requestGameTransfer({ gameId: game.gameId, toUid: transferTargetUid });
-                    setShowTransferPicker(false);
-                    setTransferTargetUid("");
-                  })
-                }
-              >
-                Anfragen
-              </Button>
-            </div>
-          ) : (
+          {ownColleagues.length > 0 && (
+            <>
+              {showTransferPicker ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={transferTargetUid}
+                    onChange={(e) => setTransferTargetUid(e.target.value)}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
+                  >
+                    <option value="">Person wählen …</option>
+                    {ownColleagues.map((m) => (
+                      <option key={m.uid} value={m.uid}>
+                        {m.displayName ?? m.email ?? m.uid}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={busy || !transferTargetUid}
+                    onClick={() =>
+                      runAction(async () => {
+                        await requestGameTransfer({ gameId: game.gameId, toUid: transferTargetUid });
+                        setShowTransferPicker(false);
+                        setTransferTargetUid("");
+                      })
+                    }
+                  >
+                    Anfragen
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTransferPicker(true)}
+                  className="self-start text-sm text-brand-red hover:underline"
+                >
+                  Verantwortung übertragen …
+                </button>
+              )}
+            </>
+          )}
+          {opponentClubLinked && (
             <button
               type="button"
-              onClick={() => setShowTransferPicker(true)}
+              disabled={busy}
+              onClick={() => runAction(() => requestGameTransfer({ gameId: game.gameId, toOpponentClub: true }))}
               className="self-start text-sm text-brand-red hover:underline"
             >
-              Verantwortung übertragen …
+              An {opponentTeamName} zurückgeben …
             </button>
           )}
         </div>

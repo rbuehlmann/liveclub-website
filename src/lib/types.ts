@@ -100,11 +100,23 @@ export interface Game {
   // Anyone eligible to become mainEditor: clubAdmin/reporter (scoped to the
   // relevant team) of either involved club, recomputed at creation time.
   eligibleEditorUids: string[];
+  // Once true, the free one-time cross-club self-claim in
+  // acceptGameTransfer is closed forever for this game — every further
+  // transfer needs an explicit requestGameTransfer from the current editor.
+  // Missing on games created before this field existed = false (safe: they
+  // simply still allow the free first claim, same as before).
+  hasBeenTransferred?: boolean;
+  // "direct" targets one specific person (own club or the opponent's, if
+  // known by uid); "clubBroadcast" targets *any* eligible editor of the
+  // opponent club (toUid null) — used when the current mainEditor wants to
+  // hand back to "whoever's available over there" without being able to
+  // see individual names on the other side (see firestore.rules: a club's
+  // members subcollection is only readable by its own members).
   pendingTransfer?: {
-    toUid: string;
+    toUid: string | null;
     requestedByUid: string;
     requestedAt: string;
-    kind: "direct" | "broadcast";
+    kind: "direct" | "clubBroadcast";
   } | null;
 }
 

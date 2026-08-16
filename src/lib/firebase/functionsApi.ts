@@ -51,7 +51,9 @@ export async function createGame(input: {
   return result.data;
 }
 
-export async function requestGameTransfer(input: { gameId: string; toUid: string }) {
+export async function requestGameTransfer(
+  input: { gameId: string; toUid: string } | { gameId: string; toOpponentClub: true }
+) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { ok: true }>(functions, "requestGameTransfer");
   const result = await call(input);

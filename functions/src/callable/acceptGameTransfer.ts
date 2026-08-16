@@ -10,21 +10,37 @@ interface AcceptGameTransferRequest {
 }
 
 /**
- * Two ways this succeeds:
- * 1. A direct requestGameTransfer targeted the caller (pendingTransfer.toUid
- *    === caller) — the normal "current editor proposed, target confirms" path.
- * 2. No pendingTransfer exists, but the caller is eligible AND belongs to a
- *    *different* club than the current mainEditor — the scenario-4 broadcast
- *    case (createGame.ts already emailed every eligible opponent-side editor
- *    a takeover invite; whoever clicks first here just claims it, no
- *    separate approval step). This never applies within the same club —
- *    same-club handoff always goes through the direct request/accept path,
- *    so a bystander can never unilaterally kick out a colleague who's
- *    actively administering.
+ * Three ways this succeeds:
+ * 1. A direct requestGameTransfer targeted the caller
+ *    (pendingTransfer.kind === "direct" && pendingTransfer.toUid === caller)
+ *    — the normal "current editor proposed, target confirms" path.
+ * 2. A requestGameTransfer({toOpponentClub: true}) is pending
+ *    (pendingTransfer.kind === "clubBroadcast") and the caller is an
+ *    eligible editor of a club other than the current mainEditor's — the
+ *    current editor explicitly asked to hand back to "whoever's available
+ *    over there," first click wins.
+ * 3. No pendingTransfer exists at all, AND the game has never had a
+ *    completed transfer before (game.hasBeenTransferred !== true) — the
+ *    one-time, no-invitation-needed claim that mirrors createGame.ts's
+ *    scenario-4 auto-invite (created as away against a real linked home
+ *    club) and also covers the symmetric case (home creates, away claims
+ *    first). This closes itself the moment ANY transfer completes, for
+ *    good — not just "while control sits with the creator", since control
+ *    can cycle back to the creator's club later via paths 1/2 below, and
+ *    the free claim must NOT reopen when that happens (a naive check like
+ *    "mainEditorClubId === createdByClubId" would incorrectly reopen it —
+ *    hence the separate boolean instead of re-deriving it from club ids).
+ *    After the first transfer, only paths 1 and 2 above can move
+ *    administration to the other club, so a side that lost control can
+ *    never just click it back; only the current editor can initiate
+ *    handing it over again. Within the SAME club this path never applies
+ *    either way — same-club handoff always goes through the direct
+ *    request/accept path, so a bystander can never unilaterally kick out a
+ *    colleague who's actively administering.
  *
  * Either way this is a Firestore transaction: reads mainEditorUid fresh and
- * writes atomically, so two people racing to accept the same broadcast
- * invite can't both "win".
+ * writes atomically, so two people racing to accept the same invite can't
+ * both "win".
  */
 export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
   { secrets: [smtpPassword] },
@@ -48,15 +64,22 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
       }
       const game = gameSnap.data()!;
       const previousEditorUid = game.mainEditorUid as string;
-      const pendingTransfer = game.pendingTransfer as { toUid: string } | null | undefined;
+      const pendingTransfer = game.pendingTransfer as
+        | { toUid: string | null; kind: "direct" | "clubBroadcast" }
+        | null
+        | undefined;
 
-      const isDirectTarget = pendingTransfer?.toUid === uid;
       const eligible: string[] = game.eligibleEditorUids ?? [];
       const newEditorClubId = await resolveEditorClubId(game, uid);
-      const isBroadcastClaim =
-        !pendingTransfer && eligible.includes(uid) && newEditorClubId !== game.mainEditorClubId;
+      const isDifferentClub = newEditorClubId !== game.mainEditorClubId;
 
-      if (!isDirectTarget && !isBroadcastClaim) {
+      const isDirectTarget = pendingTransfer?.kind === "direct" && pendingTransfer.toUid === uid;
+      const isClubBroadcastClaim =
+        pendingTransfer?.kind === "clubBroadcast" && eligible.includes(uid) && isDifferentClub;
+      const isFirstEverCrossClubClaim =
+        !pendingTransfer && eligible.includes(uid) && isDifferentClub && game.hasBeenTransferred !== true;
+
+      if (!isDirectTarget && !isClubBroadcastClaim && !isFirstEverCrossClubClaim) {
         throw new HttpsError(
           "failed-precondition",
           "Es liegt keine Übernahme-Einladung für dich vor."
@@ -71,6 +94,7 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
         mainEditorClubId: newEditorClubId,
         mainEditorDisplayName: newEditorDisplayName,
         pendingTransfer: null,
+        hasBeenTransferred: true,
         updatedAt: FieldValue.serverTimestamp(),
       });
       tx.set(gameRef.collection("editorHistory").doc(), {

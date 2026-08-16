@@ -200,6 +200,7 @@ export const createGame = onCall<CreateGameRequest>(
       mainEditorDisplayName,
       eligibleEditorUids,
       pendingTransfer: null,
+      hasBeenTransferred: false,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
