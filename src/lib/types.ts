@@ -221,6 +221,12 @@ export interface PublicGame {
   awayClubPublicId?: string | null;
   homeTeamId?: string | null;
   awayTeamId?: string | null;
+  // The public id a device follows a team by (deviceFollows.followedTeamIds)
+  // — distinct from homeTeamId/awayTeamId above, which are a club's
+  // *private* team ids. Needed to query "past games for teams I follow"
+  // directly against publicGames.
+  homePublicTeamId?: string | null;
+  awayPublicTeamId?: string | null;
   scoreHome: number;
   scoreAway: number;
   status: GameStatus;

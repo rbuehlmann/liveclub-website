@@ -75,6 +75,31 @@ export const onGameEventCreate = onDocumentCreated(
     const awayTeamId = gameData.awayTeamId as string | null | undefined;
     const isLive = state.status === "live" || state.status === "paused";
 
+    // publicGames' homeTeamId/awayTeamId above are a club's *private* team
+    // id — useless for the iOS/Android apps, which only ever know a
+    // followed team by its publicTeamId (see deviceFollows.followedTeamIds).
+    // Resolved here via the same publicClubs/{clubPublicId}/teams/{teamId}
+    // mirror onPublicGameWrite.ts already reads, so a past-games feed can
+    // eventually query publicGames directly by followed publicTeamId
+    // instead of needing a private lookup first.
+    async function resolvePublicTeamId(
+      clubPublicId: string | null | undefined,
+      teamId: string | null | undefined
+    ): Promise<string | null> {
+      if (!clubPublicId || !teamId) return null;
+      const teamSnap = await db
+        .collection("publicClubs")
+        .doc(clubPublicId)
+        .collection("teams")
+        .doc(teamId)
+        .get();
+      return (teamSnap.data()?.publicTeamId as string | undefined) ?? null;
+    }
+    const [homePublicTeamId, awayPublicTeamId] = await Promise.all([
+      resolvePublicTeamId(homeClubPublicId, homeTeamId),
+      resolvePublicTeamId(awayClubPublicId, awayTeamId),
+    ]);
+
     // A fixture is a single shared record now (see createGame.ts) — both
     // clubs' own pages/widgets/apps mirror it symmetrically, not just
     // whichever one happens to be administering it. The administering
@@ -141,6 +166,8 @@ export const onGameEventCreate = onDocumentCreated(
           awayClubPublicId: awayClubPublicId ?? null,
           homeTeamId: homeTeamId ?? null,
           awayTeamId: awayTeamId ?? null,
+          homePublicTeamId,
+          awayPublicTeamId,
           scoreHome: state.scoreHome,
           scoreAway: state.scoreAway,
           status: state.status,
