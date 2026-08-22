@@ -16,12 +16,21 @@ const BUNDLE_ID = "dev.oryno.liveclub";
 // [publicTeamId]) and "/*" (src/app/[publicClubId], the club page — a
 // single dynamic top-level segment, so it has to be the catch-all).
 const PATHS = [
+  // Bare "/" is the marketing homepage, not a club — "/*" below would
+  // otherwise swallow it too (glob "*" matches the empty remainder).
+  "NOT /",
+  // Both the exact page and its subpaths — "/admin/*" alone doesn't match
+  // "/admin" itself (no trailing segment), which would otherwise fall
+  // through to the "/*" club catch-all as if "admin" were a publicClubId.
+  "NOT /admin",
   "NOT /admin/*",
+  "NOT /dashboard",
   "NOT /dashboard/*",
   "NOT /embed/*",
   "NOT /impressum",
   "NOT /invite/*",
   "NOT /login",
+  "NOT /onboarding",
   "NOT /onboarding/*",
   "NOT /privacy-policy",
   "NOT /register",
@@ -29,6 +38,11 @@ const PATHS = [
   "NOT /support",
   "NOT /terms-of-service",
   "NOT /verein-empfehlen",
+  // Legacy German slugs (next.config.ts redirects to the routes above) —
+  // without these, tapping an old bookmarked link hands it to the app
+  // instead of letting Safari follow the redirect.
+  "NOT /agb",
+  "NOT /datenschutz",
   "NOT /.well-known/*",
   "/team/*",
   "/*",
