@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.oryno.liveclub.android",
+      "sha256_cert_fingerprints": [
+        "B9:3E:68:DF:68:0C:AB:36:D0:6A:32:9D:2B:A3:52:97:55:A9:67:CC:39:F9:3B:F8:47:4C:F3:D5:C2:19:40:0A",
+        "05:8A:2C:AD:89:A5:49:30:10:E4:FF:2C:C5:E1:4C:76:7D:C5:04:2E:2E:3E:F7:56:FF:76:D4:31:E4:7B:26:50"
+      ]
+    }
+  }
+]
