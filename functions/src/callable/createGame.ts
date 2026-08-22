@@ -13,6 +13,9 @@ import { editorDisplayName, eligibleEditorsForTeam, sendToEditorIfOptedIn } from
 // matchdays) never collide.
 const DUPLICATE_WINDOW_HOURS = 18;
 
+// Keep in sync with src/app/dashboard/games/page.tsx's date-input max.
+const MAX_ADVANCE_DAYS = 31;
+
 interface CreateGameRequest {
   clubId: string;
   teamId: string;
@@ -139,6 +142,17 @@ export const createGame = onCall<CreateGameRequest>(
     }
 
     const scheduledStartTs = Timestamp.fromDate(new Date(scheduledStart));
+
+    // Deliberately caps how far ahead a club can plan (2026-08-22 decision)
+    // — keeps the number of never-yet-live fixtures bounded and nudges
+    // clubs to keep coming back rather than bulk-creating a season upfront.
+    const maxAdvanceMs = MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000;
+    if (scheduledStartTs.toMillis() > Date.now() + maxAdvanceMs) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Der Anstoss darf höchstens ${MAX_ADVANCE_DAYS} Tage im Voraus geplant werden.`
+      );
+    }
 
     const homeTeamName = isHomeGame ? ownTeamName : opponentDisplayName;
     const awayTeamName = isHomeGame ? opponentDisplayName : ownTeamName;

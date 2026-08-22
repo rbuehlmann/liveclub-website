@@ -36,6 +36,14 @@ const STATUS_BADGE_CLASSES: Record<Game["status"], string> = {
 };
 
 const MAX_SEARCH_RESULTS = 8;
+// Keep in sync with functions/src/callable/createGame.ts's MAX_ADVANCE_DAYS.
+const MAX_ADVANCE_DAYS = 31;
+
+function maxScheduledStartValue(): string {
+  const d = new Date(Date.now() + MAX_ADVANCE_DAYS * 24 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function mapGameDoc(id: string, data: Record<string, unknown>): Game {
   const scheduledStart = data.scheduledStart as { toDate?: () => Date } | undefined;
@@ -367,6 +375,7 @@ export default function GamesPage() {
               type="datetime-local"
               required
               autoComplete="off"
+              max={maxScheduledStartValue()}
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />
