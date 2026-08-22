@@ -8,7 +8,8 @@ export default function ImpressumPage() {
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <PublicHeader />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12">
-        <h1 className="mb-6 font-teko text-4xl font-bold text-gray-900 dark:text-white">Impressum</h1>
+        <h1 className="mb-1 font-teko text-4xl font-bold text-gray-900 dark:text-white">Impressum</h1>
+        <p className="mb-6 text-xs text-gray-400 dark:text-gray-500">Stand: August 2026</p>
 
         <div className="flex flex-col gap-6 text-sm text-gray-700 dark:text-gray-300">
           <section>
@@ -69,8 +70,6 @@ export default function ImpressumPage() {
               jeweiligen Vereins.
             </p>
           </section>
-
-          <p className="text-xs text-gray-400 dark:text-gray-500">Stand: August 2026</p>
         </div>
       </main>
       <PublicFooter />
