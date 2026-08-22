@@ -13,11 +13,11 @@ export default function ImpressumPage() {
         <div className="flex flex-col gap-6 text-sm text-gray-700 dark:text-gray-300">
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Betreiber</h2>
-            <p>
-              LiveClub ist ein eigenständiges Angebot und wird betrieben von:
-            </p>
+            <p>LiveClub ist ein Angebot von</p>
             <p className="mt-2">
-              oryno.dev · Raffael Bühlmann
+              <strong className="text-gray-900 dark:text-white">oryno.dev</strong>
+              <br />
+              Inhaber: Raffael Bühlmann
               <br />
               Luzernerstrasse 5
               <br />
@@ -29,40 +29,44 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Kontakt</h2>
-            <p>hello@oryno.dev</p>
+            <p>E-Mail: hello@oryno.dev</p>
           </section>
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Verantwortlich für den Inhalt</h2>
-            <p>Raffael Bühlmann, Anschrift wie oben.</p>
+            <p>Raffael Bühlmann</p>
           </section>
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Rechtsform</h2>
-            <p>
-              Einzelunternehmen. Kein Handelsregistereintrag, keine Mehrwertsteuerpflicht (Umsatz
-              unterhalb der massgeblichen Schwellenwerte).
+            <p>Einzelunternehmen nach schweizerischem Recht.</p>
+            <p className="mt-2">
+              Soweit gesetzlich erforderlich erfolgt ein Eintrag ins Handelsregister sowie die
+              Anmeldung zur Mehrwertsteuer.
             </p>
           </section>
 
           <section>
-            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Haftungsausschluss</h2>
+            <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Haftung</h2>
             <p>
-              Die Inhalte dieser Website wurden sorgfältig erstellt. Für die Richtigkeit,
-              Vollständigkeit und Aktualität wird keine Gewähr übernommen. Für Inhalte externer,
-              verlinkter Websites ist ausschliesslich deren Betreiber verantwortlich — im Zeitpunkt
-              der Verlinkung waren keine rechtswidrigen Inhalte erkennbar.
+              Die Inhalte dieser Website wurden mit grösstmöglicher Sorgfalt erstellt. Dennoch wird
+              keine Gewähr für deren Richtigkeit, Vollständigkeit oder Aktualität übernommen.
+            </p>
+            <p className="mt-2">
+              Für Inhalte externer Websites, auf welche mittels Links verwiesen wird, sind
+              ausschliesslich deren jeweilige Betreiber verantwortlich.
             </p>
           </section>
 
           <section>
             <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Urheberrecht</h2>
             <p>
-              Die auf dieser Website veröffentlichten Inhalte (Texte, Layout, Logo, Software)
-              unterliegen dem Urheberrecht. Jede Vervielfältigung, Verbreitung oder Bearbeitung
-              ausserhalb der engen Grenzen des Urheberrechts bedarf der schriftlichen Zustimmung
-              des Betreibers. Vereine bleiben Eigentümer der von ihnen selbst hochgeladenen Inhalte
-              (z. B. Vereinslogo).
+              Sämtliche Inhalte, Designs, Logos und Softwarebestandteile von LiveClub unterliegen
+              dem Urheberrecht, soweit nichts anderes angegeben ist.
+            </p>
+            <p className="mt-2">
+              Von Vereinen hochgeladene Inhalte (z. B. Vereinslogos) verbleiben im Eigentum des
+              jeweiligen Vereins.
             </p>
           </section>
 
