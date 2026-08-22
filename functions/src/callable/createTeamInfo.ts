@@ -8,6 +8,7 @@ import {
   resolveTeamInfoSettings,
 } from "../lib/teamInfo";
 import { sendTeamInfoPush } from "../lib/teamInfoPush";
+import { apnsAuthKey } from "../lib/secrets";
 
 const MAX_TITLE_LENGTH = 100;
 const MAX_TEXT_LENGTH = 500;
@@ -36,7 +37,7 @@ function assertNonEmptyString(value: unknown, field: string, maxLength: number):
  * editor, so a team with several reporters shares one daily budget —
  * that's why the count queries below filter by teamId alone, never uid.
  */
-export const createTeamInfo = onCall<CreateTeamInfoRequest>(async (request) => {
+export const createTeamInfo = onCall<CreateTeamInfoRequest>({ secrets: [apnsAuthKey] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
