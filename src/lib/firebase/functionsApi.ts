@@ -77,6 +77,64 @@ export async function adminSetTeamInfoSettings(input: {
   return result.data;
 }
 
+export async function hideTeamInfo(infoId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ infoId: string }, { ok: true }>(functions, "hideTeamInfo");
+  const result = await call({ infoId });
+  return result.data;
+}
+
+export async function adminModerateTeamInfo(
+  input:
+    | { infoId: string; action: "delete" | "restore" }
+    | { infoId: string; action: "edit"; title: string; text: string }
+) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "adminModerateTeamInfo");
+  const result = await call(input);
+  return result.data;
+}
+
+export interface AdminTeamInfoListItem {
+  infoId: string;
+  teamId: string | null;
+  teamName: string | null;
+  clubName: string | null;
+  title: string | null;
+  text: string | null;
+  createdAt: string | null;
+  createdByUid: string | null;
+  hidden: boolean;
+  hiddenAt: string | null;
+  hiddenByRole: "redaktor" | "admin" | null;
+}
+
+export async function adminListTeamInfos(input: { teamId?: string; teamNameQuery?: string }) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { infos: AdminTeamInfoListItem[] }>(
+    functions,
+    "adminListTeamInfos"
+  );
+  const result = await call(input);
+  return result.data.infos;
+}
+
+export async function adminCreateClubArchive(clubId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ clubId: string }, { url: string; sizeBytes: number }>(
+    functions,
+    "adminCreateClubArchive"
+  );
+  const result = await call({ clubId });
+  return result.data;
+}
+
+export async function deleteOwnAccount() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<Record<string, never>, { ok: true }>(functions, "deleteOwnAccount");
+  await call({});
+}
+
 export async function requestGameTransfer(
   input: { gameId: string; toUid: string } | { gameId: string; toOpponentClub: true }
 ) {

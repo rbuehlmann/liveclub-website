@@ -108,8 +108,8 @@ export default function CreateClubPage() {
     setLogoError(null);
     try {
       const { db, storage } = getFirebaseClient();
-      const logoRef = ref(storage, `clubs/${createdClubId}/logo/${file.name}`);
-      await uploadBytes(logoRef, file);
+      const logoRef = ref(storage, `clubs/${createdClubId}/logo/${Date.now()}-${file.name}`);
+      await uploadBytes(logoRef, file, { cacheControl: "public, max-age=2592000" });
       const url = await getDownloadURL(logoRef);
       await updateDoc(doc(db, "clubs", createdClubId), { logoUrl: url });
       setLogoUrl(url);

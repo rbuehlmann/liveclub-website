@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  adminCreateClubArchive,
   adminDeleteClub,
   adminListClubs,
   adminSetLicense,
@@ -34,6 +35,8 @@ export default function AdminClubsPage() {
   const [suspendingClub, setSuspendingClub] = useState<AdminClubListItem | null>(null);
   const [deletingClub, setDeletingClub] = useState<AdminClubListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [archivingClubId, setArchivingClubId] = useState<string | null>(null);
+  const [archiveUrlByClub, setArchiveUrlByClub] = useState<Record<string, string>>({});
 
   function reload() {
     adminListClubs().then((loaded) => {
@@ -128,6 +131,22 @@ export default function AdminClubsPage() {
     }
   }
 
+  async function runCreateArchive(clubId: string) {
+    setArchivingClubId(clubId);
+    setErrorByClub((prev) => ({ ...prev, [clubId]: "" }));
+    try {
+      const { url } = await adminCreateClubArchive(clubId);
+      setArchiveUrlByClub((prev) => ({ ...prev, [clubId]: url }));
+    } catch (err) {
+      setErrorByClub((prev) => ({
+        ...prev,
+        [clubId]: (err as { message?: string })?.message ?? "Aktion fehlgeschlagen.",
+      }));
+    } finally {
+      setArchivingClubId(null);
+    }
+  }
+
   async function handleDelete() {
     if (!deletingClub) return;
     setDeleting(true);
@@ -218,7 +237,29 @@ export default function AdminClubsPage() {
                   <Button variant="danger" disabled={isBusy} onClick={() => setDeletingClub(club)}>
                     {t("deleteClub")}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={archivingClubId === club.clubId}
+                    onClick={() => runCreateArchive(club.clubId)}
+                  >
+                    {archivingClubId === club.clubId ? "Wird erstellt …" : "Archiv jetzt erstellen"}
+                  </Button>
                 </div>
+                {archiveUrlByClub[club.clubId] && (
+                  <p className="text-sm">
+                    Archiv bereit:{" "}
+                    <a
+                      href={archiveUrlByClub[club.clubId]}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-red underline"
+                    >
+                      Herunterladen
+                    </a>{" "}
+                    (Link 30 Tage gültig)
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 text-xs dark:border-white/10">
                   <span className="text-gray-400 dark:text-gray-500">Team-Infos:</span>
                   <Button

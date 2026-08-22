@@ -146,8 +146,8 @@ function ImageField({ label, fieldKey, value, onChange }: ImageFieldProps) {
     setError(null);
     try {
       const { storage } = getFirebaseClient();
-      const fileRef = ref(storage, `branding/${fieldKey}-${file.name}`);
-      await uploadBytes(fileRef, file);
+      const fileRef = ref(storage, `branding/${fieldKey}-${Date.now()}-${file.name}`);
+      await uploadBytes(fileRef, file, { cacheControl: "public, max-age=2592000" });
       const url = await getDownloadURL(fileRef);
       onChange(fieldKey, url);
     } catch (err) {

@@ -14,6 +14,11 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { adminDeleteClub } from "@/lib/firebase/functionsApi";
 import { logout } from "@/lib/firebase/authApi";
 
+const DELETE_REASON_LABELS: Record<string, string> = {
+  price: "Preis zu hoch",
+  value: "Zu wenig Nutzen",
+};
+
 export default function EditClubPage() {
   const t = useTranslations("clubSetup");
   const tCommon = useTranslations("common");
@@ -32,6 +37,8 @@ export default function EditClubPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleteReasonOther, setDeleteReasonOther] = useState("");
 
   useEffect(() => {
     if (!club) return;
@@ -72,8 +79,8 @@ export default function EditClubPage() {
     setLogoError(null);
     try {
       const { db, storage } = getFirebaseClient();
-      const logoRef = ref(storage, `clubs/${club.clubId}/logo/${file.name}`);
-      await uploadBytes(logoRef, file);
+      const logoRef = ref(storage, `clubs/${club.clubId}/logo/${Date.now()}-${file.name}`);
+      await uploadBytes(logoRef, file, { cacheControl: "public, max-age=2592000" });
       const url = await getDownloadURL(logoRef);
       await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: url });
     } catch (err) {
@@ -98,12 +105,16 @@ export default function EditClubPage() {
     }
   }
 
+  const resolvedDeleteReason =
+    deleteReason === "other" ? deleteReasonOther.trim() : DELETE_REASON_LABELS[deleteReason] ?? "";
+  const canConfirmDelete = !!deleteReason && (deleteReason !== "other" || !!deleteReasonOther.trim());
+
   async function handleDeleteClub() {
     if (!club) return;
     setDeleting(true);
     setDeleteError(null);
     try {
-      await adminDeleteClub(club.clubId);
+      await adminDeleteClub(club.clubId, resolvedDeleteReason);
       await logout();
       router.push("/");
     } catch (err) {
@@ -200,9 +211,32 @@ export default function EditClubPage() {
           und Einladungen — unwiderruflich gelöscht. Eine laufende Lizenz wird sofort beendet, ohne
           Rückerstattung bereits bezahlter Zeit. Dieser Schritt lässt sich nicht rückgängig machen.
         </p>
+        <div className="mt-4 flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Grund</label>
+          <select
+            value={deleteReason}
+            onChange={(e) => setDeleteReason(e.target.value)}
+            className="rounded-lg border border-gray-300 px-4 py-3 text-base dark:border-white/10 dark:bg-white/5 dark:text-white"
+          >
+            <option value="" disabled>
+              –
+            </option>
+            <option value="price">Preis zu hoch</option>
+            <option value="value">Zu wenig Nutzen</option>
+            <option value="other">Sonstiges</option>
+          </select>
+        </div>
+        {deleteReason === "other" && (
+          <TextField
+            label="Bitte kurz erläutern"
+            value={deleteReasonOther}
+            onChange={(e) => setDeleteReasonOther(e.target.value)}
+          />
+        )}
         <Button
           variant="danger"
           className="mt-4"
+          disabled={!canConfirmDelete}
           onClick={() => {
             setDeleteError(null);
             setConfirmingDelete(true);

@@ -5,6 +5,9 @@ import { db, auth, app } from "../firebaseAdmin";
 import { sendMail, LIVECLUB_TEAM_EMAIL } from "../lib/mailer";
 import { smtpPassword } from "../lib/secrets";
 import { getTemplate, renderTemplate } from "../lib/emailTemplates";
+import { buildAndUploadClubArchive, getArchiveDownloadUrl } from "../lib/clubArchive";
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface AdminDeleteClubRequest {
   clubId: string;
@@ -33,11 +36,21 @@ interface AdminDeleteClubRequest {
  * followedTeamIds array are harmless dead weight, not worth an unindexed
  * full-collection scan here).
  *
- * Sends a confirmation email to the club's contact address (plus an
- * internal copy) via the emailTemplates/clubDeleted template right before
- * the final recursiveDelete — fires for both callers (platform-admin and
- * self-service), since either way the club is genuinely gone and its admin
- * should have a record of it.
+ * Sends a confirmation email to the club's contact address via
+ * emailTemplates/clubDeleted, an internal notification (with the archive
+ * download link, the reason, and who triggered it) to LIVECLUB_TEAM_EMAIL,
+ * and a plain "you're no longer part of this club" email to every
+ * individual member — fires for both callers (platform-admin and
+ * self-service).
+ *
+ * Before any of that, silently snapshots everything about the club to
+ * Storage (see lib/clubArchive.ts) — evidence retention for LiveClub's own
+ * protection if a club abuses the platform and deletes itself to dodge
+ * accountability, never a restore/backup feature for the club itself (see
+ * the 2026-08-22 "Sicherheits-Archiv" design). This has to happen
+ * unconditionally here, not as a separate manual step someone remembers to
+ * click first — a self-deleting clubAdmin gives nobody the chance to do
+ * that.
  */
 export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
   { secrets: [smtpPassword] },
@@ -68,6 +81,10 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     }
     const clubData = clubSnap.data()!;
     const publicClubId: string | undefined = clubData.publicClubId;
+
+    // Must run before anything below deletes a single byte — see the class
+    // doc comment above.
+    const archive = await buildAndUploadClubArchive(clubId);
 
     const [membersSnap, teamsSnap, homeGamesSnap, awayGamesSnap, invitationsSnap, teamInfosSnap] =
       await Promise.all([
@@ -125,9 +142,16 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     // Every member: drop this club from their cached users/{uid} fields, then
     // immediately resync their claim (same derivation as syncClubClaims)
     // rather than waiting for their next sign-in/token refresh to self-heal.
+    // Also email each of them individually — contactEmail below only covers
+    // the club's own inbox, which may not even be a real login.
+    const redaktorRemovedTemplate = await getTemplate(db, "redaktorRemoved");
+    const redaktorRemovedVars = { clubName: clubData.name ?? "" };
+    const redaktorRemovedSubject = renderTemplate(redaktorRemovedTemplate.subject, redaktorRemovedVars);
+    const redaktorRemovedHtml = renderTemplate(redaktorRemovedTemplate.html, redaktorRemovedVars);
     await Promise.all(
       membersSnap.docs.map(async (memberDoc) => {
         const uid = memberDoc.id;
+        const memberEmail = memberDoc.data()?.email as string | undefined;
         const userRef = db.collection("users").doc(uid);
         await userRef.set(
           {
@@ -146,17 +170,40 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
         await auth
           .setCustomUserClaims(uid, nextClubId && nextRole ? { clubId: nextClubId, role: nextRole } : {})
           .catch(() => undefined);
+        if (memberEmail) {
+          await sendMail({ to: memberEmail, subject: redaktorRemovedSubject, html: redaktorRemovedHtml }).catch(
+            () => undefined
+          );
+        }
       })
     );
 
+    const deletionReason = reason?.trim() || "Nicht angegeben.";
     const contactEmail = clubData.contactEmail as string | undefined;
     if (contactEmail) {
-      const vars = { clubName: clubData.name ?? "", reason: reason?.trim() || "Nicht angegeben." };
+      const vars = { clubName: clubData.name ?? "", reason: deletionReason };
       const template = await getTemplate(db, "clubDeleted");
       const subject = renderTemplate(template.subject, vars);
       const html = renderTemplate(template.html, vars);
       await sendMail({ to: contactEmail, subject, html }).catch(() => undefined);
-      await sendMail({ to: LIVECLUB_TEAM_EMAIL, subject: `[Kopie] ${subject}`, html }).catch(() => undefined);
+    }
+
+    // Internal-only notification with the archive link — see the class doc
+    // comment for why this is a separate template from clubDeleted rather
+    // than a "[Kopie]" of it (the club must never see the archive URL or
+    // who triggered the deletion).
+    {
+      const archiveUrl = await getArchiveDownloadUrl(archive.path, THIRTY_DAYS_MS);
+      const triggeredBy = isPlatformAdmin
+        ? `Plattform-Administrator (${request.auth.token.email ?? request.auth.uid})`
+        : `Vereins-Admin, Selbstlöschung (${request.auth.token.email ?? request.auth.uid})`;
+      const template = await getTemplate(db, "clubDeletedInternal");
+      const vars = { clubName: clubData.name ?? "", reason: deletionReason, triggeredBy, archiveUrl };
+      await sendMail({
+        to: LIVECLUB_TEAM_EMAIL,
+        subject: renderTemplate(template.subject, vars),
+        html: renderTemplate(template.html, vars),
+      }).catch(() => undefined);
     }
 
     // clubs/{clubId} + members/teams/licenses subcollections (games are

@@ -2,12 +2,18 @@ export { onGameEventCreate } from "./triggers/onGameEventCreate";
 export { onTeamWrite } from "./triggers/onTeamWrite";
 export { onClubWrite } from "./triggers/onClubWrite";
 export { onInvitationCreate } from "./triggers/onInvitationCreate";
+export { onPublicGameWrite } from "./triggers/onPublicGameWrite";
 
 export { createClub } from "./callable/createClub";
 export { createTeam } from "./callable/createTeam";
 export { createGame } from "./callable/createGame";
 export { createTeamInfo } from "./callable/createTeamInfo";
 export { adminSetTeamInfoSettings } from "./callable/adminSetTeamInfoSettings";
+export { hideTeamInfo } from "./callable/hideTeamInfo";
+export { adminModerateTeamInfo } from "./callable/adminModerateTeamInfo";
+export { adminListTeamInfos } from "./callable/adminListTeamInfos";
+export { adminCreateClubArchive } from "./callable/adminCreateClubArchive";
+export { deleteOwnAccount } from "./callable/deleteOwnAccount";
 export { requestGameTransfer } from "./callable/requestGameTransfer";
 export { acceptGameTransfer } from "./callable/acceptGameTransfer";
 export { declineGameTransfer } from "./callable/declineGameTransfer";

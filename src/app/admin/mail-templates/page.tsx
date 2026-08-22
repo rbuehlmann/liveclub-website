@@ -30,6 +30,18 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
   },
   { id: "gameTakenOver", label: "Spiel übernommen", hint: "{{homeTeamName}}, {{awayTeamName}}" },
   { id: "gameHandedOff", label: "Spiel abgegeben", hint: "{{homeTeamName}}, {{awayTeamName}}" },
+  {
+    id: "clubDeletedInternal",
+    label: "Verein gelöscht (intern)",
+    hint: "{{clubName}}, {{triggeredBy}}, {{reason}}, {{archiveUrl}}",
+  },
+  { id: "redaktorRemoved", label: "Verein gelöscht (an Redaktor)", hint: "{{clubName}}" },
+  { id: "clubMemberLeft", label: "Redaktor hat sein Konto gelöscht", hint: "{{memberName}}, {{memberEmail}}, {{clubName}}" },
+  {
+    id: "teamInfoHidden",
+    label: "Team-Info ausgeblendet",
+    hint: "{{redaktorName}}, {{redaktorEmail}}, {{teamName}}, {{clubName}}, {{postTitle}}, {{postText}}, {{hiddenAt}}",
+  },
 ];
 
 const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
@@ -93,6 +105,32 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
     subject: "Übertragen: {{homeTeamName}} vs. {{awayTeamName}}",
     html: `<p>Hallo,</p>
 <p>Die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> wurde an eine andere Person übertragen. Du musst dich nicht mehr darum kümmern — das Spiel kannst du weiterhin live mitverfolgen.</p>`,
+  },
+  clubDeletedInternal: {
+    subject: "[Archiv] Verein gelöscht: {{clubName}}",
+    html: `<p>Verein <strong>{{clubName}}</strong> wurde gelöscht.</p>
+<p><strong>Ausgelöst von:</strong> {{triggeredBy}}</p>
+<p><strong>Grund:</strong> {{reason}}</p>
+<p><strong>Archiv (30 Tage verfügbar):</strong> <a href="{{archiveUrl}}">Herunterladen</a></p>`,
+  },
+  redaktorRemoved: {
+    subject: "{{clubName}} wurde gelöscht",
+    html: `<p>Hallo,</p>
+<p>Der Verein <strong>{{clubName}}</strong> wurde gelöscht — du bist dadurch nicht mehr Redaktor dort. Dein LiveClub-Konto selbst bleibt bestehen, falls du noch bei anderen Vereinen aktiv bist.</p>`,
+  },
+  clubMemberLeft: {
+    subject: "{{memberName}} ist nicht mehr bei {{clubName}}",
+    html: `<p>Hallo,</p>
+<p><strong>{{memberName}}</strong> ({{memberEmail}}) hat sein/ihr LiveClub-Konto gelöscht und ist dadurch nicht mehr Redaktor bei <strong>{{clubName}}</strong>.</p>`,
+  },
+  teamInfoHidden: {
+    subject: "Team-Info ausgeblendet: {{teamName}} ({{clubName}})",
+    html: `<p>Eine Team-Info wurde ausgeblendet.</p>
+<p><strong>Redaktor:</strong> {{redaktorName}} ({{redaktorEmail}})</p>
+<p><strong>Team:</strong> {{teamName}} ({{clubName}})</p>
+<p><strong>Titel:</strong> {{postTitle}}</p>
+<p><strong>Text:</strong> {{postText}}</p>
+<p><strong>Zeitpunkt:</strong> {{hiddenAt}}</p>`,
   },
 };
 

@@ -253,6 +253,13 @@ export interface TeamInfo {
   createdByUid: string;
   pushSent: boolean;
   pushSentAt: string | null;
+  // Soft-hide only — never a real delete (2026-08-22 "Moderation" design).
+  // "redaktor" can only ever set this true (via hideTeamInfo, one-way);
+  // "admin" can set/unset it (adminModerateTeamInfo).
+  hidden?: boolean;
+  hiddenAt?: string | null;
+  hiddenByUid?: string | null;
+  hiddenByRole?: "redaktor" | "admin" | null;
 }
 
 // Public, read-only mirror of one club's active teams — lets another club

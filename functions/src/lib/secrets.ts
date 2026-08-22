@@ -31,3 +31,20 @@ export const stripePriceIdTeam15Monthly = defineString("STRIPE_PRICE_ID_TEAM15_M
 export const stripePriceIdTeam15Yearly = defineString("STRIPE_PRICE_ID_TEAM15_YEARLY");
 export const stripePriceIdUnlimitedMonthly = defineString("STRIPE_PRICE_ID_UNLIMITED_MONTHLY");
 export const stripePriceIdUnlimitedYearly = defineString("STRIPE_PRICE_ID_UNLIMITED_YEARLY");
+
+// Set via `firebase functions:secrets:set APNS_AUTH_KEY` — the .p8 private
+// key content from an Apple Developer "Apple Push Notifications service
+// (APNs)" key, used to sign Live Activity push-to-start/update/end
+// requests (see lib/apns.ts). Never pass the value through a script.
+export const apnsAuthKey = defineSecret("APNS_AUTH_KEY");
+
+// Not sensitive on their own (they only matter paired with the private key
+// above), so plain params — set per environment via functions/.env.<project-id>.
+export const apnsKeyId = defineString("APNS_KEY_ID");
+export const apnsTeamId = defineString("APNS_TEAM_ID");
+// An APNs auth key is permanently locked to one environment when created in
+// the Apple Developer portal — "sandbox" matches an app built with the
+// `development` aps-environment entitlement (Xcode Debug builds run from
+// source), "production" matches TestFlight/App Store builds. Switching
+// requires a second key + a new APNS_KEY_ID/APNS_AUTH_KEY, not just this flag.
+export const apnsEnvironment = defineString("APNS_ENVIRONMENT", { default: "sandbox" });

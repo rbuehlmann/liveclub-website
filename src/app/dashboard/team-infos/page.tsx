@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, getDoc, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
-import { createTeamInfo } from "@/lib/firebase/functionsApi";
+import { createTeamInfo, hideTeamInfo } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -56,6 +56,8 @@ function mapTeamInfoDoc(id: string, data: Record<string, unknown>): TeamInfo {
     createdByUid: data.createdByUid as string,
     pushSent: (data.pushSent as boolean) ?? false,
     pushSentAt: pushSentAt?.toDate?.().toISOString() ?? null,
+    hidden: (data.hidden as boolean) ?? false,
+    hiddenByRole: (data.hiddenByRole as "redaktor" | "admin" | null) ?? null,
   };
 }
 
@@ -70,6 +72,9 @@ export default function TeamInfosPage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [confirmingPush, setConfirmingPush] = useState(false);
+  const [hidingInfoId, setHidingInfoId] = useState<string | null>(null);
+  const [hideError, setHideError] = useState<string | null>(null);
+  const [hiding, setHiding] = useState(false);
 
   const [recentInfos, setRecentInfos] = useState<TeamInfo[]>([]);
   const [infosToday, setInfosToday] = useState<TeamInfo[]>([]);
@@ -195,6 +200,20 @@ export default function TeamInfosPage() {
     }
   }
 
+  async function confirmHide() {
+    if (!hidingInfoId) return;
+    setHiding(true);
+    setHideError(null);
+    try {
+      await hideTeamInfo(hidingInfoId);
+      setHidingInfoId(null);
+    } catch (err) {
+      setHideError((err as { message?: string })?.message ?? "Ausblenden fehlgeschlagen.");
+    } finally {
+      setHiding(false);
+    }
+  }
+
   function handleSubmitClick() {
     if (!teamId || !title.trim() || !text.trim()) return;
     if (sendPush) {
@@ -304,8 +323,9 @@ export default function TeamInfosPage() {
         {teamId && recentInfos.length === 0 && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Noch keine Team-Infos für diese Mannschaft.</p>
         )}
+        {hideError && <p className="text-sm text-red-600">{hideError}</p>}
         {recentInfos.map((info) => (
-          <Card key={info.infoId} className="flex items-start gap-3">
+          <Card key={info.infoId} className={`flex items-start gap-3 ${info.hidden ? "opacity-50" : ""}`}>
             <TeamIcon publicClubId={info.publicClubId} teamName={info.teamName} size={36} />
             <div className="flex-1">
               <p className="font-medium text-gray-900 dark:text-white">
@@ -315,8 +335,14 @@ export default function TeamInfosPage() {
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                 {formatDateTimeDe(info.createdAt)}
                 {info.pushSent ? " · Push gesendet" : ""}
+                {info.hidden ? " · Ausgeblendet" : ""}
               </p>
             </div>
+            {!info.hidden && (
+              <Button variant="secondary" onClick={() => setHidingInfoId(info.infoId)}>
+                Ausblenden
+              </Button>
+            )}
           </Card>
         ))}
       </div>
@@ -348,6 +374,21 @@ export default function TeamInfosPage() {
         cancelLabel="Abbrechen"
         onConfirm={submit}
         onCancel={() => setConfirmingPush(false)}
+      />
+
+      <ConfirmDialog
+        open={!!hidingInfoId}
+        title="Team-Info ausblenden?"
+        body={
+          <>
+            Die Mitteilung verschwindet sofort aus dem Feed der App. Das kann nicht rückgängig gemacht
+            werden — nur euer Verein und Superadmin können das ändern.
+          </>
+        }
+        confirmLabel={hiding ? "Wird ausgeblendet …" : "Ausblenden"}
+        cancelLabel="Abbrechen"
+        onConfirm={confirmHide}
+        onCancel={() => setHidingInfoId(null)}
       />
     </div>
   );

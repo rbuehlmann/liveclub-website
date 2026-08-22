@@ -82,6 +82,51 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
 <p><strong>Grund:</strong> {{reason}}</p>
 <p>Falls das nicht beabsichtigt war, kontaktiere bitte umgehend unseren <a href="https://liveclub.app/support">Support</a>.</p>`,
   },
+  // Internal-only — goes to LIVECLUB_TEAM_EMAIL, never to the club itself
+  // (unlike clubDeleted above). Deliberately separate from clubDeleted
+  // rather than a "[Kopie]"-prefixed reuse of it, since this one carries
+  // the archive download link and who triggered the deletion — neither of
+  // which the club should ever see.
+  clubDeletedInternal: {
+    label: "Verein gelöscht (intern)",
+    subject: "[Archiv] Verein gelöscht: {{clubName}}",
+    html: `<p>Verein <strong>{{clubName}}</strong> wurde gelöscht.</p>
+<p><strong>Ausgelöst von:</strong> {{triggeredBy}}</p>
+<p><strong>Grund:</strong> {{reason}}</p>
+<p><strong>Archiv (30 Tage verfügbar):</strong> <a href="{{archiveUrl}}">Herunterladen</a></p>`,
+  },
+  // Sent to every individual member (not just the club's contactEmail,
+  // which clubDeleted above already covers and which may not even be a
+  // real login) when their club is deleted.
+  redaktorRemoved: {
+    label: "Verein gelöscht (an Redaktor)",
+    subject: "{{clubName}} wurde gelöscht",
+    html: `<p>Hallo,</p>
+<p>Der Verein <strong>{{clubName}}</strong> wurde gelöscht — du bist dadurch nicht mehr Redaktor dort. Dein LiveClub-Konto selbst bleibt bestehen, falls du noch bei anderen Vereinen aktiv bist.</p>`,
+  },
+  // Sent to a club's contactEmail when one of ITS members deletes their
+  // own personal LiveClub account (see deleteOwnAccount.ts) — the club
+  // itself is unaffected, this just informs them the person is gone.
+  clubMemberLeft: {
+    label: "Redaktor hat sein Konto gelöscht",
+    subject: "{{memberName}} ist nicht mehr bei {{clubName}}",
+    html: `<p>Hallo,</p>
+<p><strong>{{memberName}}</strong> ({{memberEmail}}) hat sein/ihr LiveClub-Konto gelöscht und ist dadurch nicht mehr Redaktor bei <strong>{{clubName}}</strong>.</p>`,
+  },
+  // Sent to LiveClub, the club's contactEmail, AND the original author
+  // when a redaktor hides a Team-Info (see hideTeamInfo.ts) — the full
+  // post content is included deliberately, so urgency can be judged
+  // without logging in anywhere.
+  teamInfoHidden: {
+    label: "Team-Info ausgeblendet",
+    subject: "Team-Info ausgeblendet: {{teamName}} ({{clubName}})",
+    html: `<p>Eine Team-Info wurde ausgeblendet.</p>
+<p><strong>Redaktor:</strong> {{redaktorName}} ({{redaktorEmail}})</p>
+<p><strong>Team:</strong> {{teamName}} ({{clubName}})</p>
+<p><strong>Titel:</strong> {{postTitle}}</p>
+<p><strong>Text:</strong> {{postText}}</p>
+<p><strong>Zeitpunkt:</strong> {{hiddenAt}}</p>`,
+  },
 };
 
 export function renderTemplate(template: string, vars: Record<string, string>): string {
