@@ -134,6 +134,7 @@ export const createTeamInfo = onCall<CreateTeamInfoRequest>({ secrets: [apnsAuth
     createdByUid: uid,
     pushSent: false,
     pushSentAt: null,
+    hidden: false,
   });
 
   if (wantsPush && publicTeamId) {
