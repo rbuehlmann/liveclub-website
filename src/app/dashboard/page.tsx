@@ -5,56 +5,106 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { daysRemaining, formatDateDe } from "@/lib/date";
-import { createCheckoutSession } from "@/lib/firebase/functionsApi";
+import { TeamIcon } from "@/components/TeamIcon";
+import { daysRemaining, formatDateDe, formatDateTimeDe } from "@/lib/date";
+import { createCheckoutSession, acceptGameTransfer } from "@/lib/firebase/functionsApi";
 import { LICENSE_TIERS, tierLabel } from "@/lib/licenseTiers";
 import { LicenseTier, GameStatus } from "@/lib/types";
 
 const RENEWAL_WINDOW_DAYS = 14;
 const UPCOMING_STATUSES = new Set<GameStatus>(["draft", "scheduled", "live", "paused"]);
 
+interface ClaimableGame {
+  gameId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeClubPublicId: string | null;
+  awayClubPublicId: string | null;
+  scheduledStart: string | null;
+}
+
+function mapClaimableGame(id: string, data: Record<string, unknown>): ClaimableGame {
+  const scheduledStart = data.scheduledStart as { toDate?: () => Date } | undefined;
+  return {
+    gameId: id,
+    homeTeamName: data.homeTeamName as string,
+    awayTeamName: data.awayTeamName as string,
+    homeClubPublicId: (data.homeClubPublicId as string | null) ?? null,
+    awayClubPublicId: (data.awayClubPublicId as string | null) ?? null,
+    scheduledStart: scheduledStart?.toDate?.().toISOString() ?? null,
+  };
+}
+
 export default function DashboardOverviewPage() {
   const t = useTranslations("dashboard");
   const { club, role } = useClubContext();
+  const { user } = useAuth();
   const [redirecting, setRedirecting] = useState<`${LicenseTier}-monthly` | `${LicenseTier}-yearly` | null>(
     null
   );
   const [billingError, setBillingError] = useState<string | null>(null);
-  const [openGamesCount, setOpenGamesCount] = useState(0);
+  const [claimableGames, setClaimableGames] = useState<ClaimableGame[]>([]);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!club) return;
+    if (!club || !user) return;
     const { db } = getFirebaseClient();
-    const countOpen = (docs: { data: () => Record<string, unknown> }[]) =>
-      docs.filter(
-        (d) =>
-          !d.data().mainEditorUid &&
-          UPCOMING_STATUSES.has(d.data().status as GameStatus)
-      ).length;
-    let homeCount = 0;
-    let awayCount = 0;
+    // Only games this specific user is actually allowed to claim — open
+    // (mainEditorUid null) and their uid in eligibleEditorUids — so they
+    // can accept with one click on login instead of hunting through the
+    // full games list (2026-08-22 "sofort sichtbar" decision).
+    const filterClaimable = (docs: { id: string; data: () => Record<string, unknown> }[]) =>
+      docs
+        .filter(
+          (d) =>
+            !d.data().mainEditorUid &&
+            UPCOMING_STATUSES.has(d.data().status as GameStatus) &&
+            ((d.data().eligibleEditorUids as string[] | undefined) ?? []).includes(user.uid)
+        )
+        .map((d) => mapClaimableGame(d.id, d.data()));
+    let fromHome: ClaimableGame[] = [];
+    let fromAway: ClaimableGame[] = [];
+    const merge = () => {
+      const byId = new Map<string, ClaimableGame>();
+      for (const g of [...fromHome, ...fromAway]) byId.set(g.gameId, g);
+      setClaimableGames(Array.from(byId.values()));
+    };
     const unsubHome = onSnapshot(
       query(collection(db, "games"), where("homeClubId", "==", club.clubId)),
       (snap) => {
-        homeCount = countOpen(snap.docs);
-        setOpenGamesCount(homeCount + awayCount);
+        fromHome = filterClaimable(snap.docs);
+        merge();
       }
     );
     const unsubAway = onSnapshot(
       query(collection(db, "games"), where("awayClubId", "==", club.clubId)),
       (snap) => {
-        awayCount = countOpen(snap.docs);
-        setOpenGamesCount(homeCount + awayCount);
+        fromAway = filterClaimable(snap.docs);
+        merge();
       }
     );
     return () => {
       unsubHome();
       unsubAway();
     };
-  }, [club]);
+  }, [club, user]);
+
+  async function handleClaim(gameId: string) {
+    setClaimingId(gameId);
+    setClaimError(null);
+    try {
+      await acceptGameTransfer(gameId);
+    } catch (err) {
+      setClaimError((err as { message?: string })?.message ?? "Übernehmen fehlgeschlagen.");
+    } finally {
+      setClaimingId(null);
+    }
+  }
 
   if (!club) return null;
 
@@ -168,18 +218,40 @@ export default function DashboardOverviewPage() {
         )}
       </Card>
 
-      {openGamesCount > 0 && (
-        <Link href="/dashboard/games">
-          <Card className="border-amber-200 hover:border-amber-400 dark:border-amber-500/20">
-            <p className="font-medium text-amber-800 dark:text-amber-300">
-              {openGamesCount} {openGamesCount === 1 ? "Spiel" : "Spiele"} ohne Redaktor
-            </p>
-            <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-400/80">
-              Noch niemand hat die Administration übernommen — berechtigte Redaktoren wurden per Mail
-              eingeladen.
-            </p>
-          </Card>
-        </Link>
+      {claimableGames.length > 0 && (
+        <Card className="border-amber-200 dark:border-amber-500/20">
+          <p className="font-medium text-amber-800 dark:text-amber-300">
+            {claimableGames.length} {claimableGames.length === 1 ? "Spiel" : "Spiele"} ohne Redaktor —
+            du bist berechtigt zu übernehmen
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {claimableGames.map((game) => (
+              <div
+                key={game.gameId}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 dark:bg-amber-500/10"
+              >
+                <div className="flex items-center gap-2 text-sm text-amber-900 dark:text-amber-200">
+                  <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={20} />
+                  <span>
+                    {game.homeTeamName} – {game.awayTeamName}
+                  </span>
+                  <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={20} />
+                  <span className="text-amber-700/70 dark:text-amber-400/70">
+                    · {formatDateTimeDe(game.scheduledStart)}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  disabled={claimingId === game.gameId}
+                  onClick={() => handleClaim(game.gameId)}
+                >
+                  {claimingId === game.gameId ? "Wird übernommen …" : "Übernehmen"}
+                </Button>
+              </div>
+            ))}
+          </div>
+          {claimError && <p className="mt-2 text-sm text-red-600">{claimError}</p>}
+        </Card>
       )}
 
       {role === "clubAdmin" && (

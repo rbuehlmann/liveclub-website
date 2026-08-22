@@ -1,12 +1,17 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
 import { smtpPassword } from "../lib/secrets";
 import { editorDisplayName, resolveEditorClubId, sendToEditorIfOptedIn } from "../lib/gameEditors";
 import { getTemplate, renderTemplate } from "../lib/emailTemplates";
+import { sendMail } from "../lib/mailer";
 
 interface AcceptGameTransferRequest {
   gameId: string;
+}
+
+function formatDateDe(date: Date): string {
+  return date.toLocaleDateString("de-CH", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
 /**
@@ -109,7 +114,14 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
         timestamp: FieldValue.serverTimestamp(),
       });
 
-      return { previousEditorUid, homeTeamName: game.homeTeamName, awayTeamName: game.awayTeamName };
+      return {
+        previousEditorUid,
+        homeTeamName: game.homeTeamName,
+        awayTeamName: game.awayTeamName,
+        isOpenClaim,
+        createdByClubId: game.createdByClubId as string | undefined,
+        scheduledStart: game.scheduledStart as Timestamp | undefined,
+      };
     });
 
     const vars = { homeTeamName: result.homeTeamName ?? "", awayTeamName: result.awayTeamName ?? "" };
@@ -139,6 +151,28 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
           renderTemplate(handedOffTemplate.html, vars)
         )
       );
+    }
+    // Redaktor(en) already get their own gameTakenOver/gameHandedOff mail
+    // above — but nobody told the admin who left the game open that it's
+    // now taken care of (see the 2026-08-22 "sofort sichtbar" decision).
+    if (result.isOpenClaim && result.createdByClubId) {
+      const creatingClubSnap = await db.collection("clubs").doc(result.createdByClubId).get();
+      const contactEmail = creatingClubSnap.data()?.contactEmail as string | undefined;
+      if (contactEmail) {
+        const adminTemplate = await getTemplate(db, "gameOpenClaimed");
+        const adminVars = {
+          ...vars,
+          editorName: newEditorDisplayName ?? "Ein Redaktor",
+          gameDate: result.scheduledStart ? formatDateDe(result.scheduledStart.toDate()) : "",
+        };
+        notifications.push(
+          sendMail({
+            to: contactEmail,
+            subject: renderTemplate(adminTemplate.subject, adminVars),
+            html: renderTemplate(adminTemplate.html, adminVars),
+          }).catch(() => undefined)
+        );
+      }
     }
     await Promise.all(notifications);
 

@@ -113,6 +113,16 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
     html: `<p>Hallo,</p>
 <p><strong>{{memberName}}</strong> ({{memberEmail}}) hat sein/ihr LiveClub-Konto gelöscht und ist dadurch nicht mehr Redaktor bei <strong>{{clubName}}</strong>.</p>`,
   },
+  // Sent to the creating club's contactEmail when an "offen" game (see
+  // createGame.ts's selfAsEditor:false, 2026-08-22 decision) gets claimed —
+  // the redaktor(en) already get their own gameTakenOver mail, but nobody
+  // told the admin who left it open that it's now taken care of.
+  gameOpenClaimed: {
+    label: "Offenes Spiel übernommen",
+    subject: "{{editorName}} administriert jetzt: {{homeTeamName}} vs. {{awayTeamName}}",
+    html: `<p>Hallo,</p>
+<p><strong>{{editorName}}</strong> hat die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> am {{gameDate}} übernommen — das Spiel war offen, seid ihr aber jetzt versorgt.</p>`,
+  },
   // Sent to LiveClub, the club's contactEmail, AND the original author
   // when a redaktor hides a Team-Info (see hideTeamInfo.ts) — the full
   // post content is included deliberately, so urgency can be judged

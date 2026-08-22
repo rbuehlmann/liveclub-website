@@ -31,6 +31,11 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
   { id: "gameTakenOver", label: "Spiel übernommen", hint: "{{homeTeamName}}, {{awayTeamName}}" },
   { id: "gameHandedOff", label: "Spiel abgegeben", hint: "{{homeTeamName}}, {{awayTeamName}}" },
   {
+    id: "gameOpenClaimed",
+    label: "Offenes Spiel übernommen",
+    hint: "{{editorName}}, {{homeTeamName}}, {{awayTeamName}}, {{gameDate}}",
+  },
+  {
     id: "clubDeletedInternal",
     label: "Verein gelöscht (intern)",
     hint: "{{clubName}}, {{triggeredBy}}, {{reason}}, {{archiveUrl}}",
@@ -105,6 +110,11 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
     subject: "Übertragen: {{homeTeamName}} vs. {{awayTeamName}}",
     html: `<p>Hallo,</p>
 <p>Die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> wurde an eine andere Person übertragen. Du musst dich nicht mehr darum kümmern — das Spiel kannst du weiterhin live mitverfolgen.</p>`,
+  },
+  gameOpenClaimed: {
+    subject: "{{editorName}} administriert jetzt: {{homeTeamName}} vs. {{awayTeamName}}",
+    html: `<p>Hallo,</p>
+<p><strong>{{editorName}}</strong> hat die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> am {{gameDate}} übernommen — das Spiel war offen, seid ihr aber jetzt versorgt.</p>`,
   },
   clubDeletedInternal: {
     subject: "[Archiv] Verein gelöscht: {{clubName}}",
