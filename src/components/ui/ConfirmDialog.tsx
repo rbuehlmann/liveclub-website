@@ -5,7 +5,7 @@ import { Button } from "./Button";
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  body?: string;
+  body?: React.ReactNode;
   confirmLabel: string;
   cancelLabel: string;
   onConfirm: () => void;

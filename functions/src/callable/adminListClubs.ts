@@ -34,6 +34,10 @@ export const adminListClubs = onCall(async (request) => {
         currentLicenseValidUntil: data.currentLicenseValidUntil?.toDate?.().toISOString() ?? null,
         createdAt: data.createdAt?.toDate?.().toISOString() ?? null,
         teamCount,
+        teamInfosEnabled: data.teamInfosEnabled ?? null,
+        infoPushEnabled: data.infoPushEnabled ?? null,
+        infosPerDay: data.infosPerDay ?? null,
+        pushesPerDay: data.pushesPerDay ?? null,
       };
     })
   );

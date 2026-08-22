@@ -16,6 +16,7 @@ const CLUB_ADMIN_LINKS = [
   { href: "/dashboard/club", labelKey: "club" },
   { href: "/dashboard/teams", labelKey: "teams" },
   { href: "/dashboard/games", labelKey: "games" },
+  { href: "/dashboard/team-infos", labelKey: "teamInfos" },
   { href: "/dashboard/reporters", labelKey: "reporters" },
   { href: "/dashboard/share", labelKey: "share" },
   { href: "/dashboard/profile", labelKey: "profile" },
@@ -24,6 +25,7 @@ const CLUB_ADMIN_LINKS = [
 const REPORTER_LINKS = [
   { href: "/dashboard", labelKey: "overview" },
   { href: "/dashboard/games", labelKey: "games" },
+  { href: "/dashboard/team-infos", labelKey: "teamInfos" },
   { href: "/dashboard/profile", labelKey: "profile" },
 ] as const;
 

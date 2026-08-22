@@ -51,6 +51,32 @@ export async function createGame(input: {
   return result.data;
 }
 
+export async function createTeamInfo(input: {
+  clubId: string;
+  teamId: string;
+  title: string;
+  text: string;
+  sendPush: boolean;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { infoId: string }>(functions, "createTeamInfo");
+  const result = await call(input);
+  return result.data;
+}
+
+export async function adminSetTeamInfoSettings(input: {
+  clubId: string;
+  teamInfosEnabled?: boolean | null;
+  infoPushEnabled?: boolean | null;
+  infosPerDay?: number | null;
+  pushesPerDay?: number | null;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "adminSetTeamInfoSettings");
+  const result = await call(input);
+  return result.data;
+}
+
 export async function requestGameTransfer(
   input: { gameId: string; toUid: string } | { gameId: string; toOpponentClub: true }
 ) {
@@ -124,6 +150,10 @@ export interface AdminClubListItem {
   currentLicenseValidUntil: string | null;
   createdAt: string | null;
   teamCount: number;
+  teamInfosEnabled: boolean | null;
+  infoPushEnabled: boolean | null;
+  infosPerDay: number | null;
+  pushesPerDay: number | null;
 }
 
 export async function adminListClubs() {

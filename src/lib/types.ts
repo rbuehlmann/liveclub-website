@@ -234,6 +234,27 @@ export interface PublicGame {
   lastEventType?: string | null;
 }
 
+// A short, manually-authored team announcement, mixed chronologically into
+// the same feed as games in the iOS/Android apps (2026-08-21 "Team-Infos"
+// design) — always live immediately on creation, no draft state. Public
+// read like PublicGame, since the spectator apps have no login.
+export interface TeamInfo {
+  infoId: string;
+  teamId: string;
+  publicTeamId?: string | null;
+  clubId: string;
+  publicClubId?: string | null;
+  teamName: string;
+  clubName: string;
+  clubLogoUrl?: string | null;
+  title: string;
+  text: string;
+  createdAt: string | null;
+  createdByUid: string;
+  pushSent: boolean;
+  pushSentAt: string | null;
+}
+
 // Public, read-only mirror of one club's active teams — lets another club
 // look up and select a specific opponent team by public club id, without
 // exposing the private clubs/{clubId}/teams collection itself.

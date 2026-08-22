@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { adminDeleteClub, adminListClubs, adminSetLicense, AdminClubListItem } from "@/lib/firebase/functionsApi";
+import {
+  adminDeleteClub,
+  adminListClubs,
+  adminSetLicense,
+  adminSetTeamInfoSettings,
+  AdminClubListItem,
+} from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -87,6 +93,30 @@ export default function AdminClubsPage() {
     try {
       await adminSetLicense({ clubId, action: "suspend", notes: notesByClub[clubId] ?? "" });
       setSuspendingClub(null);
+      reload();
+    } catch (err) {
+      setErrorByClub((prev) => ({
+        ...prev,
+        [clubId]: (err as { message?: string })?.message ?? "Aktion fehlgeschlagen.",
+      }));
+    } finally {
+      setBusyClubId(null);
+    }
+  }
+
+  async function runToggleTeamInfoSetting(
+    clubId: string,
+    field: "teamInfosEnabled" | "infoPushEnabled",
+    current: boolean | null
+  ) {
+    setBusyClubId(clubId);
+    setErrorByClub((prev) => ({ ...prev, [clubId]: "" }));
+    try {
+      // Cycle null (platform default) -> true -> false -> null, so an
+      // admin can always get back to "just follow the global default"
+      // without a separate reset control.
+      const next = current === null ? true : current === true ? false : null;
+      await adminSetTeamInfoSettings({ clubId, [field]: next });
       reload();
     } catch (err) {
       setErrorByClub((prev) => ({
@@ -187,6 +217,33 @@ export default function AdminClubsPage() {
                   </Button>
                   <Button variant="danger" disabled={isBusy} onClick={() => setDeletingClub(club)}>
                     {t("deleteClub")}
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 text-xs dark:border-white/10">
+                  <span className="text-gray-400 dark:text-gray-500">Team-Infos:</span>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isBusy}
+                    onClick={() => runToggleTeamInfoSetting(club.clubId, "teamInfosEnabled", club.teamInfosEnabled)}
+                  >
+                    {club.teamInfosEnabled === null
+                      ? "Infos: Standard"
+                      : club.teamInfosEnabled
+                        ? "Infos: An (Override)"
+                        : "Infos: Aus (Override)"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={isBusy}
+                    onClick={() => runToggleTeamInfoSetting(club.clubId, "infoPushEnabled", club.infoPushEnabled)}
+                  >
+                    {club.infoPushEnabled === null
+                      ? "Push: Standard"
+                      : club.infoPushEnabled
+                        ? "Push: An (Override)"
+                        : "Push: Aus (Override)"}
                   </Button>
                 </div>
                 {errorByClub[club.clubId] && (

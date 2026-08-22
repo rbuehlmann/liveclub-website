@@ -7,6 +7,38 @@
         { "fieldPath": "country", "order": "ASCENDING" },
         { "fieldPath": "name", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "publicGames",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "homePublicTeamId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicGames",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "awayPublicTeamId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "teamInfos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "teamId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "teamInfos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "teamId", "order": "ASCENDING" },
+        { "fieldPath": "pushSentAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -76,6 +76,14 @@ export default function AgbPage() {
               Einladung zur Übernahme, bei erfolgter Übernahme oder Übergabe), die sich in den
               persönlichen Profileinstellungen einzeln deaktivieren lassen.
             </p>
+            <p className="mt-2">
+              Redaktoren können zudem kurze Team-Infos veröffentlichen, optional mit Push-Benachrichtigung
+              an Follower des Teams. Für den Inhalt ist die veröffentlichende Person verantwortlich. Nicht
+              erlaubt sind insbesondere Werbung/Spam, rechtswidrige oder beleidigende Inhalte sowie
+              Inhalte, die Rechte Dritter verletzen. LiveClub kann diese Funktion — insgesamt oder nur den
+              Push-Versand — für einzelne Vereine ohne Vorankündigung einschränken, etwa bei Missbrauch;
+              die Kernfunktion (Live-Spielstände) bleibt davon unberührt.
+            </p>
           </section>
 
           <section>

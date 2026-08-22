@@ -6,6 +6,8 @@ export { onInvitationCreate } from "./triggers/onInvitationCreate";
 export { createClub } from "./callable/createClub";
 export { createTeam } from "./callable/createTeam";
 export { createGame } from "./callable/createGame";
+export { createTeamInfo } from "./callable/createTeamInfo";
+export { adminSetTeamInfoSettings } from "./callable/adminSetTeamInfoSettings";
 export { requestGameTransfer } from "./callable/requestGameTransfer";
 export { acceptGameTransfer } from "./callable/acceptGameTransfer";
 export { declineGameTransfer } from "./callable/declineGameTransfer";

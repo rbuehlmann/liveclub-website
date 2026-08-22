@@ -12,6 +12,122 @@ const DEFAULT_ACCENT = "#f02b22";
 const DEFAULT_BACKGROUND_LIGHT = "#f3efe5";
 const DEFAULT_BACKGROUND_DARK = "#080808";
 
+// Hardcoded fallback if settings/teamInfo doesn't exist yet — kept in sync
+// with functions/src/lib/teamInfo.ts's TEAM_INFO_DEFAULTS.
+const TEAM_INFO_HARDCODED_DEFAULTS = {
+  teamInfosEnabled: true,
+  infoPushEnabled: true,
+  infosPerDay: 10,
+  pushesPerDay: 3,
+};
+
+interface TeamInfoGlobalSettings {
+  teamInfosEnabled: boolean;
+  infoPushEnabled: boolean;
+  infosPerDay: number;
+  pushesPerDay: number;
+}
+
+function TeamInfoSettingsCard() {
+  const [settings, setSettings] = useState<TeamInfoGlobalSettings>(TEAM_INFO_HARDCODED_DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    getDoc(doc(db, "settings", "teamInfo"))
+      .then((snap) => {
+        const data = snap.data();
+        setSettings({
+          teamInfosEnabled: data?.teamInfosEnabled ?? TEAM_INFO_HARDCODED_DEFAULTS.teamInfosEnabled,
+          infoPushEnabled: data?.infoPushEnabled ?? TEAM_INFO_HARDCODED_DEFAULTS.infoPushEnabled,
+          infosPerDay: data?.infosPerDay ?? TEAM_INFO_HARDCODED_DEFAULTS.infosPerDay,
+          pushesPerDay: data?.pushesPerDay ?? TEAM_INFO_HARDCODED_DEFAULTS.pushesPerDay,
+        });
+      })
+      .catch((err) => setLoadError((err as { message?: string })?.message ?? "Laden fehlgeschlagen."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const { db } = getFirebaseClient();
+      await setDoc(doc(db, "settings", "teamInfo"), settings);
+      setMessage("Gespeichert ✓ — gilt sofort für alle Vereine ohne eigenes Override.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+  if (loadError) {
+    return (
+      <Card>
+        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Team-Infos (global)</h2>
+        <p className="text-sm text-red-600">{loadError}</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Team-Infos (global)</h2>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Platform-weite Standardwerte. Ein einzelner Verein kann davon per Override (Vereinsliste) abweichen
+        — z. B. bei Missbrauch nur den Push deaktivieren, ohne Team-Infos selbst zu sperren.
+      </p>
+      <div className="flex flex-col gap-4">
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={settings.teamInfosEnabled}
+            onChange={(e) => setSettings((s) => ({ ...s, teamInfosEnabled: e.target.checked }))}
+          />
+          Team-Infos aktiviert
+        </label>
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={settings.infoPushEnabled}
+            onChange={(e) => setSettings((s) => ({ ...s, infoPushEnabled: e.target.checked }))}
+          />
+          Info-Push aktiviert
+        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Team-Infos pro Tag</label>
+            <input
+              type="number"
+              min={0}
+              value={settings.infosPerDay}
+              onChange={(e) => setSettings((s) => ({ ...s, infosPerDay: Number(e.target.value) }))}
+              className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Info-Pushs pro Tag</label>
+            <input
+              type="number"
+              min={0}
+              value={settings.pushesPerDay}
+              onChange={(e) => setSettings((s) => ({ ...s, pushesPerDay: Number(e.target.value) }))}
+              className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+            />
+          </div>
+        </div>
+        {message && <p className="text-sm text-green-700">{message}</p>}
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Wird gespeichert …" : "Speichern"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 interface ImageFieldProps {
   label: string;
   fieldKey: keyof BrandingSettings;
@@ -208,6 +324,8 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </Card>
+
+      <TeamInfoSettingsCard />
     </div>
   );
 }

@@ -209,6 +209,26 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Short manual team announcements shown mixed into the same
+    // chronological feed as games (see the 2026-08-21 "Team-Infos"
+    // design) — public/anonymous read like publicGames above, since the
+    // iOS/Android spectator apps have no login. Only ever written by
+    // createTeamInfo (Admin SDK).
+    match /teamInfos/{infoId} {
+      allow get: if clubLicenseOk(
+        get(/databases/$(database)/documents/publicClubs/$(resource.data.get('publicClubId', '')))
+      );
+      allow list: if true;
+      allow write: if false;
+
+      // Abuse-accountability audit log (infoId/teamId/editorId/sentAt/
+      // termsVersion) — platform-admin-only concern for now, no client
+      // role reads this today.
+      match /pushLog/{logId} {
+        allow read, write: if false;
+      }
+    }
+
     match /publicTeams/{publicTeamId} {
       allow get: if clubLicenseOk(
         get(/databases/$(database)/documents/publicClubs/$(resource.data.get('publicClubId', '')))
@@ -230,12 +250,20 @@ service cloud.firestore {
     match /deviceFollows/{deviceId} {
       allow read: if false;
       allow create, update: if request.resource.data.keys().hasOnly(
-          ['followedTeamIds', 'pushToStartToken', 'activityUpdateTokens', 'fcmToken', 'platform', 'updatedAt']
+          ['followedTeamIds', 'liveActivityDisabledTeamIds', 'pushToStartToken', 'activityUpdateTokens', 'fcmToken', 'platform', 'updatedAt']
         ) &&
         request.resource.data.platform is string &&
         (!('followedTeamIds' in request.resource.data) || (
           request.resource.data.followedTeamIds is list &&
           request.resource.data.followedTeamIds.size() <= 50
+        )) &&
+        // Per-team opt-out from automatic Live Activity starts (see the
+        // "Live Activity immer starten" toggle) — the exception list, not a
+        // mirror of every setting, so a device with everything enabled
+        // (the common case) writes an empty/absent list here.
+        (!('liveActivityDisabledTeamIds' in request.resource.data) || (
+          request.resource.data.liveActivityDisabledTeamIds is list &&
+          request.resource.data.liveActivityDisabledTeamIds.size() <= 50
         )) &&
         (!('pushToStartToken' in request.resource.data) ||
           request.resource.data.pushToStartToken is string) &&
