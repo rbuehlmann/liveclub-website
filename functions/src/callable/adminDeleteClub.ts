@@ -7,8 +7,6 @@ import { smtpPassword } from "../lib/secrets";
 import { getTemplate, renderTemplate } from "../lib/emailTemplates";
 import { buildAndUploadClubArchive, getArchiveDownloadUrl } from "../lib/clubArchive";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 interface AdminDeleteClubRequest {
   clubId: string;
   reason?: string;
@@ -193,7 +191,7 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     // than a "[Kopie]" of it (the club must never see the archive URL or
     // who triggered the deletion).
     {
-      const archiveUrl = await getArchiveDownloadUrl(archive.path, THIRTY_DAYS_MS);
+      const archiveUrl = await getArchiveDownloadUrl(archive.path);
       const triggeredBy = isPlatformAdmin
         ? `Plattform-Administrator (${request.auth.token.email ?? request.auth.uid})`
         : `Vereins-Admin, Selbstlöschung (${request.auth.token.email ?? request.auth.uid})`;

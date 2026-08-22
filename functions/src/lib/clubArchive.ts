@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { getStorage } from "firebase-admin/storage";
 import { db, app } from "../firebaseAdmin";
 
@@ -80,7 +81,19 @@ export async function buildAndUploadClubArchive(
   const json = JSON.stringify(archive, jsonSafeReplacer, 2);
   const fileName = `${ARCHIVE_PREFIX}/${clubId}-${Date.now()}.json`;
   const file = getStorage(app).bucket().file(fileName);
-  await file.save(json, { contentType: "application/json" });
+  // A Firebase-style download token (same mechanism the client SDK's
+  // getDownloadURL uses for club logos) rather than a GCS V4 signed URL —
+  // signing requires the function's runtime service account to have
+  // iam.serviceAccounts.signBlob, which isn't granted by default and would
+  // need a manual IAM change. The token approach needs no extra permission
+  // and works with the same firebaseAdmin credentials already in use; the
+  // 30-day Storage lifecycle rule (see ARCHIVE_PREFIX above) is what
+  // actually bounds how long it stays valid, not the token itself.
+  const downloadToken = randomUUID();
+  await file.save(json, {
+    contentType: "application/json",
+    metadata: { metadata: { firebaseStorageDownloadTokens: downloadToken } },
+  });
 
   return { path: fileName, sizeBytes: Buffer.byteLength(json) };
 }
@@ -94,9 +107,21 @@ function jsonSafeReplacer(_key: string, value: unknown): unknown {
   return value;
 }
 
-/** A signed, time-limited download URL for a previously-created archive. */
-export async function getArchiveDownloadUrl(path: string, expiresInMs: number): Promise<string> {
-  const file = getStorage(app).bucket().file(path);
-  const [url] = await file.getSignedUrl({ action: "read", expires: Date.now() + expiresInMs });
-  return url;
+/**
+ * A download URL for a previously-created archive, via the same Firebase
+ * download-token mechanism buildAndUploadClubArchive sets at creation time
+ * (see the comment there for why — no getSignedUrl/signBlob). Reads the
+ * token back from the file's metadata rather than assuming the caller still
+ * has it, and generates one on the fly for any archive that predates this.
+ */
+export async function getArchiveDownloadUrl(path: string): Promise<string> {
+  const bucket = getStorage(app).bucket();
+  const file = bucket.file(path);
+  const [metadata] = await file.getMetadata();
+  let token = (metadata.metadata?.firebaseStorageDownloadTokens as string | undefined)?.split(",")[0];
+  if (!token) {
+    token = randomUUID();
+    await file.setMetadata({ metadata: { firebaseStorageDownloadTokens: token } });
+  }
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 }

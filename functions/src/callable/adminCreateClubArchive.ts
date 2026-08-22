@@ -1,8 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { buildAndUploadClubArchive, getArchiveDownloadUrl } from "../lib/clubArchive";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 /**
  * On-demand archive snapshot without deleting anything — for testing the
  * archive format during build, and removable later (see the 2026-08-22
@@ -22,6 +20,6 @@ export const adminCreateClubArchive = onCall<{ clubId: string }>(async (request)
   }
 
   const { path, sizeBytes } = await buildAndUploadClubArchive(clubId);
-  const url = await getArchiveDownloadUrl(path, THIRTY_DAYS_MS);
+  const url = await getArchiveDownloadUrl(path);
   return { url, sizeBytes };
 });
