@@ -250,7 +250,7 @@ service cloud.firestore {
     match /deviceFollows/{deviceId} {
       allow read: if false;
       allow create, update: if request.resource.data.keys().hasOnly(
-          ['followedTeamIds', 'liveActivityDisabledTeamIds', 'pushToStartToken', 'activityUpdateTokens', 'fcmToken', 'platform', 'updatedAt']
+          ['followedTeamIds', 'liveActivityDisabledTeamIds', 'pushNotificationsDisabledTeamIds', 'pushToStartToken', 'activityUpdateTokens', 'apnsAlertToken', 'fcmToken', 'platform', 'updatedAt']
         ) &&
         request.resource.data.platform is string &&
         (!('followedTeamIds' in request.resource.data) || (
@@ -265,10 +265,20 @@ service cloud.firestore {
           request.resource.data.liveActivityDisabledTeamIds is list &&
           request.resource.data.liveActivityDisabledTeamIds.size() <= 50
         )) &&
+        // Same exception-list shape, but for the "Push Notification" toggle
+        // (Team-Info pushes) instead of Live Activity starts.
+        (!('pushNotificationsDisabledTeamIds' in request.resource.data) || (
+          request.resource.data.pushNotificationsDisabledTeamIds is list &&
+          request.resource.data.pushNotificationsDisabledTeamIds.size() <= 50
+        )) &&
         (!('pushToStartToken' in request.resource.data) ||
           request.resource.data.pushToStartToken is string) &&
         (!('activityUpdateTokens' in request.resource.data) ||
           request.resource.data.activityUpdateTokens is map) &&
+        // Standard APNs alert token (Team-Info pushes, Phase 2) — distinct
+        // from the ActivityKit-only tokens above.
+        (!('apnsAlertToken' in request.resource.data) ||
+          request.resource.data.apnsAlertToken is string) &&
         (!('fcmToken' in request.resource.data) ||
           request.resource.data.fcmToken is string);
       allow delete: if false;
@@ -281,6 +291,16 @@ service cloud.firestore {
     match /settings/branding {
       allow read: if true;
       allow write: if isPlatformAdmin();
+    }
+
+    // Any signed-in user needs to read the platform-wide Team-Info
+    // defaults (infosPerDay/pushesPerDay/*Enabled) so the dashboard can
+    // show/enforce the *actual* configured limit instead of a hardcoded
+    // guess — not sensitive data, so this is safe to open up beyond
+    // platformAdmin. Writes stay admin-only (falls through to the generic
+    // settings/{docId} rule below). More specific match wins.
+    match /settings/teamInfo {
+      allow read: if isSignedIn();
     }
 
     // Platform-wide settings — nothing here is club-specific or public.

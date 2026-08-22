@@ -1,6 +1,6 @@
 import { getMessaging } from "firebase-admin/messaging";
 import { app } from "../firebaseAdmin";
-import { devicesFollowing, DeviceFollow } from "./liveActivity";
+import { devicesFollowing, wantsTeamInfoPush, DeviceFollow } from "./liveActivity";
 import { sendAlertPush } from "./apnsAlert";
 
 // deviceFollows.apnsAlertToken (a device's standard APNs token, registered
@@ -25,7 +25,9 @@ export async function sendTeamInfoPush(
   publicTeamId: string,
   notification: { title: string; body: string }
 ): Promise<{ sent: number; failed: number }> {
-  const devices = (await devicesFollowing(publicTeamId)) as DeviceFollowWithAlertToken[];
+  const allDevices = (await devicesFollowing(publicTeamId)) as DeviceFollowWithAlertToken[];
+  // "Push Notification" toggle, per team — see wantsTeamInfoPush.
+  const devices = allDevices.filter((d) => wantsTeamInfoPush(d, publicTeamId));
   const androidTokens = devices.filter((d) => d.platform === "android" && d.fcmToken).map((d) => d.fcmToken!);
   const iosTokens = devices.filter((d) => d.platform === "ios" && d.apnsAlertToken).map((d) => d.apnsAlertToken!);
   if (androidTokens.length === 0 && iosTokens.length === 0) return { sent: 0, failed: 0 };

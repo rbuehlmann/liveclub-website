@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
 import { createTeamInfo } from "@/lib/firebase/functionsApi";
@@ -15,13 +15,22 @@ import { formatDateTimeDe } from "@/lib/date";
 
 const MAX_TITLE_LENGTH = 100;
 const MAX_TEXT_LENGTH = 500;
-// Mirrors functions/src/lib/teamInfo.ts's TEAM_INFO_DEFAULTS — only used
-// here for the optimistic "X von Y verfügbar" label before a team is
-// selected / before the live count query resolves. The server is always
-// the real gate; a stale display number here can never let a request
-// through that the backend would reject.
-const DEFAULT_INFOS_PER_DAY = 10;
-const DEFAULT_PUSHES_PER_DAY = 3;
+// Hardcoded fallback only — mirrors functions/src/lib/teamInfo.ts's
+// TEAM_INFO_DEFAULTS, used only if neither settings/teamInfo (platform
+// default) nor the club's own override provide a value. The server is
+// always the real gate; a stale display number here can never let a
+// request through that the backend would reject.
+const FALLBACK_INFOS_PER_DAY = 10;
+const FALLBACK_PUSHES_PER_DAY = 3;
+const FALLBACK_TEAM_INFOS_ENABLED = true;
+const FALLBACK_INFO_PUSH_ENABLED = true;
+
+interface TeamInfoSettings {
+  teamInfosEnabled: boolean;
+  infoPushEnabled: boolean;
+  infosPerDay: number;
+  pushesPerDay: number;
+}
 
 function startOfToday(): Date {
   const d = new Date();
@@ -64,6 +73,55 @@ export default function TeamInfosPage() {
 
   const [recentInfos, setRecentInfos] = useState<TeamInfo[]>([]);
   const [infosToday, setInfosToday] = useState<TeamInfo[]>([]);
+
+  // Resolved the same way as the server (functions/src/lib/teamInfo.ts's
+  // resolveTeamInfoSettings): club override, falling back to the
+  // platform-wide default, falling back to the hardcoded constants above.
+  // Previously this page ignored both and always showed/enforced the
+  // hardcoded numbers — a superadmin raising the limit had no visible
+  // effect on the dashboard even though the backend already honored it.
+  const [globalSettings, setGlobalSettings] = useState<Partial<TeamInfoSettings> | null>(null);
+  const [clubOverrides, setClubOverrides] = useState<Partial<TeamInfoSettings> | null>(null);
+
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    getDoc(doc(db, "settings", "teamInfo"))
+      .then((snap) => {
+        setGlobalSettings((snap.data() as Partial<TeamInfoSettings> | undefined) ?? {});
+      })
+      // Falls back to the hardcoded constants (via pickSetting) rather than
+      // leaving globalSettings stuck at null forever — a permission or
+      // network hiccup here should never silently freeze the displayed
+      // limit at "still loading".
+      .catch(() => setGlobalSettings({}));
+  }, []);
+
+  useEffect(() => {
+    if (!club) return;
+    const { db } = getFirebaseClient();
+    return onSnapshot(doc(db, "clubs", club.clubId), (snap) => {
+      const data = snap.data();
+      setClubOverrides({
+        teamInfosEnabled: data?.teamInfosEnabled ?? undefined,
+        infoPushEnabled: data?.infoPushEnabled ?? undefined,
+        infosPerDay: data?.infosPerDay ?? undefined,
+        pushesPerDay: data?.pushesPerDay ?? undefined,
+      });
+    });
+  }, [club]);
+
+  function pickSetting<K extends keyof TeamInfoSettings>(key: K, fallback: TeamInfoSettings[K]): TeamInfoSettings[K] {
+    const clubValue = clubOverrides?.[key];
+    if (clubValue !== undefined && clubValue !== null) return clubValue as TeamInfoSettings[K];
+    const globalValue = globalSettings?.[key];
+    if (globalValue !== undefined && globalValue !== null) return globalValue as TeamInfoSettings[K];
+    return fallback;
+  }
+
+  const effectiveInfosPerDay = pickSetting("infosPerDay", FALLBACK_INFOS_PER_DAY);
+  const effectivePushesPerDay = pickSetting("pushesPerDay", FALLBACK_PUSHES_PER_DAY);
+  const teamInfosEnabled = pickSetting("teamInfosEnabled", FALLBACK_TEAM_INFOS_ENABLED);
+  const infoPushEnabled = pickSetting("infoPushEnabled", FALLBACK_INFO_PUSH_ENABLED);
 
   useEffect(() => {
     if (!club) return;
@@ -113,8 +171,8 @@ export default function TeamInfosPage() {
 
   const infosUsedToday = infosToday.length;
   const pushesUsedToday = infosToday.filter((i) => i.pushSent).length;
-  const infosRemaining = Math.max(0, DEFAULT_INFOS_PER_DAY - infosUsedToday);
-  const pushesRemaining = Math.max(0, DEFAULT_PUSHES_PER_DAY - pushesUsedToday);
+  const infosRemaining = Math.max(0, effectiveInfosPerDay - infosUsedToday);
+  const pushesRemaining = Math.max(0, effectivePushesPerDay - pushesUsedToday);
 
   function resetForm() {
     setTitle("");
@@ -146,7 +204,8 @@ export default function TeamInfosPage() {
     }
   }
 
-  const canSubmit = !!teamId && !!title.trim() && !!text.trim() && infosRemaining > 0 && !creating;
+  const canSubmit =
+    teamInfosEnabled && !!teamId && !!title.trim() && !!text.trim() && infosRemaining > 0 && !creating;
 
   return (
     <div className="flex flex-col gap-6">
@@ -178,10 +237,17 @@ export default function TeamInfosPage() {
               </select>
             </div>
 
-            {teamId && (
+            {!teamInfosEnabled && (
+              <p className="text-sm text-red-600">
+                Team-Infos sind für euren Verein aktuell deaktiviert. Kontaktiere den Support, falls das
+                unerwartet ist.
+              </p>
+            )}
+
+            {teamId && teamInfosEnabled && (
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Heute noch verfügbar: {infosRemaining} von {DEFAULT_INFOS_PER_DAY} Team-Infos,{" "}
-                {pushesRemaining} von {DEFAULT_PUSHES_PER_DAY} Pushs.
+                Heute noch verfügbar: {infosRemaining} von {effectiveInfosPerDay} Team-Infos,{" "}
+                {infoPushEnabled ? `${pushesRemaining} von ${effectivePushesPerDay} Pushs.` : "Push deaktiviert."}
               </p>
             )}
 
@@ -207,18 +273,20 @@ export default function TeamInfosPage() {
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                checked={sendPush}
-                disabled={pushesRemaining <= 0}
-                onChange={(e) => setSendPush(e.target.checked)}
-              />
-              Als Push-Mitteilung senden
-              {pushesRemaining <= 0 && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">(Tageslimit erreicht)</span>
-              )}
-            </label>
+            {infoPushEnabled && (
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={sendPush}
+                  disabled={pushesRemaining <= 0}
+                  onChange={(e) => setSendPush(e.target.checked)}
+                />
+                Als Push-Mitteilung senden
+                {pushesRemaining <= 0 && (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">(Tageslimit erreicht)</span>
+                )}
+              </label>
+            )}
 
             {createError && <p className="text-sm text-red-600">{createError}</p>}
             {infosRemaining <= 0 && teamId && (
@@ -273,7 +341,7 @@ export default function TeamInfosPage() {
             entspricht.
             <br />
             <br />
-            Noch {Math.max(0, pushesRemaining - 1) + 1} von {DEFAULT_PUSHES_PER_DAY} Pushs heute verfügbar.
+            Noch {Math.max(0, pushesRemaining - 1) + 1} von {effectivePushesPerDay} Pushs heute verfügbar.
           </>
         }
         confirmLabel={creating ? "Wird gesendet …" : "Veröffentlichen & senden"}
