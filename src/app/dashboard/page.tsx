@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { daysRemaining, formatDateDe } from "@/lib/date";
 import { createCheckoutSession } from "@/lib/firebase/functionsApi";
 import { LICENSE_TIERS, tierLabel } from "@/lib/licenseTiers";
-import { LicenseTier } from "@/lib/types";
+import { LicenseTier, GameStatus } from "@/lib/types";
 
 const RENEWAL_WINDOW_DAYS = 14;
+const UPCOMING_STATUSES = new Set<GameStatus>(["draft", "scheduled", "live", "paused"]);
 
 export default function DashboardOverviewPage() {
   const t = useTranslations("dashboard");
@@ -20,6 +23,38 @@ export default function DashboardOverviewPage() {
     null
   );
   const [billingError, setBillingError] = useState<string | null>(null);
+  const [openGamesCount, setOpenGamesCount] = useState(0);
+
+  useEffect(() => {
+    if (!club) return;
+    const { db } = getFirebaseClient();
+    const countOpen = (docs: { data: () => Record<string, unknown> }[]) =>
+      docs.filter(
+        (d) =>
+          !d.data().mainEditorUid &&
+          UPCOMING_STATUSES.has(d.data().status as GameStatus)
+      ).length;
+    let homeCount = 0;
+    let awayCount = 0;
+    const unsubHome = onSnapshot(
+      query(collection(db, "games"), where("homeClubId", "==", club.clubId)),
+      (snap) => {
+        homeCount = countOpen(snap.docs);
+        setOpenGamesCount(homeCount + awayCount);
+      }
+    );
+    const unsubAway = onSnapshot(
+      query(collection(db, "games"), where("awayClubId", "==", club.clubId)),
+      (snap) => {
+        awayCount = countOpen(snap.docs);
+        setOpenGamesCount(homeCount + awayCount);
+      }
+    );
+    return () => {
+      unsubHome();
+      unsubAway();
+    };
+  }, [club]);
 
   if (!club) return null;
 
@@ -132,6 +167,20 @@ export default function DashboardOverviewPage() {
           </>
         )}
       </Card>
+
+      {openGamesCount > 0 && (
+        <Link href="/dashboard/games">
+          <Card className="border-amber-200 hover:border-amber-400 dark:border-amber-500/20">
+            <p className="font-medium text-amber-800 dark:text-amber-300">
+              {openGamesCount} {openGamesCount === 1 ? "Spiel" : "Spiele"} ohne Redaktor
+            </p>
+            <p className="mt-1 text-sm text-amber-700/80 dark:text-amber-400/80">
+              Noch niemand hat die Administration übernommen — berechtigte Redaktoren wurden per Mail
+              eingeladen.
+            </p>
+          </Card>
+        </Link>
+      )}
 
       {role === "clubAdmin" && (
         <div className="grid gap-4 sm:grid-cols-2">

@@ -32,6 +32,13 @@ export const stripePriceIdTeam15Yearly = defineString("STRIPE_PRICE_ID_TEAM15_YE
 export const stripePriceIdUnlimitedMonthly = defineString("STRIPE_PRICE_ID_UNLIMITED_MONTHLY");
 export const stripePriceIdUnlimitedYearly = defineString("STRIPE_PRICE_ID_UNLIMITED_YEARLY");
 
+// Set via `firebase functions:secrets:set BACKFILL_LOGO_SECRET` — a
+// throwaway random string only you know, gating the one-off
+// adminBackfillLogoCacheControl HTTP endpoint (plain `onRequest`, not
+// `onCall`, specifically so it's triggerable with a single `curl` command
+// instead of needing a mocked auth context — see that file for why).
+export const backfillLogoSecret = defineSecret("BACKFILL_LOGO_SECRET");
+
 // Set via `firebase functions:secrets:set APNS_AUTH_KEY` — the .p8 private
 // key content from an Apple Developer "Apple Push Notifications service
 // (APNs)" key, used to sign Live Activity push-to-start/update/end

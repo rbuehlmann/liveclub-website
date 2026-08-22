@@ -17,6 +17,7 @@ import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
 import { buildInviteUrl } from "@/lib/publicRoutes";
+import { updateMemberTeams } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
@@ -43,6 +44,10 @@ export default function ReportersPage() {
   const [inviting, setInviting] = useState(false);
   const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [editingUid, setEditingUid] = useState<string | null>(null);
+  const [editTeamIds, setEditTeamIds] = useState<string[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!club) return;
@@ -139,6 +144,32 @@ export default function ReportersPage() {
     await deleteDoc(doc(db, "invitations", invitationId));
   }
 
+  function startEdit(member: Member) {
+    setEditingUid(member.uid);
+    setEditTeamIds(member.teamIds ?? []);
+    setEditError(null);
+  }
+
+  function toggleEditTeam(teamId: string) {
+    setEditTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
+    );
+  }
+
+  async function saveEdit() {
+    if (!club || !editingUid) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      await updateMemberTeams({ clubId: club.clubId, memberId: editingUid, teamIds: editTeamIds });
+      setEditingUid(null);
+    } catch (err) {
+      setEditError((err as { message?: string })?.message ?? "Speichern fehlgeschlagen.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   async function copyLink(link: string) {
     await navigator.clipboard.writeText(link);
     setCopied(true);
@@ -212,18 +243,49 @@ export default function ReportersPage() {
             const assignedTeamNames = teams
               .filter((team) => member.teamIds?.includes(team.teamId))
               .map((team) => team.name);
+            const isEditing = editingUid === member.uid;
             return (
-              <Card key={member.uid} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{member.displayName ?? member.email}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : "Keine Mannschaft zugewiesen"}
-                  </p>
+              <Card key={member.uid} className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">{member.displayName ?? member.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : "Keine Mannschaft zugewiesen"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => (isEditing ? setEditingUid(null) : startEdit(member))}>
+                      {isEditing ? tCommon("cancel") : "Bearbeiten"}
+                    </Button>
+                    <Button variant="danger" onClick={() => handleRemove(member.uid)}>
+                      {t("remove")}
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="danger" onClick={() => handleRemove(member.uid)}>
-                  {t("remove")}
-                </Button>
+                {isEditing && (
+                  <div className="flex flex-col gap-3 border-t border-gray-100 pt-3 dark:border-white/10">
+                    <div className="flex flex-col gap-1">
+                      {teams.map((team) => (
+                        <label
+                          key={team.teamId}
+                          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={editTeamIds.includes(team.teamId)}
+                            onChange={() => toggleEditTeam(team.teamId)}
+                          />
+                          {team.name}
+                        </label>
+                      ))}
+                    </div>
+                    {editError && <p className="text-sm text-red-600">{editError}</p>}
+                    <Button disabled={savingEdit} onClick={saveEdit}>
+                      {savingEdit ? tCommon("loading") : tCommon("save")}
+                    </Button>
+                  </div>
+                )}
               </Card>
             );
           })}

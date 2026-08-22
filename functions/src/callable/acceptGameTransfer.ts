@@ -10,7 +10,7 @@ interface AcceptGameTransferRequest {
 }
 
 /**
- * Three ways this succeeds:
+ * Four ways this succeeds:
  * 1. A direct requestGameTransfer targeted the caller
  *    (pendingTransfer.kind === "direct" && pendingTransfer.toUid === caller)
  *    — the normal "current editor proposed, target confirms" path.
@@ -37,6 +37,10 @@ interface AcceptGameTransferRequest {
  *    either way — same-club handoff always goes through the direct
  *    request/accept path, so a bystander can never unilaterally kick out a
  *    colleague who's actively administering.
+ * 4. game.mainEditorUid is null (see createGame.ts's selfAsEditor:false —
+ *    "kein Redaktor"/"offen" games, 2026-08-22 decision) and the caller is
+ *    in eligibleEditorUids — same first-click-wins claim, just for a game
+ *    that was never assigned in the first place rather than handed off.
  *
  * Either way this is a Firestore transaction: reads mainEditorUid fresh and
  * writes atomically, so two people racing to accept the same invite can't
@@ -63,7 +67,7 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
         throw new HttpsError("not-found", "Spiel nicht gefunden.");
       }
       const game = gameSnap.data()!;
-      const previousEditorUid = game.mainEditorUid as string;
+      const previousEditorUid = (game.mainEditorUid ?? null) as string | null;
       const pendingTransfer = game.pendingTransfer as
         | { toUid: string | null; kind: "direct" | "clubBroadcast" }
         | null
@@ -78,8 +82,9 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
         pendingTransfer?.kind === "clubBroadcast" && eligible.includes(uid) && isDifferentClub;
       const isFirstEverCrossClubClaim =
         !pendingTransfer && eligible.includes(uid) && isDifferentClub && game.hasBeenTransferred !== true;
+      const isOpenClaim = !previousEditorUid && eligible.includes(uid);
 
-      if (!isDirectTarget && !isClubBroadcastClaim && !isFirstEverCrossClubClaim) {
+      if (!isDirectTarget && !isClubBroadcastClaim && !isFirstEverCrossClubClaim && !isOpenClaim) {
         throw new HttpsError(
           "failed-precondition",
           "Es liegt keine Übernahme-Einladung für dich vor."
@@ -113,22 +118,29 @@ export const acceptGameTransfer = onCall<AcceptGameTransferRequest>(
     // 2026-08-15 design's Mail-Einstellungen): "abgegeben" to whoever just
     // lost administration, "übernommen" to whoever just gained it — not the
     // same event from each side's point of view.
-    const handedOffTemplate = await getTemplate(db, "gameHandedOff");
     const takenOverTemplate = await getTemplate(db, "gameTakenOver");
-    await Promise.all([
-      sendToEditorIfOptedIn(
-        result.previousEditorUid,
-        "gameHandedOff",
-        renderTemplate(handedOffTemplate.subject, vars),
-        renderTemplate(handedOffTemplate.html, vars)
-      ),
+    const notifications = [
       sendToEditorIfOptedIn(
         uid,
         "gameTakenOver",
         renderTemplate(takenOverTemplate.subject, vars),
         renderTemplate(takenOverTemplate.html, vars)
       ),
-    ]);
+    ];
+    // No previous editor to notify for an open-claim (game.mainEditorUid
+    // was null — see path 4 above).
+    if (result.previousEditorUid) {
+      const handedOffTemplate = await getTemplate(db, "gameHandedOff");
+      notifications.push(
+        sendToEditorIfOptedIn(
+          result.previousEditorUid,
+          "gameHandedOff",
+          renderTemplate(handedOffTemplate.subject, vars),
+          renderTemplate(handedOffTemplate.html, vars)
+        )
+      );
+    }
+    await Promise.all(notifications);
 
     return { ok: true };
   }

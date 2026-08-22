@@ -24,6 +24,11 @@ interface CreateGameRequest {
   opponentTeamId?: string;
   opponentTeamName?: string;
   scheduledStart?: string; // ISO string
+  // Whether the creator becomes mainEditor immediately (default/undefined =
+  // true, so older clients keep today's behavior). false leaves the game
+  // "offen" (mainEditorUid: null) and emails eligible editors an open
+  // invite instead — see the 2026-08-22 "Redaktor-Rechte" decision.
+  selfAsEditor?: boolean;
 }
 
 function assertNonEmptyString(value: unknown, field: string): asserts value is string {
@@ -67,7 +72,9 @@ export const createGame = onCall<CreateGameRequest>(
       opponentTeamId,
       opponentTeamName,
       scheduledStart,
+      selfAsEditor,
     } = request.data;
+    const wantsToBeEditor = selfAsEditor !== false;
 
     assertNonEmptyString(clubId, "clubId");
     assertNonEmptyString(teamId, "teamId");
@@ -193,7 +200,7 @@ export const createGame = onCall<CreateGameRequest>(
         ? await eligibleEditorsForTeam(opponentClubRealId, opponentTeamIdToStore)
         : [];
     const eligibleEditorUids = Array.from(new Set([...ownEligible, ...opponentEligible]));
-    const mainEditorDisplayName = await editorDisplayName(uid);
+    const mainEditorDisplayName = wantsToBeEditor ? await editorDisplayName(uid) : null;
 
     const gameRef = db.collection("games").doc();
     await gameRef.set({
@@ -209,7 +216,7 @@ export const createGame = onCall<CreateGameRequest>(
       scheduledStart: scheduledStartTs,
       status: "scheduled",
       score: { home: 0, away: 0 },
-      mainEditorUid: uid,
+      mainEditorUid: wantsToBeEditor ? uid : null,
       mainEditorClubId: clubId,
       mainEditorDisplayName,
       eligibleEditorUids,
@@ -224,30 +231,66 @@ export const createGame = onCall<CreateGameRequest>(
       timestamp: FieldValue.serverTimestamp(),
     });
 
-    // Scenario 4: creating as the away side against a real linked home club
-    // — proactively invite every eligible home-side editor to take over,
-    // since the home club usually runs the actual live coverage.
-    if (!isHomeGame && opponentClubRealId && opponentEligible.length > 0) {
-      const opponentClubSnap = await db.collection("clubs").doc(opponentClubRealId).get();
-      const template = await getTemplate(db, "gameTakeoverInvite");
-      const vars = {
-        clubName: opponentClubSnap.data()?.name ?? "",
-        opponentClubName: club.name,
-        gameDate: formatDateDe(scheduledStartTs.toDate()),
-        homeTeamName,
-        awayTeamName,
-      };
-      const subject = renderTemplate(template.subject, vars);
-      const html = renderTemplate(template.html, vars);
-      await Promise.all(
-        opponentEligible.map((editorUid) =>
-          sendToEditorIfOptedIn(editorUid, "gameTakeoverInvite", subject, html)
-        )
-      );
-      await gameRef.collection("editorHistory").add({
-        action: "takeoverInviteSent",
-        timestamp: FieldValue.serverTimestamp(),
-      });
+    if (wantsToBeEditor) {
+      // Scenario 4: creating as the away side against a real linked home
+      // club — proactively invite every eligible home-side editor to take
+      // over, since the home club usually runs the actual live coverage.
+      // Only fires when the creator kept the game for themselves — the
+      // "offen" branch below already covers the opponent side too, and
+      // firing both would double-email them.
+      if (!isHomeGame && opponentClubRealId && opponentEligible.length > 0) {
+        const opponentClubSnap = await db.collection("clubs").doc(opponentClubRealId).get();
+        const template = await getTemplate(db, "gameTakeoverInvite");
+        const vars = {
+          clubName: opponentClubSnap.data()?.name ?? "",
+          opponentClubName: club.name,
+          gameDate: formatDateDe(scheduledStartTs.toDate()),
+          homeTeamName,
+          awayTeamName,
+        };
+        const subject = renderTemplate(template.subject, vars);
+        const html = renderTemplate(template.html, vars);
+        await Promise.all(
+          opponentEligible.map((editorUid) =>
+            sendToEditorIfOptedIn(editorUid, "gameTakeoverInvite", subject, html)
+          )
+        );
+        await gameRef.collection("editorHistory").add({
+          action: "takeoverInviteSent",
+          timestamp: FieldValue.serverTimestamp(),
+        });
+      }
+    } else {
+      // "Offen" (2026-08-22 decision): the creator declined to be
+      // mainEditor. Invite own-team eligible editors always; for an away
+      // game against a real linked club, also invite the opponent's
+      // eligible editors (same recipient set the "scenario 4" FYI-invite
+      // above would reach, just framed as "nobody's assigned yet" instead
+      // of "you could take over"). First to accept via acceptGameTransfer
+      // wins — same claim mechanism, see its path 4.
+      const recipients = new Set([...ownEligible, ...(isHomeGame ? [] : opponentEligible)]);
+      recipients.delete(uid);
+      if (recipients.size > 0) {
+        const template = await getTemplate(db, "gameTakeoverInvite");
+        const vars = {
+          clubName: club.name,
+          opponentClubName: opponentDisplayName,
+          gameDate: formatDateDe(scheduledStartTs.toDate()),
+          homeTeamName,
+          awayTeamName,
+        };
+        const subject = renderTemplate(template.subject, vars);
+        const html = renderTemplate(template.html, vars);
+        await Promise.all(
+          Array.from(recipients).map((editorUid) =>
+            sendToEditorIfOptedIn(editorUid, "gameTakeoverInvite", subject, html)
+          )
+        );
+        await gameRef.collection("editorHistory").add({
+          action: "takeoverInviteSent",
+          timestamp: FieldValue.serverTimestamp(),
+        });
+      }
     }
 
     return { gameId: gameRef.id, alreadyExisted: false };

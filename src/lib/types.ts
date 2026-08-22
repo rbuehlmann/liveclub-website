@@ -89,8 +89,12 @@ export interface Game {
   lastEventType?: string | null;
   // Exactly one uid may administer (start/score/etc.) this game at a time —
   // enforced in firestore.rules on the events subcollection, not just in
-  // the UI. See requestGameTransfer/acceptGameTransfer.
-  mainEditorUid: string;
+  // the UI. See requestGameTransfer/acceptGameTransfer. Null means "offen"
+  // — the creator declined to be editor at creation time (see createGame.ts's
+  // selfAsEditor:false, 2026-08-22 decision) and nobody has claimed it yet;
+  // events can't be created against a null mainEditorUid (firestore.rules),
+  // so the game is fully visible but not yet administrable.
+  mainEditorUid: string | null;
   mainEditorClubId: string;
   // Snapshot of users/{mainEditorUid}.publicDisplayName — denormalized here
   // because the client can only ever read its own users/{uid} doc, never

@@ -41,6 +41,7 @@ export async function createGame(input: {
   opponentTeamId?: string;
   opponentTeamName?: string;
   scheduledStart?: string;
+  selfAsEditor?: boolean;
 }) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { gameId: string; alreadyExisted: boolean }>(
@@ -148,6 +149,23 @@ export async function acceptGameTransfer(gameId: string) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<{ gameId: string }, { ok: true }>(functions, "acceptGameTransfer");
   const result = await call({ gameId });
+  return result.data;
+}
+
+export async function nudgeOpenGameInvite(gameId: string) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<{ gameId: string }, { ok: true; sentCount: number }>(
+    functions,
+    "nudgeOpenGameInvite"
+  );
+  const result = await call({ gameId });
+  return result.data;
+}
+
+export async function updateMemberTeams(input: { clubId: string; memberId: string; teamIds: string[] }) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "updateMemberTeams");
+  const result = await call(input);
   return result.data;
 }
 

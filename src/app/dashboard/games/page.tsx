@@ -12,6 +12,7 @@ import {
   acceptGameTransfer,
   declineGameTransfer,
   requestGameTransfer,
+  nudgeOpenGameInvite,
 } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -61,7 +62,7 @@ function mapGameDoc(id: string, data: Record<string, unknown>): Game {
     scheduledStart: scheduledStart?.toDate?.().toISOString() ?? null,
     status: data.status as Game["status"],
     score: (data.score as Game["score"]) ?? { home: 0, away: 0 },
-    mainEditorUid: data.mainEditorUid as string,
+    mainEditorUid: (data.mainEditorUid as string | null) ?? null,
     mainEditorClubId: data.mainEditorClubId as string,
     mainEditorDisplayName: (data.mainEditorDisplayName as string | null) ?? null,
     eligibleEditorUids: (data.eligibleEditorUids as string[]) ?? [],
@@ -88,6 +89,7 @@ export default function GamesPage() {
   const [selectedOpponent, setSelectedOpponent] = useState<PublicTeamProfile | null>(null);
   const [manualOpponentName, setManualOpponentName] = useState("");
   const [scheduledStart, setScheduledStart] = useState("");
+  const [wantsToBeEditor, setWantsToBeEditor] = useState(true);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createNotice, setCreateNotice] = useState<string | null>(null);
@@ -243,6 +245,7 @@ export default function GamesPage() {
         opponentTeamId: selectedOpponent?.teamId,
         opponentTeamName: selectedOpponent ? undefined : manualOpponentName.trim(),
         scheduledStart: scheduledStart ? new Date(scheduledStart).toISOString() : undefined,
+        selfAsEditor: wantsToBeEditor,
       });
       if (result.alreadyExisted) {
         setCreateNotice(
@@ -379,6 +382,22 @@ export default function GamesPage() {
               value={scheduledStart}
               onChange={(e) => setScheduledStart(e.target.value)}
             />
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={wantsToBeEditor}
+                  onChange={(e) => setWantsToBeEditor(e.target.checked)}
+                />
+                Ich möchte selbst Redaktor für dieses Spiel sein
+              </label>
+              {!wantsToBeEditor && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Das Spiel bleibt offen — alle berechtigten Redaktoren erhalten eine Einladungs-Mail, wer
+                  zuerst annimmt, übernimmt.
+                </p>
+              )}
+            </div>
             {createError && <p className="text-sm text-red-600">{createError}</p>}
             {createNotice && <p className="text-sm text-blue-700 dark:text-blue-400">{createNotice}</p>}
             <Button type="submit" disabled={creating || !opponentDisplayName || !scheduledStart}>
@@ -402,6 +421,7 @@ export default function GamesPage() {
             ownPublicClubId={club.publicClubId}
             userUid={user.uid}
             members={members}
+            isClubAdmin={role === "clubAdmin"}
           />
         ))}
       </div>
@@ -426,6 +446,7 @@ export default function GamesPage() {
                 ownPublicClubId={club.publicClubId}
                 userUid={user.uid}
                 members={members}
+                isClubAdmin={role === "clubAdmin"}
               />
             ))}
         </div>
@@ -441,6 +462,7 @@ function GameCard({
   ownPublicClubId,
   userUid,
   members,
+  isClubAdmin,
 }: {
   game: Game;
   t: ReturnType<typeof useTranslations>;
@@ -448,11 +470,14 @@ function GameCard({
   ownPublicClubId: string;
   userUid: string;
   members: Member[];
+  isClubAdmin: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showTransferPicker, setShowTransferPicker] = useState(false);
   const [transferTargetUid, setTransferTargetUid] = useState("");
+  const [nudging, setNudging] = useState(false);
+  const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
 
   const isMainEditor = game.mainEditorUid === userUid;
   const pendingTransferTargetsMe = game.pendingTransfer?.kind === "direct" && game.pendingTransfer.toUid === userUid;
@@ -464,10 +489,16 @@ function GameCard({
   // editor explicitly asking to hand back to the opponent club (any of
   // their eligible editors may accept it).
   const crossClubClaimable =
+    !!game.mainEditorUid &&
     !isMainEditor &&
     game.eligibleEditorUids.includes(userUid) &&
     ownClubId !== game.mainEditorClubId &&
     ((!game.pendingTransfer && !game.hasBeenTransferred) || game.pendingTransfer?.kind === "clubBroadcast");
+  // "Offen" (2026-08-22 decision) — nobody was assigned at creation time
+  // (see createGame.ts's selfAsEditor:false). Same first-click-wins claim
+  // as crossClubClaimable, just without requiring a different club — see
+  // acceptGameTransfer.ts's path 4.
+  const openClaimable = !game.mainEditorUid && game.eligibleEditorUids.includes(userUid);
   // Only own-club colleagues can be named as a direct handoff target — the
   // opposing club's members aren't readable client-side (privacy, see
   // firestore.rules), so a handback to the opponent club is a broadcast to
@@ -513,11 +544,16 @@ function GameCard({
               ? ` · ${game.score.home}:${game.score.away}`
               : ""}
           </p>
-          {UPCOMING_STATUSES.has(game.status) && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Hauptredaktor: {game.mainEditorDisplayName ?? (isMainEditor ? "Du" : "—")}
-            </p>
-          )}
+          {UPCOMING_STATUSES.has(game.status) &&
+            (game.mainEditorUid ? (
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Hauptredaktor: {game.mainEditorDisplayName ?? (isMainEditor ? "Du" : "—")}
+              </p>
+            ) : (
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                Offen — noch kein Redaktor zugeteilt
+              </p>
+            ))}
         </div>
         {isMainEditor ? (
           <Link href={buildGameLiveUrl(game.gameId)}>
@@ -550,6 +586,48 @@ function GameCard({
               Ablehnen
             </Button>
           </div>
+        </div>
+      )}
+
+      {openClaimable && (
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+          <span>Noch niemand administriert dieses Spiel — du bist berechtigt zu übernehmen.</span>
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
+          >
+            Übernehmen
+          </Button>
+        </div>
+      )}
+
+      {!game.mainEditorUid && isClubAdmin && UPCOMING_STATUSES.has(game.status) && (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={nudging}
+            onClick={async () => {
+              setNudging(true);
+              setNudgeMessage(null);
+              try {
+                const result = await nudgeOpenGameInvite(game.gameId);
+                setNudgeMessage(
+                  result.sentCount > 0
+                    ? `Erinnerung an ${result.sentCount} Redaktor(en) gesendet.`
+                    : "Keine berechtigten Redaktoren gefunden."
+                );
+              } catch (err) {
+                setNudgeMessage((err as { message?: string })?.message ?? "Senden fehlgeschlagen.");
+              } finally {
+                setNudging(false);
+              }
+            }}
+          >
+            {nudging ? "Wird gesendet …" : "Erinnerung erneut senden"}
+          </Button>
+          {nudgeMessage && <span className="text-xs text-gray-500 dark:text-gray-400">{nudgeMessage}</span>}
         </div>
       )}
 
