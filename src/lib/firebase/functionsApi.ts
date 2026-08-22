@@ -293,6 +293,20 @@ export async function createCheckoutSession(input: {
   return result.data;
 }
 
+export async function submitSupportRequest(input: {
+  platform: "website" | "ios" | "android";
+  topic: "bug" | "question" | "feature" | "feedback";
+  name: string;
+  email: string;
+  message: string;
+  recaptchaToken: string;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "submitSupportRequest");
+  const result = await call(input);
+  return result.data;
+}
+
 export async function submitClubRecommendation(input: {
   clubName: string;
   country?: string;

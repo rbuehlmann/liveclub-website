@@ -321,5 +321,10 @@ service cloud.firestore {
       allow read: if isPlatformAdmin();
       allow write: if false;
     }
+
+    match /supportRequests/{id} {
+      allow read: if isPlatformAdmin();
+      allow write: if false;
+    }
   }
 }

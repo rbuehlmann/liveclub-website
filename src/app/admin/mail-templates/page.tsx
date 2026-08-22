@@ -24,6 +24,11 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
     hint: "{{clubName}}, {{country}}, {{note}}, {{source}}, {{referralCode}}",
   },
   {
+    id: "supportRequest",
+    label: "Support-Anfrage eingegangen",
+    hint: "{{platform}}, {{topicLabel}}, {{name}}, {{email}}, {{message}}",
+  },
+  {
     id: "gameTakeoverInvite",
     label: "Einladung zur Spielübernahme",
     hint: "{{homeTeamName}}, {{awayTeamName}}, {{gameDate}}",
@@ -94,6 +99,18 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
 <li><strong>Notiz:</strong> {{note}}</li>
 <li><strong>Referral-Code:</strong> {{referralCode}}</li>
 </ul>`,
+  },
+  supportRequest: {
+    subject: "[{{platform}}] {{topicLabel}}: {{name}}",
+    html: `<p>Neue Support-Anfrage über die Website:</p>
+<ul>
+<li><strong>Plattform:</strong> {{platform}}</li>
+<li><strong>Anliegen:</strong> {{topicLabel}}</li>
+<li><strong>Name:</strong> {{name}}</li>
+<li><strong>E-Mail:</strong> {{email}}</li>
+</ul>
+<p><strong>Nachricht:</strong></p>
+<p>{{message}}</p>`,
   },
   gameTakeoverInvite: {
     subject: "Einladung: {{homeTeamName}} vs. {{awayTeamName}} am {{gameDate}}",

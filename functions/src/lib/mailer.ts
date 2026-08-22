@@ -10,6 +10,11 @@ const FROM_ADDRESS = "LiveClub <no-reply@liveclub.app>";
 // Placeholder single address for now — will move to a real team inbox later.
 export const LIVECLUB_TEAM_EMAIL = "raffael.buehlmann@gmail.com";
 
+// The public /support form's destination — a real inbox distinct from
+// LIVECLUB_TEAM_EMAIL above (that one's for internal ops notifications,
+// this one's the address users are told to expect a reply from).
+export const LIVECLUB_SUPPORT_EMAIL = "support@liveclub.app";
+
 export async function sendMail(input: { to: string; subject: string; html: string }) {
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,

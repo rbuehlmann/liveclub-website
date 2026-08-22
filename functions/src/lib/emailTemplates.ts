@@ -113,6 +113,22 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
     html: `<p>Hallo,</p>
 <p><strong>{{memberName}}</strong> ({{memberEmail}}) hat sein/ihr LiveClub-Konto gelöscht und ist dadurch nicht mehr Redaktor bei <strong>{{clubName}}</strong>.</p>`,
   },
+  // Internal — goes to LIVECLUB_SUPPORT_EMAIL, never back to the sender
+  // (they get their own confirmation in the UI, not a mail). See
+  // submitSupportRequest.ts.
+  supportRequest: {
+    label: "Support-Anfrage eingegangen",
+    subject: "[{{platform}}] {{topicLabel}}: {{name}}",
+    html: `<p>Neue Support-Anfrage über die Website:</p>
+<ul>
+<li><strong>Plattform:</strong> {{platform}}</li>
+<li><strong>Anliegen:</strong> {{topicLabel}}</li>
+<li><strong>Name:</strong> {{name}}</li>
+<li><strong>E-Mail:</strong> {{email}}</li>
+</ul>
+<p><strong>Nachricht:</strong></p>
+<p>{{message}}</p>`,
+  },
   // Sent to the creating club's contactEmail when an "offen" game (see
   // createGame.ts's selfAsEditor:false, 2026-08-22 decision) gets claimed —
   // the redaktor(en) already get their own gameTakenOver mail, but nobody

@@ -1,6 +1,7 @@
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Card } from "@/components/ui/Card";
+import { SupportForm } from "./SupportForm";
 
 export const metadata = { title: "Support – LiveClub" };
 
@@ -51,16 +52,7 @@ export default function SupportPage() {
           </div>
         </Card>
 
-        <Card>
-          <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Kontakt</h2>
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            Schreib uns an{" "}
-            <a href="mailto:hello@oryno.dev" className="text-brand-red hover:underline">
-              hello@oryno.dev
-            </a>{" "}
-            — in der Regel antworten wir innerhalb von 1–2 Werktagen.
-          </p>
-        </Card>
+        <SupportForm />
       </main>
       <PublicFooter />
     </div>
