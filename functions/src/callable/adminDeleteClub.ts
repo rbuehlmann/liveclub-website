@@ -21,11 +21,12 @@ interface AdminDeleteClubRequest {
  * anymore" deletion). This one has no undo.
  *
  * Firestore alone doesn't cascade-delete: clubs/{clubId} and its
- * subcollections come off via recursiveDelete, but publicClubs (a separate
- * top-level doc), publicGames/publicTeams (top-level mirrors keyed by their
- * own ids), invitations (queried by clubId), each member's cached
- * users/{uid} club fields, the Storage logo, and Auth custom claims all
- * need their own explicit cleanup or they'd orphan silently.
+ * subcollections come off via recursiveDelete, but games/teamInfos
+ * (top-level, queried by clubId), publicClubs (a separate top-level doc),
+ * publicGames/publicTeams (top-level mirrors keyed by their own ids),
+ * invitations (queried by clubId), each member's cached users/{uid} club
+ * fields, the Storage logo, and Auth custom claims all need their own
+ * explicit cleanup or they'd orphan silently.
  *
  * Deliberately does not touch Stripe (no auto-cancelling a real
  * subscription) or deviceFollows (stale publicTeamId entries in a device's
@@ -68,15 +69,19 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     const clubData = clubSnap.data()!;
     const publicClubId: string | undefined = clubData.publicClubId;
 
-    const [membersSnap, teamsSnap, homeGamesSnap, awayGamesSnap, invitationsSnap] = await Promise.all([
-      clubRef.collection("members").get(),
-      clubRef.collection("teams").get(),
-      // Games are a single top-level collection now (see createGame.ts) — a
-      // club can appear as either side, never nested under it.
-      db.collection("games").where("homeClubId", "==", clubId).get(),
-      db.collection("games").where("awayClubId", "==", clubId).get(),
-      db.collection("invitations").where("clubId", "==", clubId).get(),
-    ]);
+    const [membersSnap, teamsSnap, homeGamesSnap, awayGamesSnap, invitationsSnap, teamInfosSnap] =
+      await Promise.all([
+        clubRef.collection("members").get(),
+        clubRef.collection("teams").get(),
+        // Games are a single top-level collection now (see createGame.ts) — a
+        // club can appear as either side, never nested under it.
+        db.collection("games").where("homeClubId", "==", clubId).get(),
+        db.collection("games").where("awayClubId", "==", clubId).get(),
+        db.collection("invitations").where("clubId", "==", clubId).get(),
+        // Team-Infos are also a top-level collection (public read, see
+        // createTeamInfo.ts) — same orphaning risk as games above.
+        db.collection("teamInfos").where("clubId", "==", clubId).get(),
+      ]);
     const gameDocs = [...homeGamesSnap.docs, ...awayGamesSnap.docs].filter(
       (doc, i, all) => all.findIndex((d) => d.id === doc.id) === i
     );
@@ -108,6 +113,10 @@ export const adminDeleteClub = onCall<AdminDeleteClubRequest>(
     // once one of its two sides no longer exists, so the whole record goes
     // rather than trying to keep a half-orphaned game around.
     await Promise.all(gameDocs.map((gameDoc) => db.recursiveDelete(gameDoc.ref)));
+
+    // Each Team-Info has its own pushLog subcollection, same reasoning as
+    // games above — recursiveDelete per doc, not a plain batch delete.
+    await Promise.all(teamInfosSnap.docs.map((infoDoc) => db.recursiveDelete(infoDoc.ref)));
 
     if (publicClubId) {
       await db.recursiveDelete(db.collection("publicClubs").doc(publicClubId));
