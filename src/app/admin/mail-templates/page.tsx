@@ -54,6 +54,28 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
   },
 ];
 
+// Purely a sidebar grouping — every id here must also be a KNOWN_TEMPLATES
+// entry. Anything not listed (custom templates added via "+ Neue Vorlage")
+// falls into "Weitere" automatically.
+const CATEGORIES: { label: string; ids: string[] }[] = [
+  { label: "Auth", ids: ["emailVerification", "passwordReset"] },
+  {
+    label: "Vereine",
+    ids: [
+      "invite",
+      "clubDeactivated",
+      "clubDeleted",
+      "clubDeletedInternal",
+      "redaktorRemoved",
+      "clubMemberLeft",
+      "clubRecommendation",
+    ],
+  },
+  { label: "Spiele", ids: ["gameTakeoverInvite", "gameTakenOver", "gameHandedOff", "gameOpenClaimed"] },
+  { label: "Team-Infos", ids: ["teamInfoHidden"] },
+  { label: "Support", ids: ["supportRequest"] },
+];
+
 const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
   emailVerification: {
     subject: "Bitte bestätige deine E-Mail-Adresse",
@@ -167,6 +189,94 @@ interface TemplateMeta {
   hint?: string;
 }
 
+function SidebarButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${
+        active
+          ? "bg-brand-red/10 text-brand-red"
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+// Wraps every outgoing mail server-side (functions/src/lib/mailer.ts) —
+// change the logo/branding once here instead of in all 15 templates.
+function EmailLayoutCard() {
+  const [headerHtml, setHeaderHtml] = useState("");
+  const [footerHtml, setFooterHtml] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    getDoc(doc(db, "settings", "emailLayout"))
+      .then((snap) => {
+        const data = snap.data();
+        setHeaderHtml(data?.headerHtml ?? "");
+        setFooterHtml(data?.footerHtml ?? "");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const { db } = getFirebaseClient();
+      await setDoc(doc(db, "settings", "emailLayout"), { headerHtml, footerHtml }, { merge: true });
+      setMessage("Gespeichert ✓ — gilt sofort für alle Mails.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <Card>
+      <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Header & Footer</h2>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Wird automatisch um jede ausgehende Mail gelegt (auch Test-Mails) — z. B. ein Logo oben oder ein
+        einheitlicher Footer. So musst du das Design nur an einer Stelle pflegen, nicht in jeder der
+        Vorlagen einzeln.
+      </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Header (HTML)</label>
+          <textarea
+            value={headerHtml}
+            onChange={(e) => setHeaderHtml(e.target.value)}
+            rows={6}
+            placeholder='<div style="text-align:center;padding:16px 0;"><img src="https://liveclub.app/logo.png" height="40" alt="LiveClub"></div>'
+            className="rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Footer (HTML)</label>
+          <textarea
+            value={footerHtml}
+            onChange={(e) => setFooterHtml(e.target.value)}
+            rows={6}
+            placeholder='<p style="color:#999;font-size:12px;text-align:center;">LiveClub · liveclub.app</p>'
+            className="rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+          />
+        </div>
+        {message && <p className="text-sm text-green-700">{message}</p>}
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Wird gespeichert …" : "Speichern"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
 function TemplateCard({ id, label, hint }: TemplateMeta) {
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
@@ -250,7 +360,8 @@ function TemplateCard({ id, label, hint }: TemplateMeta) {
 
       <div className="mt-4 border-t border-gray-100 dark:border-white/10 pt-4">
         <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
-          Test-Mail (auch ungespeicherte Änderungen, mit Beispieldaten) an eine beliebige Adresse.
+          Test-Mail (auch ungespeicherte Änderungen, mit Beispieldaten und dem aktuellen Header/Footer) an
+          eine beliebige Adresse.
         </p>
         <div className="flex items-end gap-3">
           <div className="flex-1">
@@ -271,8 +382,11 @@ function TemplateCard({ id, label, hint }: TemplateMeta) {
   );
 }
 
+const DESIGN_ID = "__design__";
+
 export default function AdminMailTemplatesPage() {
   const [templates, setTemplates] = useState<TemplateMeta[] | null>(null);
+  const [selectedId, setSelectedId] = useState<string>(DESIGN_ID);
   const [addingNew, setAddingNew] = useState(false);
   const [newId, setNewId] = useState("");
   const [newLabel, setNewLabel] = useState("");
@@ -306,42 +420,107 @@ export default function AdminMailTemplatesPage() {
     setNewId("");
     setNewLabel("");
     setAddingNew(false);
+    setSelectedId(id);
   }
 
   if (!templates) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
+
+  const byId = new Map(templates.map((t) => [t.id, t]));
+  const categorizedIds = new Set(CATEGORIES.flatMap((c) => c.ids));
+  const customTemplates = templates.filter((t) => !categorizedIds.has(t.id));
+  const selectedTemplate = selectedId !== DESIGN_ID ? byId.get(selectedId) : undefined;
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-bold text-gray-900 dark:text-white">Mail Vorlagen</h1>
 
-      {templates.map((template) => (
-        <TemplateCard key={template.id} {...template} />
-      ))}
-
-      <Card>
-        {addingNew ? (
-          <div className="flex flex-col gap-4">
-            <h2 className="font-semibold text-gray-900 dark:text-white">Neue Vorlage</h2>
-            <TextField
-              label="ID (technisch, z. B. licenseExpiring)"
-              value={newId}
-              onChange={(e) => setNewId(e.target.value)}
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <nav className="flex flex-col gap-4 md:w-64 md:flex-shrink-0">
+          <div>
+            <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Design
+            </p>
+            <SidebarButton
+              label="Header & Footer"
+              active={selectedId === DESIGN_ID}
+              onClick={() => setSelectedId(DESIGN_ID)}
             />
-            <TextField label="Name (Anzeige)" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-            {addError && <p className="text-sm text-red-600">{addError}</p>}
-            <div className="flex gap-2">
-              <Button onClick={handleAddTemplate}>Erstellen</Button>
-              <Button variant="secondary" onClick={() => setAddingNew(false)}>
-                Abbrechen
-              </Button>
-            </div>
           </div>
-        ) : (
+
+          {CATEGORIES.map((cat) => {
+            const items = cat.ids.map((id) => byId.get(id)).filter((t): t is TemplateMeta => !!t);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat.label}>
+                <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                  {cat.label}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {items.map((t) => (
+                    <SidebarButton
+                      key={t.id}
+                      label={t.label}
+                      active={selectedId === t.id}
+                      onClick={() => setSelectedId(t.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {customTemplates.length > 0 && (
+            <div>
+              <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Weitere
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {customTemplates.map((t) => (
+                  <SidebarButton
+                    key={t.id}
+                    label={t.label}
+                    active={selectedId === t.id}
+                    onClick={() => setSelectedId(t.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <Button variant="secondary" onClick={() => setAddingNew(true)}>
             + Neue Vorlage
           </Button>
-        )}
-      </Card>
+        </nav>
+
+        <div className="flex-1">
+          {selectedId === DESIGN_ID ? (
+            <EmailLayoutCard />
+          ) : selectedTemplate ? (
+            <TemplateCard key={selectedTemplate.id} {...selectedTemplate} />
+          ) : null}
+
+          {addingNew && (
+            <Card className="mt-6">
+              <div className="flex flex-col gap-4">
+                <h2 className="font-semibold text-gray-900 dark:text-white">Neue Vorlage</h2>
+                <TextField
+                  label="ID (technisch, z. B. licenseExpiring)"
+                  value={newId}
+                  onChange={(e) => setNewId(e.target.value)}
+                />
+                <TextField label="Name (Anzeige)" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
+                {addError && <p className="text-sm text-red-600">{addError}</p>}
+                <div className="flex gap-2">
+                  <Button onClick={handleAddTemplate}>Erstellen</Button>
+                  <Button variant="secondary" onClick={() => setAddingNew(false)}>
+                    Abbrechen
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
