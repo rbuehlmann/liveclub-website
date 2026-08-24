@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { HelpArticleMeta } from "@/lib/help/types";
 
 const MAX_RESULTS = 8;
@@ -10,6 +11,7 @@ const MAX_RESULTS = 8;
 // via getAllArticles) — fine at this content size. Swapping to Algolia
 // later only touches this component, not the pages that render it.
 export function SearchBar({ articles }: { articles: HelpArticleMeta[] }) {
+  const t = useTranslations("help");
   const [query, setQuery] = useState("");
 
   const results = useMemo(() => {
@@ -31,7 +33,7 @@ export function SearchBar({ articles }: { articles: HelpArticleMeta[] }) {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Wonach suchst du?"
+        placeholder={t("searchPlaceholder")}
         className="w-full rounded-full border border-gray-200 bg-white px-5 py-3.5 text-base shadow-sm focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 focus:outline-none dark:border-white/15 dark:bg-white/5 dark:text-white"
       />
       {results.length > 0 && (

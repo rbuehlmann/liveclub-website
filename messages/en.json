@@ -1,0 +1,157 @@
+{
+  "footer": {
+    "legalNotice": "Legal Notice",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "support": "Support"
+  },
+  "home": {
+    "tagline": "Your club. Right there with you.",
+    "subtitle": "Live scores for small and medium-sized sports clubs.",
+    "statsTeams": "Registered teams",
+    "statsClubs": "Registered clubs",
+    "statsFinished": "Games played",
+    "statsLive": "Live now",
+    "clubNameLabel": "Club name",
+    "clubNamePlaceholder": "e.g. FC Example",
+    "countryLabel": "Country",
+    "allCountries": "All countries",
+    "countries": {
+      "Schweiz": "Switzerland",
+      "Deutschland": "Germany",
+      "Österreich": "Austria",
+      "Liechtenstein": "Liechtenstein"
+    },
+    "noClubsFound": "No clubs found.",
+    "missingClub": "Can't find your club?",
+    "tellUs": "Let us know",
+    "matchingTeam": "Team: {name}",
+    "backToSearch": "← Back to search",
+    "teamOf": "Teams of {name}",
+    "noTeamsYet": "No teams yet.",
+    "betaNotice": "LiveClub app for fans — join the beta now",
+    "registerClub": "Register your club"
+  },
+  "publicClub": {
+    "notFound": "Club not found.",
+    "noLiveGame": "No game is currently live.",
+    "openDetails": "Open details",
+    "bookmarkHint": "Bookmark this page to follow your club — refresh anytime to see the latest state.",
+    "appComingSoon": "Coming soon: the LiveClub app for fans",
+    "metaDescription": "Live scores and info for {name} on LiveClub.",
+    "status": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "live": "Live",
+      "paused": "Paused",
+      "finished": "Finished",
+      "cancelled": "Cancelled"
+    }
+  },
+  "publicTeam": {
+    "notFound": "Team not found.",
+    "bookmarkHint": "Bookmark this page to follow this team.",
+    "backToClub": "Back to the whole club",
+    "metaDescription": "Live scores and info for {name} from {clubName} on LiveClub."
+  },
+  "publicGame": {
+    "notFound": "Game not found.",
+    "loading": "Loading …",
+    "pausedSuffix": "paused",
+    "status": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "live": "Live",
+      "paused": "Paused",
+      "finished": "Finished",
+      "cancelled": "Cancelled"
+    }
+  },
+  "support": {
+    "title": "How can we help?",
+    "faqTitle": "Frequently asked questions",
+    "faq1Question": "I forgot my password.",
+    "faq1Answer": "On the <link>Sign in</link> page, you can request a password reset email under \"Forgot password?\".",
+    "faq2Question": "How do I add a team or a game?",
+    "faq2Answer": "As a club admin, you'll find this under \"Teams\" or \"Games\" in your club dashboard.",
+    "faq3Question": "I have a question about my subscription/billing.",
+    "faq3Answer": "As a club admin, you can view and manage your subscription directly in the dashboard under \"Manage subscription\" (handled via Stripe). For anything else, reach out to us directly.",
+    "faq4Question": "I found a bug.",
+    "faq4Answer": "Tell us briefly what happened — ideally with your club/team, browser, and the steps that led to the bug.",
+    "form": {
+      "title": "Still have questions?",
+      "doneMessage": "Thanks! We've received your request and will get back to you.",
+      "platformLabel": "Platform",
+      "platforms": {
+        "website": "Website",
+        "ios": "iOS",
+        "android": "Android"
+      },
+      "topicLabel": "Topic",
+      "topics": {
+        "bug": "Report a bug",
+        "question": "Question about the app",
+        "feature": "Feature idea",
+        "feedback": "General feedback"
+      },
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "messageLabel": "Message",
+      "sending": "Sending …",
+      "send": "Send message",
+      "recaptchaNotice": "This page is protected by reCAPTCHA.",
+      "sendFailed": "Failed to send."
+    }
+  },
+  "recommendClub": {
+    "title": "Can't find your club?",
+    "subtitle": "Let us know and we'll reach out to the club and invite them.",
+    "doneMessage": "Thanks! We've received your tip and will reach out to the club.",
+    "clubNameLabel": "Club name",
+    "countryLabel": "Country",
+    "countries": {
+      "Schweiz": "Switzerland",
+      "Deutschland": "Germany",
+      "Österreich": "Austria",
+      "Liechtenstein": "Liechtenstein"
+    },
+    "nameLabel": "Your name (optional)",
+    "emailLabel": "Your email (optional, for follow-up)",
+    "noteLabel": "Note (optional)",
+    "sending": "Sending …",
+    "submit": "Suggest club",
+    "recaptchaNotice": "This page is protected by reCAPTCHA.",
+    "sendFailed": "Failed to send."
+  },
+  "help": {
+    "metaDescription": "Documentation and guides for LiveClub — clubs, games, editors, apps.",
+    "backToApp": "Back to liveclub.app",
+    "heroTitle": "How can we help?",
+    "categoriesTitle": "Categories",
+    "recentlyUpdatedTitle": "Recently updated",
+    "searchPlaceholder": "What are you looking for?",
+    "onThisPage": "On this page",
+    "previous": "← Previous",
+    "next": "Next →",
+    "breadcrumbDocs": "Docs",
+    "noArticlesInCategory": "No articles in this category yet.",
+    "lastUpdated": "Last updated",
+    "categories": {
+      "erste-schritte": "Getting Started",
+      "spiele": "Games",
+      "vereine": "Clubs",
+      "redaktoren": "Editors",
+      "apps": "Apps",
+      "push": "Push",
+      "abo": "Subscription",
+      "einstellungen": "Settings",
+      "fehlerbehebung": "Troubleshooting",
+      "neuigkeiten": "News"
+    },
+    "roles": {
+      "fan": "Fan",
+      "redaktor": "Editor",
+      "admin": "Administrator"
+    }
+  }
+}

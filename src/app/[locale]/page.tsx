@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import NextLink from "next/link";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { collection, getDocs, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildTeamUrl } from "@/lib/publicRoutes";
@@ -12,6 +13,10 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 
+// Values match clubs' stored `country` field exactly (always German —
+// registration itself isn't translated yet, see the 2026-08-24 i18n
+// scope decision) — only the *displayed* label is translated, via
+// home.countries in messages/{locale}.json, keyed by these same strings.
 const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
 
 interface ClubResult {
@@ -53,6 +58,7 @@ interface TeamNameMatch {
 }
 
 export default function Home() {
+  const t = useTranslations("home");
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [country, setCountry] = useState("");
@@ -180,28 +186,24 @@ export default function Home() {
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
         <div className="text-center">
           <h1 className="font-teko text-5xl font-bold text-gray-900 dark:text-white">LiveClub</h1>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">
-            Dein Verein. Direkt dabei.
-          </p>
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
-            Live-Spielstände für kleine und mittlere Sportvereine.
-          </p>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">{t("tagline")}</p>
+          <p className="mt-3 text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
         </div>
 
         <div className="grid grid-cols-4 divide-x divide-gray-200 rounded-xl border border-gray-200 bg-white py-4 dark:divide-white/10 dark:border-white/10 dark:bg-white/5">
           <div className="flex flex-col items-center gap-1">
             <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{registeredTeamsCount}</p>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Teams</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">{t("statsTeams")}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
             <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">{licensedClubIds.size}</p>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Registrierte Vereine</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">{t("statsClubs")}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
             <p className="font-teko text-3xl font-bold text-gray-900 dark:text-white">
               {gameStatusCounts.finished}
             </p>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Gespielte Spiele</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">{t("statsFinished")}</p>
           </div>
           <div className="flex flex-col items-center gap-1">
             <p
@@ -211,29 +213,29 @@ export default function Home() {
             >
               {gameStatusCounts.live}
             </p>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400">Live jetzt</p>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">{t("statsLive")}</p>
           </div>
         </div>
 
         <Card>
           <div className="flex flex-col gap-4">
             <TextField
-              label="Vereinsname"
-              placeholder="z. B. FC Musterhausen"
+              label={t("clubNameLabel")}
+              placeholder={t("clubNamePlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Land</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("countryLabel")}</label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
               >
-                <option value="">Alle Länder</option>
+                <option value="">{t("allCountries")}</option>
                 {COUNTRIES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {t(`countries.${c}`)}
                   </option>
                 ))}
               </select>
@@ -258,18 +260,18 @@ export default function Home() {
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {matchingTeam ? `Mannschaft: ${matchingTeam.name}` : club.sport}
+                    {matchingTeam ? t("matchingTeam", { name: matchingTeam.name }) : club.sport}
                   </p>
                 </div>
               </Card>
             ))}
             {searchTerm.trim() && visibleClubs.length === 0 && (
               <div className="flex flex-col items-center gap-1 py-2 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Keine Vereine gefunden.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t("noClubsFound")}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Vermisst du deinen Verein?{" "}
+                  {t("missingClub")}{" "}
                   <Link href="/verein-empfehlen" className="text-brand-red hover:underline">
-                    Sag uns Bescheid
+                    {t("tellUs")}
                   </Link>
                 </p>
               </div>
@@ -284,11 +286,13 @@ export default function Home() {
               onClick={() => setSelectedClub(null)}
               className="self-start text-sm text-brand-red hover:underline"
             >
-              ← Zurück zur Suche
+              {t("backToSearch")}
             </button>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Mannschaft von {selectedClub.name}</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t("teamOf", { name: selectedClub.name })}
+            </p>
             {teams.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Noch keine Mannschaften vorhanden.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t("noTeamsYet")}</p>
             )}
             {teams.map((team) => (
               <Card key={team.teamId} className="cursor-pointer" onClick={() => selectTeam(team)}>
@@ -300,9 +304,7 @@ export default function Home() {
         )}
 
         <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            LiveClub-App für Fans — jetzt am Beta-Test teilnehmen
-          </p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
           <div className="flex gap-3">
             <a href="https://testflight.apple.com/join/VB8bURxn" target="_blank" rel="noopener noreferrer">
               <Button variant="secondary">App Store</Button>
@@ -311,9 +313,11 @@ export default function Home() {
               <Button variant="secondary">Play Store</Button>
             </a>
           </div>
-          <Link href="/register" className="mt-2 text-sm text-brand-red hover:underline">
-            Verein registrieren
-          </Link>
+          {/* /register lives outside the [locale] tree (2026-08-24 scope
+              decision) — plain next/link, not the locale-aware one. */}
+          <NextLink href="/register" className="mt-2 text-sm text-brand-red hover:underline">
+            {t("registerClub")}
+          </NextLink>
         </div>
       </div>
       <PublicFooter />

@@ -1,10 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 import { HELP_CATEGORIES } from "@/lib/help/categories";
 
 export function HelpSidebar() {
+  const t = useTranslations("help.categories");
+  // The locale-aware usePathname() strips the /en prefix, so comparing
+  // against a plain "/help/{slug}" href works the same for both locales.
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-1 text-sm">
@@ -22,7 +25,7 @@ export function HelpSidebar() {
             }`}
           >
             <span aria-hidden>{cat.icon}</span>
-            {cat.label}
+            {t(cat.slug)}
           </Link>
         );
       })}

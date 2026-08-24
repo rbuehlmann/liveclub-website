@@ -112,11 +112,6 @@
     "qrCode": "QR-Code",
     "shareText": "Folge unserem Verein auf LiveClub"
   },
-  "public": {
-    "noLiveGame": "Momentan läuft kein Spiel.",
-    "liveLabel": "LIVE",
-    "poweredBy": "Bald verfügbar: die LiveClub-App für Fans"
-  },
   "admin": {
     "title": "Plattform-Administration",
     "clubs": "Vereine",
@@ -126,5 +121,160 @@
     "validUntil": "Gültig bis",
     "notes": "Interner Hinweis",
     "apply": "Anwenden"
+  },
+  "footer": {
+    "legalNotice": "Impressum",
+    "privacyPolicy": "Datenschutz",
+    "termsOfService": "AGB",
+    "support": "Support"
+  },
+  "home": {
+    "tagline": "Dein Verein. Direkt dabei.",
+    "subtitle": "Live-Spielstände für kleine und mittlere Sportvereine.",
+    "statsTeams": "Registrierte Teams",
+    "statsClubs": "Registrierte Vereine",
+    "statsFinished": "Gespielte Spiele",
+    "statsLive": "Live jetzt",
+    "clubNameLabel": "Vereinsname",
+    "clubNamePlaceholder": "z. B. FC Musterhausen",
+    "countryLabel": "Land",
+    "allCountries": "Alle Länder",
+    "countries": {
+      "Schweiz": "Schweiz",
+      "Deutschland": "Deutschland",
+      "Österreich": "Österreich",
+      "Liechtenstein": "Liechtenstein"
+    },
+    "noClubsFound": "Keine Vereine gefunden.",
+    "missingClub": "Vermisst du deinen Verein?",
+    "tellUs": "Sag uns Bescheid",
+    "matchingTeam": "Mannschaft: {name}",
+    "backToSearch": "← Zurück zur Suche",
+    "teamOf": "Mannschaft von {name}",
+    "noTeamsYet": "Noch keine Mannschaften vorhanden.",
+    "betaNotice": "LiveClub-App für Fans — jetzt am Beta-Test teilnehmen",
+    "registerClub": "Verein registrieren"
+  },
+  "publicClub": {
+    "notFound": "Verein wurde nicht gefunden.",
+    "noLiveGame": "Momentan läuft kein Spiel.",
+    "openDetails": "Details öffnen",
+    "bookmarkHint": "Diese Seite bookmarken, um deinen Verein zu folgen — beim Aktualisieren siehst du immer den neuesten Stand.",
+    "appComingSoon": "Bald verfügbar: die LiveClub-App für Fans",
+    "metaDescription": "Live-Spielstände und Infos zu {name} auf LiveClub.",
+    "status": {
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "live": "Live",
+      "paused": "Pausiert",
+      "finished": "Beendet",
+      "cancelled": "Abgesagt"
+    }
+  },
+  "publicTeam": {
+    "notFound": "Mannschaft wurde nicht gefunden.",
+    "bookmarkHint": "Diese Seite bookmarken, um dieser Mannschaft zu folgen.",
+    "backToClub": "Zum ganzen Verein",
+    "metaDescription": "Live-Spielstände und Infos zu {name} von {clubName} auf LiveClub."
+  },
+  "publicGame": {
+    "notFound": "Spiel wurde nicht gefunden.",
+    "loading": "Wird geladen …",
+    "pausedSuffix": "pausiert",
+    "status": {
+      "draft": "Entwurf",
+      "scheduled": "Geplant",
+      "live": "Live",
+      "paused": "Pausiert",
+      "finished": "Beendet",
+      "cancelled": "Abgesagt"
+    }
+  },
+  "support": {
+    "title": "Wie können wir helfen?",
+    "faqTitle": "Häufige Fragen",
+    "faq1Question": "Ich habe mein Passwort vergessen.",
+    "faq1Answer": "Auf der <link>Anmelden</link>-Seite kannst du unter „Passwort vergessen?“ eine E-Mail zum Zurücksetzen anfordern.",
+    "faq2Question": "Wie füge ich eine Mannschaft oder ein Spiel hinzu?",
+    "faq2Answer": "Als Vereins-Admin findest du das unter „Mannschaften“ bzw. „Spiele“ in deinem Vereins-Dashboard.",
+    "faq3Question": "Ich habe eine Frage zu meinem Abo/zur Rechnung.",
+    "faq3Answer": "Als Vereins-Admin kannst du dein Abo direkt im Dashboard unter „Abo verwalten“ einsehen und verwalten (läuft über Stripe). Bei weiteren Fragen melde dich direkt bei uns.",
+    "faq4Question": "Ich habe einen Fehler gefunden.",
+    "faq4Answer": "Schreib uns kurz, was passiert ist — am besten mit Verein/Mannschaft, Browser und den Schritten, die zum Fehler geführt haben.",
+    "form": {
+      "title": "Noch offene Fragen?",
+      "doneMessage": "Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.",
+      "platformLabel": "Plattform",
+      "platforms": {
+        "website": "Website",
+        "ios": "iOS",
+        "android": "Android"
+      },
+      "topicLabel": "Anliegen",
+      "topics": {
+        "bug": "Bug melden",
+        "question": "Frage zur App",
+        "feature": "Feature-Idee",
+        "feedback": "Allgemeines Feedback"
+      },
+      "nameLabel": "Name",
+      "emailLabel": "E-Mail",
+      "messageLabel": "Nachricht",
+      "sending": "Wird gesendet …",
+      "send": "Nachricht senden",
+      "recaptchaNotice": "Diese Seite ist durch reCAPTCHA geschützt.",
+      "sendFailed": "Senden fehlgeschlagen."
+    }
+  },
+  "recommendClub": {
+    "title": "Vermisst du deinen Verein?",
+    "subtitle": "Sag uns Bescheid, wir melden uns beim Verein und laden ihn ein.",
+    "doneMessage": "Danke! Wir haben deinen Hinweis erhalten und melden uns beim Verein.",
+    "clubNameLabel": "Vereinsname",
+    "countryLabel": "Land",
+    "countries": {
+      "Schweiz": "Schweiz",
+      "Deutschland": "Deutschland",
+      "Österreich": "Österreich",
+      "Liechtenstein": "Liechtenstein"
+    },
+    "nameLabel": "Dein Name (optional)",
+    "emailLabel": "Deine E-Mail (optional, für Rückfragen)",
+    "noteLabel": "Notiz (optional)",
+    "sending": "Wird gesendet …",
+    "submit": "Verein vorschlagen",
+    "recaptchaNotice": "Diese Seite ist durch reCAPTCHA geschützt.",
+    "sendFailed": "Senden fehlgeschlagen."
+  },
+  "help": {
+    "metaDescription": "Dokumentation und Anleitungen für LiveClub — Vereine, Spiele, Redaktoren, Apps.",
+    "backToApp": "Zurück zu liveclub.app",
+    "heroTitle": "Wie können wir helfen?",
+    "categoriesTitle": "Kategorien",
+    "recentlyUpdatedTitle": "Zuletzt aktualisiert",
+    "searchPlaceholder": "Wonach suchst du?",
+    "onThisPage": "Auf dieser Seite",
+    "previous": "← Zurück",
+    "next": "Weiter →",
+    "breadcrumbDocs": "Docs",
+    "noArticlesInCategory": "Noch keine Artikel in dieser Kategorie.",
+    "lastUpdated": "Zuletzt aktualisiert",
+    "categories": {
+      "erste-schritte": "Erste Schritte",
+      "spiele": "Spiele",
+      "vereine": "Vereine",
+      "redaktoren": "Redaktoren",
+      "apps": "Apps",
+      "push": "Push",
+      "abo": "Abonnement",
+      "einstellungen": "Einstellungen",
+      "fehlerbehebung": "Fehlerbehebung",
+      "neuigkeiten": "Neuigkeiten"
+    },
+    "roles": {
+      "fan": "Fan",
+      "redaktor": "Redaktor",
+      "admin": "Administrator"
+    }
   }
 }

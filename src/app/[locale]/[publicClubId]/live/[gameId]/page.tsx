@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { TeamIcon } from "@/components/TeamIcon";
@@ -9,16 +10,8 @@ import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicGame } from "@/lib/types";
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Entwurf",
-  scheduled: "Geplant",
-  live: "Live",
-  paused: "Pausiert",
-  finished: "Beendet",
-  cancelled: "Abgesagt",
-};
-
 export default function PublicLiveGamePage() {
+  const t = useTranslations("publicGame");
   const params = useParams<{ publicClubId: string; gameId: string }>();
   const [game, setGame] = useState<PublicGame | null>(null);
   const [unavailable, setUnavailable] = useState(false);
@@ -57,7 +50,7 @@ export default function PublicLiveGamePage() {
       <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
         <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
-          Spiel wurde nicht gefunden.
+          {t("notFound")}
         </main>
         <PublicFooter />
       </div>
@@ -69,7 +62,7 @@ export default function PublicLiveGamePage() {
       <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
         <PublicHeader />
         <main className="flex flex-1 items-center justify-center text-gray-500 dark:text-gray-400">
-          Wird geladen …
+          {t("loading")}
         </main>
         <PublicFooter />
       </div>
@@ -97,8 +90,8 @@ export default function PublicLiveGamePage() {
           <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={48} />
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {STATUS_LABELS[game.status] ?? game.status}
-          {game.status === "paused" ? " (pausiert)" : ""}
+          {t.has(`status.${game.status}`) ? t(`status.${game.status}`) : game.status}
+          {game.status === "paused" ? ` (${t("pausedSuffix")})` : ""}
         </p>
       </main>
       <PublicFooter />

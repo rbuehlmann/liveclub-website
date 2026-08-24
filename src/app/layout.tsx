@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Teko } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { BrandingProvider } from "@/components/layout/BrandingProvider";
+import deMessages from "../../messages/de.json";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,16 +29,23 @@ export const metadata: Metadata = {
   description: "Live-Spielstände für kleine Sportvereine.",
 };
 
-// getLocale()/getMessages() read from src/i18n/request.ts, which is fixed
-// (locale: "de", no cookies()/headers()) so this resolves at build time
-// under `output: "export"` — see that file for why it still has to exist.
-export default async function RootLayout({
+// Deliberately static/hardcoded ("de" + a direct messages/de.json import),
+// NOT next-intl's dynamic getLocale()/getMessages() — those read a
+// per-request value (via src/proxy.ts, see i18n/request.ts), and since this
+// layout wraps literally every route in the app, using them here forced
+// *every* page — including /dashboard, /admin, /login, none of which have
+// anything to do with i18n — into dynamic (non-prerendered) rendering.
+// app/[locale]/layout.tsx nests its own NextIntlClientProvider with the
+// real per-locale messages for the public-page subtree instead (via
+// setRequestLocale, which stays static-rendering-safe because it's driven
+// by the statically-known [locale] route param, not a request header).
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const locale = "de";
+  const messages = deMessages;
 
   return (
     <html

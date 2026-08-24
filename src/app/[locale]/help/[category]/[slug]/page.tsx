@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypeSlug from "rehype-slug";
-import { getAllArticles, getArticleSource, extractHeadings, DEFAULT_LOCALE } from "@/lib/help/content";
+import { getTranslations } from "next-intl/server";
+import { getAllArticles, getArticleSource, extractHeadings } from "@/lib/help/content";
 import { getCategory } from "@/lib/help/categories";
+import { routing } from "@/i18n/routing";
 import { Breadcrumbs } from "@/components/help/Breadcrumbs";
 import { HelpSidebar } from "@/components/help/HelpSidebar";
 import { TableOfContents } from "@/components/help/TableOfContents";
@@ -11,17 +13,28 @@ import { ArticleNavigation } from "@/components/help/ArticleNavigation";
 import { RoleBadge, PlatformBadge } from "@/components/help/Badges";
 import { mdxComponents } from "@/components/help/mdxComponents";
 
-type Params = Promise<{ category: string; slug: string }>;
+type Params = Promise<{ locale: string; category: string; slug: string }>;
 
+// Every locale must define the exact same {category, slug} pairs — see
+// content/en/.../*.mdx counterparts of the German articles. If a locale
+// is ever missing one, that specific /xx/help/.../slug just 404s rather
+// than silently falling back to the wrong language.
 export function generateStaticParams() {
-  return getAllArticles().map((a) => ({ category: a.category, slug: a.slug }));
+  return routing.locales.flatMap((locale) =>
+    getAllArticles(locale).map((a) => ({ locale, category: a.category, slug: a.slug }))
+  );
+}
+
+function localizedUrl(locale: string, path: string): string {
+  const prefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+  return `https://liveclub.app${prefix}${path}`;
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { category, slug } = await params;
-  const article = getArticleSource(DEFAULT_LOCALE, category, slug);
+  const { locale, category, slug } = await params;
+  const article = getArticleSource(locale, category, slug);
   if (!article) return {};
-  const url = `https://liveclub.app/help/${category}/${slug}`;
+  const url = localizedUrl(locale, `/help/${category}/${slug}`);
   return {
     title: article.frontmatter.title,
     description: article.frontmatter.summary,
@@ -36,14 +49,16 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function HelpArticlePage({ params }: { params: Params }) {
-  const { category: categorySlug, slug } = await params;
+  const { locale, category: categorySlug, slug } = await params;
   const category = getCategory(categorySlug);
-  const article = getArticleSource(DEFAULT_LOCALE, categorySlug, slug);
+  const article = getArticleSource(locale, categorySlug, slug);
   if (!category || !article) notFound();
 
+  const t = await getTranslations({ locale, namespace: "help" });
+  const categoryLabel = t(`categories.${categorySlug}`);
   const headings = extractHeadings(article.content);
 
-  const siblings = getAllArticles()
+  const siblings = getAllArticles(locale)
     .filter((a) => a.category === categorySlug)
     .sort((a, b) => a.title.localeCompare(b.title));
   const currentIndex = siblings.findIndex((a) => a.slug === slug);
@@ -59,8 +74,8 @@ export default async function HelpArticlePage({ params }: { params: Params }) {
       <div className="min-w-0 flex-1">
         <Breadcrumbs
           items={[
-            { label: "Docs", href: "/help" },
-            { label: category.label, href: `/help/${category.slug}` },
+            { label: t("breadcrumbDocs"), href: "/help" },
+            { label: categoryLabel, href: `/help/${category.slug}` },
             { label: article.frontmatter.title },
           ]}
         />
@@ -75,7 +90,7 @@ export default async function HelpArticlePage({ params }: { params: Params }) {
           {article.frontmatter.platforms?.map((platform) => <PlatformBadge key={platform} platform={platform} />)}
           {article.frontmatter.updated && (
             <span className="text-xs text-gray-400 dark:text-gray-500">
-              Zuletzt aktualisiert: {article.frontmatter.updated}
+              {t("lastUpdated")}: {article.frontmatter.updated}
             </span>
           )}
         </div>

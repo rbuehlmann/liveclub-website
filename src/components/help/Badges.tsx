@@ -1,6 +1,6 @@
+import { useTranslations } from "next-intl";
 import { HelpPlatform, HelpRole } from "@/lib/help/types";
 
-const ROLE_LABELS: Record<HelpRole, string> = { fan: "Fan", redaktor: "Redaktor", admin: "Administrator" };
 const ROLE_CLASSES: Record<HelpRole, string> = {
   fan: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
   redaktor: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
@@ -8,10 +8,9 @@ const ROLE_CLASSES: Record<HelpRole, string> = {
 };
 
 export function RoleBadge({ role }: { role: HelpRole }) {
+  const t = useTranslations("help.roles");
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_CLASSES[role]}`}>
-      {ROLE_LABELS[role]}
-    </span>
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_CLASSES[role]}`}>{t(role)}</span>
   );
 }
 

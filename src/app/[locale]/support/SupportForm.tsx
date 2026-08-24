@@ -1,28 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { submitSupportRequest } from "@/lib/firebase/functionsApi";
 import { getRecaptchaToken } from "@/lib/recaptcha";
 
-const PLATFORMS: { value: "website" | "ios" | "android"; label: string }[] = [
-  { value: "website", label: "Website" },
-  { value: "ios", label: "iOS" },
-  { value: "android", label: "Android" },
-];
-
-const TOPICS: { value: "bug" | "question" | "feature" | "feedback"; label: string }[] = [
-  { value: "bug", label: "🐛 Bug melden" },
-  { value: "question", label: "❓ Frage zur App" },
-  { value: "feature", label: "💡 Feature-Idee" },
-  { value: "feedback", label: "💬 Allgemeines Feedback" },
-];
+const PLATFORM_VALUES = ["website", "ios", "android"] as const;
+const TOPIC_VALUES = ["bug", "question", "feature", "feedback"] as const;
+const TOPIC_ICONS: Record<(typeof TOPIC_VALUES)[number], string> = {
+  bug: "🐛",
+  question: "❓",
+  feature: "💡",
+  feedback: "💬",
+};
 
 export function SupportForm() {
-  const [platform, setPlatform] = useState<(typeof PLATFORMS)[number]["value"]>("website");
-  const [topic, setTopic] = useState<(typeof TOPICS)[number]["value"]>("question");
+  const t = useTranslations("support.form");
+  const [platform, setPlatform] = useState<(typeof PLATFORM_VALUES)[number]>("website");
+  const [topic, setTopic] = useState<(typeof TOPIC_VALUES)[number]>("question");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -49,7 +47,7 @@ export function SupportForm() {
       });
       setDone(true);
     } catch (err) {
-      setError((err as { message?: string })?.message ?? "Senden fehlgeschlagen.");
+      setError((err as { message?: string })?.message ?? t("sendFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -57,53 +55,51 @@ export function SupportForm() {
 
   return (
     <Card>
-      <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Noch offene Fragen?</h2>
+      <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("title")}</h2>
       {done ? (
-        <p className="text-sm text-green-700 dark:text-green-400">
-          Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.
-        </p>
+        <p className="text-sm text-green-700 dark:text-green-400">{t("doneMessage")}</p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Plattform</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("platformLabel")}</label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value as typeof platform)}
               required
               className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
             >
-              {PLATFORMS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
+              {PLATFORM_VALUES.map((p) => (
+                <option key={p} value={p}>
+                  {t(`platforms.${p}`)}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anliegen</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("topicLabel")}</label>
             <select
               value={topic}
               onChange={(e) => setTopic(e.target.value as typeof topic)}
               required
               className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
             >
-              {TOPICS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {TOPIC_VALUES.map((topicValue) => (
+                <option key={topicValue} value={topicValue}>
+                  {TOPIC_ICONS[topicValue]} {t(`topics.${topicValue}`)}
                 </option>
               ))}
             </select>
           </div>
-          <TextField label="Name" required value={name} onChange={(e) => setName(e.target.value)} />
+          <TextField label={t("nameLabel")} required value={name} onChange={(e) => setName(e.target.value)} />
           <TextField
-            label="E-Mail"
+            label={t("emailLabel")}
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Nachricht</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("messageLabel")}</label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -114,11 +110,9 @@ export function SupportForm() {
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" fullWidth disabled={submitting || !canSubmit}>
-            {submitting ? "Wird gesendet …" : "Nachricht senden"}
+            {submitting ? t("sending") : t("send")}
           </Button>
-          <p className="text-center text-xs text-gray-400 dark:text-gray-500">
-            Diese Seite ist durch reCAPTCHA geschützt.
-          </p>
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500">{t("recaptchaNotice")}</p>
         </form>
       )}
     </Card>

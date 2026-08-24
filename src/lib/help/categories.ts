@@ -1,6 +1,10 @@
 import { HelpCategory } from "./types";
 
 // Order here is the display order everywhere (homepage grid, sidebar).
+// `label` is German-only and kept just as an internal reference/fallback —
+// every actual render site looks up the translated label via
+// messages/{locale}.json's help.categories.{slug} instead (see
+// HelpSidebar.tsx, help/page.tsx, help/[category]/page.tsx).
 export const HELP_CATEGORIES: HelpCategory[] = [
   { slug: "erste-schritte", icon: "🚀", label: "Erste Schritte" },
   { slug: "spiele", icon: "⚽", label: "Spiele" },

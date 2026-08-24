@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { fetchPublicDoc } from "@/lib/firestoreRest";
+import { routing } from "@/i18n/routing";
 import { PublicClubPageClient } from "./PublicClubPageClient";
 
-type Params = Promise<{ publicClubId: string }>;
+type Params = Promise<{ locale: string; publicClubId: string }>;
+
+// "as-needed": only a non-default locale gets a URL prefix (see routing.ts).
+function localizedUrl(locale: string, path: string): string {
+  const prefix = locale === routing.defaultLocale ? "" : `/${locale}`;
+  return `https://liveclub.app${prefix}${path}`;
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { publicClubId } = await params;
+  const { locale, publicClubId } = await params;
   const club = await fetchPublicDoc("publicClubs", publicClubId);
   if (!club) return {};
 
+  const t = await getTranslations({ locale, namespace: "publicClub" });
   const name = club.name as string;
   const title = `${name} – LiveClub`;
-  const description = `Live-Spielstände und Infos zu ${name} auf LiveClub.`;
-  const url = `https://liveclub.app/${publicClubId}`;
+  const description = t("metaDescription", { name });
+  const url = localizedUrl(locale, `/${publicClubId}`);
   const logoUrl = club.logoUrl as string | null;
 
   return {

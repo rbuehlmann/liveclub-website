@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { useBranding } from "@/components/layout/BrandingProvider";
 
 // Shared top bar for every public-facing page (homepage/search, login,
@@ -33,7 +34,8 @@ export function PublicHeader() {
             </span>
           )}
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link href="/login">
             <Button>GO LIVE</Button>

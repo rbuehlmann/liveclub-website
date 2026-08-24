@@ -1,11 +1,16 @@
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { getAllArticles } from "@/lib/help/content";
 import { HELP_CATEGORIES } from "@/lib/help/categories";
 import { SearchBar } from "@/components/help/SearchBar";
 import { ArticleCard } from "@/components/help/ArticleCard";
 
-export default function HelpHomePage() {
-  const articles = getAllArticles();
+type Params = Promise<{ locale: string }>;
+
+export default async function HelpHomePage({ params }: { params: Params }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "help" });
+  const articles = getAllArticles(locale);
   // "Zuletzt aktualisiert" only — no separate "created" date is tracked
   // per article yet, and there's no usage data for a real "Beliebte
   // Artikel" ranking, so those two sections from the original spec are
@@ -18,13 +23,13 @@ export default function HelpHomePage() {
   return (
     <div className="flex flex-col gap-16">
       <div className="flex flex-col items-center gap-6 text-center">
-        <h1 className="font-teko text-5xl font-bold text-gray-900 dark:text-white">Wie können wir helfen?</h1>
+        <h1 className="font-teko text-5xl font-bold text-gray-900 dark:text-white">{t("heroTitle")}</h1>
         <SearchBar articles={articles} />
       </div>
 
       <div>
         <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-          Kategorien
+          {t("categoriesTitle")}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           {HELP_CATEGORIES.map((cat) => (
@@ -36,7 +41,9 @@ export default function HelpHomePage() {
               <span className="text-3xl" aria-hidden>
                 {cat.icon}
               </span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">{cat.label}</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {t(`categories.${cat.slug}`)}
+              </span>
             </Link>
           ))}
         </div>
@@ -45,7 +52,7 @@ export default function HelpHomePage() {
       {recentlyUpdated.length > 0 && (
         <div>
           <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-            Zuletzt aktualisiert
+            {t("recentlyUpdatedTitle")}
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recentlyUpdated.map((a) => (
