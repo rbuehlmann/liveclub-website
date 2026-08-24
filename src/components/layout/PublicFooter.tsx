@@ -1,18 +1,17 @@
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 // Swiss legal notice ("Impressum") needs to stay reachable from every
 // customer/visitor-facing page — kept as a small, unobtrusive bar rather
 // than a full marketing footer since the product is "function over design".
 //
-// Plain next/link, not the locale-aware one — this component is also
-// rendered from pages entirely outside app/[locale]/ (dashboard, admin,
-// login, register, ...). The tradeoff: these 4 links always go to the
-// German legal/support pages even from an /en/... page, rather than
-// following to their /en/ counterparts. Acceptable for now — useTranslations()
-// for the *labels* still correctly shows English there (it reads from
-// whichever NextIntlClientProvider is nearest, and [locale]/layout.tsx
-// nests an English one for pages under /en/...).
+// Locale-aware Link: this component is also rendered from pages entirely
+// outside app/[locale]/ (dashboard, admin, login, register, ...). There it
+// resolves against the root layout's static German-only provider, so it
+// still renders the plain unprefixed hrefs ("/impressum" etc.) exactly as
+// before. Inside app/[locale]/ it correctly follows to the current page's
+// locale (e.g. /en/impressum from an /en/... page) instead of always
+// dropping back to German.
 export function PublicFooter() {
   const t = useTranslations("footer");
   return (
