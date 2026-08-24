@@ -93,13 +93,13 @@ export default function SharePage() {
         <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("qrCode")}</h2>
         {qrDataUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={qrDataUrl} alt="QR-Code" width={200} height={200} />
+          <img src={qrDataUrl} alt={t("qrCode")} width={200} height={200} />
         )}
       </Card>
 
       {teams.filter((team) => team.publicTeamId).length > 0 && (
         <Card>
-          <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">Mannschaften teilen</h2>
+          <h2 className="mb-2 font-semibold text-gray-900 dark:text-white">{t("shareTeams")}</h2>
           <div className="flex flex-col gap-6">
             {teams
               .filter((team) => team.publicTeamId)
@@ -122,7 +122,7 @@ export default function SharePage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={teamQrs[team.publicTeamId as string]}
-                        alt={`QR-Code ${team.name}`}
+                        alt={t("qrCodeForTeam", { team: team.name })}
                         width={120}
                         height={120}
                       />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { TeamIcon } from "@/components/TeamIcon";
 import { daysRemaining, formatDateDe, formatDateTimeDe } from "@/lib/date";
 import { createCheckoutSession, acceptGameTransfer } from "@/lib/firebase/functionsApi";
-import { LICENSE_TIERS, tierLabel } from "@/lib/licenseTiers";
+import { LICENSE_TIERS } from "@/lib/licenseTiers";
 import { LicenseTier, GameStatus } from "@/lib/types";
 
 const RENEWAL_WINDOW_DAYS = 14;
@@ -41,6 +41,7 @@ function mapClaimableGame(id: string, data: Record<string, unknown>): ClaimableG
 
 export default function DashboardOverviewPage() {
   const t = useTranslations("dashboard");
+  const locale = useLocale() as "de" | "en";
   const { club, role } = useClubContext();
   const { user } = useAuth();
   const [redirecting, setRedirecting] = useState<`${LicenseTier}-monthly` | `${LicenseTier}-yearly` | null>(
@@ -100,7 +101,7 @@ export default function DashboardOverviewPage() {
     try {
       await acceptGameTransfer(gameId);
     } catch (err) {
-      setClaimError((err as { message?: string })?.message ?? "Übernehmen fehlgeschlagen.");
+      setClaimError((err as { message?: string })?.message ?? t("claimFailed"));
     } finally {
       setClaimingId(null);
     }
@@ -125,7 +126,7 @@ export default function DashboardOverviewPage() {
       const { url } = await createCheckoutSession({ clubId: club.clubId, tier, interval });
       window.location.href = url;
     } catch (err) {
-      setBillingError((err as { message?: string })?.message ?? "Checkout fehlgeschlagen.");
+      setBillingError((err as { message?: string })?.message ?? t("checkoutFailed"));
       setRedirecting(null);
     }
   }
@@ -138,15 +139,15 @@ export default function DashboardOverviewPage() {
 
         {isSuspended ? (
           <div className="mt-4 rounded-lg bg-red-50 p-4 dark:bg-red-500/10">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">
-              Dieser Verein wurde manuell deaktiviert.
-            </p>
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">{t("suspendedNotice")}</p>
             <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-              Bitte{" "}
-              <Link href="/support" className="underline">
-                kontaktiere den Support
-              </Link>
-              , um das zu klären.
+              {t.rich("suspendedContact", {
+                link: (chunks) => (
+                  <Link href="/support" className="underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </p>
           </div>
         ) : (
@@ -157,17 +158,21 @@ export default function DashboardOverviewPage() {
                   ? t("trialExpired")
                   : isTrial
                     ? t("trialEndsIn", { days: remaining ?? 0 })
-                    : `${t("licenseStatusActive")} · ${tierLabel(club.currentLicenseTier)}`}
+                    : `${t("licenseStatusActive")} · ${
+                        t.has(`licenseTiers.${club.currentLicenseTier}`)
+                          ? t(`licenseTiers.${club.currentLicenseTier}`)
+                          : "–"
+                      }`}
               </p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Gültig bis {formatDateDe(club.currentLicenseValidUntil)}
+                {t("validUntil", { date: formatDateDe(club.currentLicenseValidUntil, locale) })}
               </p>
             </div>
 
             {role === "clubAdmin" && canBuy && (
               <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 dark:border-white/10 pt-4">
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {isExpired ? "Jetzt kaufen" : "Jetzt verlängern"}
+                  {isExpired ? t("buyNow") : t("renewNow")}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {LICENSE_TIERS.map((tierInfo) => (
@@ -175,14 +180,14 @@ export default function DashboardOverviewPage() {
                       key={tierInfo.id}
                       className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4 dark:border-white/10"
                     >
-                      <p className="font-semibold text-gray-900 dark:text-white">{tierInfo.label}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{t(`licenseTiers.${tierInfo.id}`)}</p>
                       <Button
                         onClick={() => handleUpgrade(tierInfo.id, "monthly")}
                         disabled={redirecting !== null}
                       >
                         {redirecting === `${tierInfo.id}-monthly`
-                          ? "Wird geöffnet …"
-                          : `${tierInfo.monthlyPrice}/Monat`}
+                          ? t("opening")
+                          : t("priceMonthly", { price: tierInfo.monthlyPrice })}
                       </Button>
                       <Button
                         variant="secondary"
@@ -190,28 +195,26 @@ export default function DashboardOverviewPage() {
                         disabled={redirecting !== null}
                       >
                         {redirecting === `${tierInfo.id}-yearly`
-                          ? "Wird geöffnet …"
-                          : `${tierInfo.yearlyPrice}/Jahr`}
+                          ? t("opening")
+                          : t("priceYearly", { price: tierInfo.yearlyPrice })}
                       </Button>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Einmalzahlung für die gewählte Laufzeit — kein Abo, keine automatische
-                  Verlängerung.
-                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t("oneTimePaymentNotice")}</p>
                 {billingError && <p className="text-sm text-red-600">{billingError}</p>}
               </div>
             )}
 
             {role === "clubAdmin" && !canBuy && isActive && remaining !== null && (
               <p className="mt-4 border-t border-gray-100 dark:border-white/10 pt-4 text-xs text-gray-400 dark:text-gray-500">
-                Verlängerung ab {formatDateDe(
-                  new Date(
-                    Date.now() + (remaining - RENEWAL_WINDOW_DAYS) * 24 * 60 * 60 * 1000
-                  ).toISOString()
-                )}{" "}
-                möglich ({RENEWAL_WINDOW_DAYS} Tage vor Ablauf).
+                {t("renewalAvailableFrom", {
+                  date: formatDateDe(
+                    new Date(Date.now() + (remaining - RENEWAL_WINDOW_DAYS) * 24 * 60 * 60 * 1000).toISOString(),
+                    locale
+                  ),
+                  days: RENEWAL_WINDOW_DAYS,
+                })}
               </p>
             )}
           </>
@@ -221,8 +224,7 @@ export default function DashboardOverviewPage() {
       {claimableGames.length > 0 && (
         <Card className="border-amber-200 dark:border-amber-500/20">
           <p className="font-medium text-amber-800 dark:text-amber-300">
-            {claimableGames.length} {claimableGames.length === 1 ? "Spiel" : "Spiele"} ohne Redaktor —
-            du bist berechtigt zu übernehmen
+            {t("claimableGamesBanner", { count: claimableGames.length })}
           </p>
           <div className="mt-3 flex flex-col gap-2">
             {claimableGames.map((game) => (
@@ -237,7 +239,7 @@ export default function DashboardOverviewPage() {
                   </span>
                   <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={20} />
                   <span className="text-amber-700/70 dark:text-amber-400/70">
-                    · {formatDateTimeDe(game.scheduledStart)}
+                    · {formatDateTimeDe(game.scheduledStart, locale)}
                   </span>
                 </div>
                 <Button
@@ -245,7 +247,7 @@ export default function DashboardOverviewPage() {
                   disabled={claimingId === game.gameId}
                   onClick={() => handleClaim(game.gameId)}
                 >
-                  {claimingId === game.gameId ? "Wird übernommen …" : "Übernehmen"}
+                  {claimingId === game.gameId ? t("claiming") : t("claim")}
                 </Button>
               </div>
             ))}

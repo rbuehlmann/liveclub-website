@@ -14,10 +14,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { adminDeleteClub } from "@/lib/firebase/functionsApi";
 import { logout } from "@/lib/firebase/authApi";
 
-const DELETE_REASON_LABELS: Record<string, string> = {
-  price: "Preis zu hoch",
-  value: "Zu wenig Nutzen",
-};
+const DELETE_REASONS = ["price", "value", "other"] as const;
 
 export default function EditClubPage() {
   const t = useTranslations("clubSetup");
@@ -84,7 +81,7 @@ export default function EditClubPage() {
       const url = await getDownloadURL(logoRef);
       await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: url });
     } catch (err) {
-      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Logo-Upload fehlgeschlagen.");
+      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? t("logoUploadFailed"));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -99,14 +96,18 @@ export default function EditClubPage() {
       const { db } = getFirebaseClient();
       await updateDoc(doc(db, "clubs", club.clubId), { logoUrl: null });
     } catch (err) {
-      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Entfernen fehlgeschlagen.");
+      setLogoError((err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? t("logoRemoveFailed"));
     } finally {
       setUploading(false);
     }
   }
 
   const resolvedDeleteReason =
-    deleteReason === "other" ? deleteReasonOther.trim() : DELETE_REASON_LABELS[deleteReason] ?? "";
+    deleteReason === "other"
+      ? deleteReasonOther.trim()
+      : deleteReason && t.has(`deleteReasons.${deleteReason}`)
+        ? t(`deleteReasons.${deleteReason}`)
+        : "";
   const canConfirmDelete = !!deleteReason && (deleteReason !== "other" || !!deleteReasonOther.trim());
 
   async function handleDeleteClub() {
@@ -118,7 +119,7 @@ export default function EditClubPage() {
       await logout();
       router.push("/");
     } catch (err) {
-      setDeleteError((err as { message?: string })?.message ?? "Löschen fehlgeschlagen.");
+      setDeleteError((err as { message?: string })?.message ?? t("deleteClubFailed"));
       setDeleting(false);
       setConfirmingDelete(false);
     }
@@ -150,32 +151,34 @@ export default function EditClubPage() {
         />
         <div className="flex flex-col gap-1">
           <TextField label={t("sport")} value={club.sport} disabled readOnly />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Sportart kann nach dem Erstellen nicht mehr geändert werden.
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{t("sportNotEditable")}</p>
         </div>
         {!readOnly && (
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vereinslogo</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("clubLogo")}</label>
             {club.logoUrl && (
               <div className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={club.logoUrl} alt="" className="h-16 w-16 rounded object-contain" />
                 <Button type="button" variant="secondary" onClick={handleLogoRemove} disabled={uploading}>
-                  Logo entfernen
+                  {t("removeLogo")}
                 </Button>
               </div>
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploading} />
-            <p className="text-xs text-gray-500 dark:text-gray-400">Empfehlung: 500×500 px, transparentes PNG.</p>
-            {uploading && <p className="text-xs text-gray-500 dark:text-gray-400">Wird hochgeladen …</p>}
-            {logoError && <p className="text-xs text-red-600">Fehler: {logoError}</p>}
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("logoRecommendation")}</p>
+            {uploading && <p className="text-xs text-gray-500 dark:text-gray-400">{t("uploadingLogo")}</p>}
+            {logoError && (
+              <p className="text-xs text-red-600">
+                {t("logoErrorPrefix")} {logoError}
+              </p>
+            )}
           </div>
         )}
         {!readOnly && (
           <div className="flex gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Heimfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("homeColor")}</label>
               <input
                 type="color"
                 value={primaryColor}
@@ -184,7 +187,7 @@ export default function EditClubPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auswärtsfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("awayColor")}</label>
               <input
                 type="color"
                 value={secondaryColor}
@@ -205,14 +208,12 @@ export default function EditClubPage() {
 
     {!readOnly && (
       <Card className="border-red-200 dark:border-red-500/20">
-        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Verein löschen</h2>
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">{t("deleteClubTitle")}</h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Damit werden {club.name} und alle zugehörigen Daten — Mannschaften, Spiele, Mitgliedschaften
-          und Einladungen — unwiderruflich gelöscht. Eine laufende Lizenz wird sofort beendet, ohne
-          Rückerstattung bereits bezahlter Zeit. Dieser Schritt lässt sich nicht rückgängig machen.
+          {t("deleteClubWarning", { clubName: club.name })}
         </p>
         <div className="mt-4 flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Grund</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("deleteReasonLabel")}</label>
           <select
             value={deleteReason}
             onChange={(e) => setDeleteReason(e.target.value)}
@@ -221,14 +222,16 @@ export default function EditClubPage() {
             <option value="" disabled>
               –
             </option>
-            <option value="price">Preis zu hoch</option>
-            <option value="value">Zu wenig Nutzen</option>
-            <option value="other">Sonstiges</option>
+            {DELETE_REASONS.map((reason) => (
+              <option key={reason} value={reason}>
+                {t(`deleteReasons.${reason}`)}
+              </option>
+            ))}
           </select>
         </div>
         {deleteReason === "other" && (
           <TextField
-            label="Bitte kurz erläutern"
+            label={t("deleteReasonOtherLabel")}
             value={deleteReasonOther}
             onChange={(e) => setDeleteReasonOther(e.target.value)}
           />
@@ -242,7 +245,7 @@ export default function EditClubPage() {
             setConfirmingDelete(true);
           }}
         >
-          Verein endgültig löschen
+          {t("deleteClubButton")}
         </Button>
         {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
       </Card>
@@ -250,9 +253,9 @@ export default function EditClubPage() {
 
     <ConfirmDialog
       open={confirmingDelete}
-      title={`"${club.name}" endgültig löschen?`}
-      body="Alle Mannschaften, Spiele, Mitgliedschaften und Einladungen dieses Vereins werden unwiderruflich gelöscht. Eine laufende Lizenz wird sofort beendet, ohne Rückerstattung. Das kann nicht rückgängig gemacht werden."
-      confirmLabel={deleting ? tCommon("loading") : "Endgültig löschen"}
+      title={t("deleteClubConfirmTitle", { clubName: club.name })}
+      body={t("deleteClubConfirmBody")}
+      confirmLabel={deleting ? tCommon("loading") : t("deleteClubConfirmButton")}
       cancelLabel={tCommon("cancel")}
       onConfirm={handleDeleteClub}
       onCancel={() => setConfirmingDelete(false)}

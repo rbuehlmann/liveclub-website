@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { registerWithEmail } from "@/lib/firebase/authApi";
-import { toGermanAuthErrorMessage } from "@/lib/firebase/errorMessages";
+import { authErrorKey } from "@/lib/firebase/errorMessages";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { AppLocaleProvider } from "@/components/layout/AppLocaleProvider";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 function RegisterForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
+  const tErrors = useTranslations("authErrors");
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect");
@@ -33,7 +35,7 @@ function RegisterForm() {
       await registerWithEmail({ email, password, displayName });
       router.push(redirectTarget || "/onboarding/create-club");
     } catch (err) {
-      setError(toGermanAuthErrorMessage(err));
+      setError(tErrors(authErrorKey(err)));
     } finally {
       setSubmitting(false);
     }
@@ -41,7 +43,7 @@ function RegisterForm() {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
-      <PublicHeader />
+      <PublicHeader variant="app" />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
           <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">{t("registerTitle")}</h1>
@@ -79,11 +81,13 @@ function RegisterForm() {
                 className="mt-1"
               />
               <span>
-                Ich habe die{" "}
-                <Link href="/terms-of-service" target="_blank" className="text-brand-red hover:underline">
-                  AGB
-                </Link>{" "}
-                gelesen und akzeptiere sie.
+                {t.rich("termsAcceptance", {
+                  link: (chunks) => (
+                    <Link href="/terms-of-service" target="_blank" className="text-brand-red hover:underline">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
               </span>
             </label>
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -108,8 +112,10 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={null}>
-      <RegisterForm />
-    </Suspense>
+    <AppLocaleProvider>
+      <Suspense fallback={null}>
+        <RegisterForm />
+      </Suspense>
+    </AppLocaleProvider>
   );
 }

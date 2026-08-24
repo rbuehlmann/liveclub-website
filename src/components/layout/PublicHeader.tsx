@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import NextLink from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { AppLanguageSwitcher } from "@/components/layout/AppLanguageSwitcher";
 import { useBranding } from "@/components/layout/BrandingProvider";
 
 // Shared top bar for every public-facing page (homepage/search, login,
@@ -12,7 +14,19 @@ import { useBranding } from "@/components/layout/BrandingProvider";
 // present — not used on /dashboard/* or /admin/* (their own layouts already
 // carry a club/platform-specific header) nor on /embed/* (runs inside a
 // third-party page and must stay unbranded).
-export function PublicHeader() {
+//
+// variant="url" (default): the URL-based LanguageSwitcher, for pages under
+// app/[locale]/ where the locale-aware Link below correctly resolves
+// against the real page locale.
+// variant="app": the localStorage-based AppLanguageSwitcher, for
+// login/register/onboarding — outside app/[locale]/, no /en/ URL exists
+// there. The logo Link is locale-aware either way: inside app/[locale]/ it
+// follows the current page's locale; outside it, it resolves against
+// whichever NextIntlClientProvider is nearest (AppLocaleProvider for
+// login/register/onboarding, or the root's static "de" one for untouched
+// pages like /invite), so it never regresses to always-German like a plain
+// next/link would.
+export function PublicHeader({ variant = "url" }: { variant?: "url" | "app" }) {
   const branding = useBranding();
   const logoLight = branding.logoLight;
   const logoDark = branding.logoDark ?? branding.logoLight;
@@ -35,11 +49,11 @@ export function PublicHeader() {
           )}
         </Link>
         <div className="flex items-center gap-3">
-          <LanguageSwitcher />
+          {variant === "app" ? <AppLanguageSwitcher /> : <LanguageSwitcher />}
           <ThemeToggle />
-          <Link href="/login">
+          <NextLink href="/login">
             <Button>GO LIVE</Button>
-          </Link>
+          </NextLink>
         </div>
       </div>
     </header>

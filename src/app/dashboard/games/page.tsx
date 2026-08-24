@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -248,15 +248,13 @@ export default function GamesPage() {
         selfAsEditor: wantsToBeEditor,
       });
       if (result.alreadyExisted) {
-        setCreateNotice(
-          "Dieses Spiel wurde bereits von der anderen Seite erfasst — es erscheint unten in eurer Liste."
-        );
+        setCreateNotice(t("alreadyExistedNotice"));
       }
       clearOpponent();
       setManualOpponentName("");
       setScheduledStart("");
     } catch (err) {
-      setCreateError((err as { message?: string })?.message ?? "Anlegen fehlgeschlagen.");
+      setCreateError((err as { message?: string })?.message ?? t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -290,7 +288,7 @@ export default function GamesPage() {
             </div>
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input type="checkbox" checked={isHomeGame} onChange={(e) => setIsHomeGame(e.target.checked)} />
-              Heimspiel
+              {t("homeGame")}
             </label>
             <div className="flex flex-col gap-2">
               {selectedOpponent ? (
@@ -313,14 +311,14 @@ export default function GamesPage() {
                     </span>
                   </div>
                   <Button type="button" variant="secondary" onClick={clearOpponent}>
-                    Ändern
+                    {t("change")}
                   </Button>
                 </div>
               ) : (
                 <>
                   <TextField
-                    label="Gegner suchen (Team, Verein oder ID)"
-                    placeholder="z. B. FC Beispiel oder 756-234567"
+                    label={t("opponentSearchLabel")}
+                    placeholder={t("opponentSearchPlaceholder")}
                     value={opponentSearchTerm}
                     onChange={(e) => setOpponentSearchTerm(e.target.value)}
                   />
@@ -328,9 +326,9 @@ export default function GamesPage() {
                     <div className="flex flex-col gap-1 rounded-lg border border-gray-200 dark:border-white/10">
                       {opponentSearchResults.length === 0 ? (
                         <div className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                          <span className="text-gray-500 dark:text-gray-400">Kein Treffer.</span>
+                          <span className="text-gray-500 dark:text-gray-400">{t("noMatch")}</span>
                           <Button type="button" variant="secondary" onClick={useSearchTermAsFreeText}>
-                            Als Name ohne Verknüpfung verwenden
+                            {t("useAsFreeText")}
                           </Button>
                         </div>
                       ) : (
@@ -363,10 +361,10 @@ export default function GamesPage() {
                   {manualOpponentName && !opponentSearchTerm.trim() && (
                     <div className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-white/10">
                       <span className="text-gray-700 dark:text-gray-300">
-                        „{manualOpponentName}“ (ohne Verknüpfung)
+                        {t("manualOpponentLabel", { name: manualOpponentName })}
                       </span>
                       <Button type="button" variant="secondary" onClick={() => setManualOpponentName("")}>
-                        Ändern
+                        {t("change")}
                       </Button>
                     </div>
                   )}
@@ -389,13 +387,10 @@ export default function GamesPage() {
                   checked={wantsToBeEditor}
                   onChange={(e) => setWantsToBeEditor(e.target.checked)}
                 />
-                Ich möchte selbst Redaktor für dieses Spiel sein
+                {t("wantsToBeEditor")}
               </label>
               {!wantsToBeEditor && (
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Das Spiel bleibt offen — alle berechtigten Redaktoren erhalten eine Einladungs-Mail, wer
-                  zuerst annimmt, übernimmt.
-                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">{t("openGameHint")}</p>
               )}
             </div>
             {createError && <p className="text-sm text-red-600">{createError}</p>}
@@ -478,6 +473,7 @@ function GameCard({
   const [transferTargetUid, setTransferTargetUid] = useState("");
   const [nudging, setNudging] = useState(false);
   const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
+  const locale = useLocale();
 
   const isMainEditor = game.mainEditorUid === userUid;
   const pendingTransferTargetsMe = game.pendingTransfer?.kind === "direct" && game.pendingTransfer.toUid === userUid;
@@ -516,7 +512,7 @@ function GameCard({
     try {
       await fn();
     } catch (err) {
-      setActionError((err as { message?: string })?.message ?? "Aktion fehlgeschlagen.");
+      setActionError((err as { message?: string })?.message ?? t("actionFailed"));
     } finally {
       setBusy(false);
     }
@@ -539,7 +535,7 @@ function GameCard({
             <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={24} />
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {formatDateTimeDe(game.scheduledStart)}
+            {formatDateTimeDe(game.scheduledStart, locale as "de" | "en")}
             {game.status !== "draft" && game.status !== "scheduled"
               ? ` · ${game.score.home}:${game.score.away}`
               : ""}
@@ -547,12 +543,10 @@ function GameCard({
           {UPCOMING_STATUSES.has(game.status) &&
             (game.mainEditorUid ? (
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                Hauptredaktor: {game.mainEditorDisplayName ?? (isMainEditor ? "Du" : "—")}
+                {t("mainEditor", { name: game.mainEditorDisplayName ?? (isMainEditor ? t("you") : "—") })}
               </p>
             ) : (
-              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                Offen — noch kein Redaktor zugeteilt
-              </p>
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-400">{t("openNoEditor")}</p>
             ))}
         </div>
         {isMainEditor ? (
@@ -561,21 +555,21 @@ function GameCard({
           </Link>
         ) : (
           <Link href={buildClubUrl(ownPublicClubId)} target="_blank">
-            <Button variant="secondary">Live mitverfolgen</Button>
+            <Button variant="secondary">{t("followLive")}</Button>
           </Link>
         )}
       </div>
 
       {pendingTransferTargetsMe && (
         <div className="flex flex-col gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-          <p>Du wurdest eingeladen, dieses Spiel zu übernehmen.</p>
+          <p>{t("transferInviteNotice")}</p>
           <div className="flex gap-2">
             <Button
               type="button"
               disabled={busy}
               onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
             >
-              Übernehmen
+              {t("accept")}
             </Button>
             <Button
               type="button"
@@ -583,7 +577,7 @@ function GameCard({
               disabled={busy}
               onClick={() => runAction(() => declineGameTransfer(game.gameId))}
             >
-              Ablehnen
+              {t("decline")}
             </Button>
           </div>
         </div>
@@ -591,13 +585,13 @@ function GameCard({
 
       {openClaimable && (
         <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-          <span>Noch niemand administriert dieses Spiel — du bist berechtigt zu übernehmen.</span>
+          <span>{t("openClaimableNotice")}</span>
           <Button
             type="button"
             disabled={busy}
             onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
           >
-            Übernehmen
+            {t("accept")}
           </Button>
         </div>
       )}
@@ -614,18 +608,16 @@ function GameCard({
               try {
                 const result = await nudgeOpenGameInvite(game.gameId);
                 setNudgeMessage(
-                  result.sentCount > 0
-                    ? `Erinnerung an ${result.sentCount} Redaktor(en) gesendet.`
-                    : "Keine berechtigten Redaktoren gefunden."
+                  result.sentCount > 0 ? t("nudgeResult", { count: result.sentCount }) : t("nudgeNoneFound")
                 );
               } catch (err) {
-                setNudgeMessage((err as { message?: string })?.message ?? "Senden fehlgeschlagen.");
+                setNudgeMessage((err as { message?: string })?.message ?? t("nudgeSendFailed"));
               } finally {
                 setNudging(false);
               }
             }}
           >
-            {nudging ? "Wird gesendet …" : "Erinnerung erneut senden"}
+            {nudging ? t("sending") : t("resendReminder")}
           </Button>
           {nudgeMessage && <span className="text-xs text-gray-500 dark:text-gray-400">{nudgeMessage}</span>}
         </div>
@@ -633,20 +625,20 @@ function GameCard({
 
       {crossClubClaimable && (
         <div className="flex items-center justify-between gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:bg-blue-500/10 dark:text-blue-300">
-          <span>Aktuell administriert die andere Seite — du bist berechtigt zu übernehmen.</span>
+          <span>{t("crossClubClaimableNotice")}</span>
           <Button
             type="button"
             disabled={busy}
             onClick={() => runAction(() => acceptGameTransfer(game.gameId))}
           >
-            Übernehmen
+            {t("accept")}
           </Button>
         </div>
       )}
 
       {isMainEditor && clubBroadcastPending && (
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Warte auf Rückmeldung von {opponentTeamName} …
+          {t("waitingForResponse", { team: opponentTeamName })}
         </p>
       )}
 
@@ -661,7 +653,7 @@ function GameCard({
                     onChange={(e) => setTransferTargetUid(e.target.value)}
                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5"
                   >
-                    <option value="">Person wählen …</option>
+                    <option value="">{t("choosePerson")}</option>
                     {ownColleagues.map((m) => (
                       <option key={m.uid} value={m.uid}>
                         {m.displayName ?? m.email ?? m.uid}
@@ -680,7 +672,7 @@ function GameCard({
                       })
                     }
                   >
-                    Anfragen
+                    {t("requestTransfer")}
                   </Button>
                 </div>
               ) : (
@@ -689,7 +681,7 @@ function GameCard({
                   onClick={() => setShowTransferPicker(true)}
                   className="self-start text-sm text-brand-red hover:underline"
                 >
-                  Verantwortung übertragen …
+                  {t("transferResponsibility")}
                 </button>
               )}
             </>
@@ -701,7 +693,7 @@ function GameCard({
               onClick={() => runAction(() => requestGameTransfer({ gameId: game.gameId, toOpponentClub: true }))}
               className="self-start text-sm text-brand-red hover:underline"
             >
-              An {opponentTeamName} zurückgeben …
+              {t("returnToOpponent", { team: opponentTeamName })}
             </button>
           )}
         </div>

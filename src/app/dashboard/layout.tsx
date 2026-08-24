@@ -9,6 +9,8 @@ import { useCurrentClub } from "@/lib/hooks/useCurrentClub";
 import { ClubContext } from "@/components/club/ClubContext";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { AppLocaleProvider } from "@/components/layout/AppLocaleProvider";
+import { AppLanguageSwitcher } from "@/components/layout/AppLanguageSwitcher";
 import { logout } from "@/lib/firebase/authApi";
 
 const CLUB_ADMIN_LINKS = [
@@ -30,6 +32,14 @@ const REPORTER_LINKS = [
 ] as const;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AppLocaleProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </AppLocaleProvider>
+  );
+}
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const t = useTranslations("dashboard");
   const tAuth = useTranslations("auth");
   const { user, authLoading } = useAuth();
@@ -78,6 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <AppLanguageSwitcher />
               <ThemeToggle />
               <button
                 onClick={() => logout().then(() => router.push("/login"))}

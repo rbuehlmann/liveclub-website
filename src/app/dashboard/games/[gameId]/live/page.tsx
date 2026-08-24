@@ -258,7 +258,7 @@ export default function LiveControlPage() {
         title={t("confirmFinishTitle")}
         body={t("confirmFinishBody")}
         confirmLabel={t("finishGame")}
-        cancelLabel="Abbrechen"
+        cancelLabel={tCommon("cancel")}
         onConfirm={handleFinish}
         onCancel={() => setConfirmFinish(false)}
       />

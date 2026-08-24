@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -13,15 +14,17 @@ import { deleteOwnAccount } from "@/lib/firebase/functionsApi";
 import { logout } from "@/lib/firebase/authApi";
 
 // Keep in sync with functions/src/lib/gameEditors.ts's NotificationKey.
-const NOTIFICATION_OPTIONS: { key: string; label: string }[] = [
-  { key: "gameTakeoverInvite", label: "Einladung zur Spielübernahme" },
-  { key: "gameTakenOver", label: "Spiel übernommen (von dir)" },
-  { key: "gameHandedOff", label: "Spiel abgegeben (von dir)" },
-  { key: "reminders", label: "Erinnerungen" },
-  { key: "generalInfo", label: "Allgemeine Informationen" },
-];
+const NOTIFICATION_OPTION_KEYS = [
+  "gameTakeoverInvite",
+  "gameTakenOver",
+  "gameHandedOff",
+  "reminders",
+  "generalInfo",
+] as const;
 
 export default function ProfilePage() {
+  const t = useTranslations("profile");
+  const tCommon = useTranslations("common");
   const { user } = useAuth();
   const router = useRouter();
   const [publicDisplayName, setPublicDisplayName] = useState("");
@@ -55,7 +58,7 @@ export default function ProfilePage() {
         { publicDisplayName: publicDisplayName.trim() || null, notificationPrefs },
         { merge: true }
       );
-      setMessage("Gespeichert ✓");
+      setMessage(t("saved"));
     } finally {
       setSaving(false);
     }
@@ -69,49 +72,45 @@ export default function ProfilePage() {
       await logout();
       router.push("/");
     } catch (err) {
-      setDeleteError((err as { message?: string })?.message ?? "Löschen fehlgeschlagen.");
+      setDeleteError((err as { message?: string })?.message ?? t("deleteFailed"));
       setDeleting(false);
       setConfirmingDelete(false);
     }
   }
 
-  if (!user || loading) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
+  if (!user || loading) return <p className="text-gray-500 dark:text-gray-400">{tCommon("loading")}</p>;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-bold text-gray-900 dark:text-white">Profil</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("pageTitle")}</h1>
 
       <Card>
-        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Öffentlicher Anzeigename</h2>
+        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">{t("displayNameTitle")}</h2>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Wird als "Redaktor: {"{Name}"}" bei einem laufenden Spiel angezeigt, das du administrierst —
-          z. B. "Max", "GoalHunter" oder dein echter Name. Leer lassen, um nichts anzuzeigen.
+          {t("displayNameExplanationPrefix")}
+          {"{Name}"}
+          {t("displayNameExplanationSuffix")}
         </p>
         <TextField
-          label="Anzeigename"
-          placeholder="z. B. GoalHunter"
+          label={t("displayNameLabel")}
+          placeholder={t("displayNamePlaceholder")}
           value={publicDisplayName}
           onChange={(e) => setPublicDisplayName(e.target.value)}
         />
       </Card>
 
       <Card>
-        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">E-Mail-Benachrichtigungen</h2>
-        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Standardmässig sind alle aktiviert, damit du nichts Wichtiges verpasst — hier kannst du
-          einzelne abschalten.
-        </p>
+        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">{t("notificationsTitle")}</h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">{t("notificationsSubtitle")}</p>
         <div className="flex flex-col gap-3">
-          {NOTIFICATION_OPTIONS.map((opt) => (
-            <label key={opt.key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          {NOTIFICATION_OPTION_KEYS.map((key) => (
+            <label key={key} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
                 type="checkbox"
-                checked={notificationPrefs[opt.key] !== false}
-                onChange={(e) =>
-                  setNotificationPrefs((prev) => ({ ...prev, [opt.key]: e.target.checked }))
-                }
+                checked={notificationPrefs[key] !== false}
+                onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, [key]: e.target.checked }))}
               />
-              {opt.label}
+              {t(`notificationOptions.${key}`)}
             </label>
           ))}
         </div>
@@ -119,16 +118,12 @@ export default function ProfilePage() {
 
       {message && <p className="text-sm text-green-700">{message}</p>}
       <Button onClick={handleSave} disabled={saving}>
-        {saving ? "Wird gespeichert …" : "Speichern"}
+        {saving ? t("saving") : tCommon("save")}
       </Button>
 
       <Card className="border-red-200 dark:border-red-500/20">
-        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">Konto löschen</h2>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Dein persönliches Konto wird gelöscht und deine Mitgliedschaft bei allen Vereinen entfernt.
-          Vereine selbst bleiben bestehen — sie werden per E-Mail informiert. Dieser Schritt lässt sich
-          nicht rückgängig machen.
-        </p>
+        <h2 className="text-lg font-semibold text-red-700 dark:text-red-400">{t("deleteAccountTitle")}</h2>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t("deleteAccountWarning")}</p>
         <Button
           variant="danger"
           className="mt-4"
@@ -137,17 +132,17 @@ export default function ProfilePage() {
             setConfirmingDelete(true);
           }}
         >
-          Konto endgültig löschen
+          {t("deleteAccountButton")}
         </Button>
         {deleteError && <p className="mt-2 text-sm text-red-600">{deleteError}</p>}
       </Card>
 
       <ConfirmDialog
         open={confirmingDelete}
-        title="Konto endgültig löschen?"
-        body="Deine Mitgliedschaft bei allen Vereinen wird entfernt und dein Konto gelöscht. Das kann nicht rückgängig gemacht werden."
-        confirmLabel={deleting ? "Wird gelöscht …" : "Endgültig löschen"}
-        cancelLabel="Abbrechen"
+        title={t("deleteAccountConfirmTitle")}
+        body={t("deleteAccountConfirmBody")}
+        confirmLabel={deleting ? t("deleting") : t("deleteAccountConfirmButton")}
+        cancelLabel={tCommon("cancel")}
         onConfirm={handleDeleteAccount}
         onCancel={() => setConfirmingDelete(false)}
       />

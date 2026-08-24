@@ -5,9 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { loginWithEmail, resetPassword } from "@/lib/firebase/authApi";
-import { toGermanAuthErrorMessage } from "@/lib/firebase/errorMessages";
+import { authErrorKey } from "@/lib/firebase/errorMessages";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { AppLocaleProvider } from "@/components/layout/AppLocaleProvider";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 function LoginForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
+  const tErrors = useTranslations("authErrors");
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect") || "/dashboard";
@@ -32,7 +34,7 @@ function LoginForm() {
       await loginWithEmail(email, password);
       router.push(redirectTarget);
     } catch (err) {
-      setError(toGermanAuthErrorMessage(err));
+      setError(tErrors(authErrorKey(err)));
     } finally {
       setSubmitting(false);
     }
@@ -42,20 +44,20 @@ function LoginForm() {
     setError(null);
     setInfo(null);
     if (!email) {
-      setError("Bitte gib zuerst deine E-Mail-Adresse ein.");
+      setError(t("emailRequiredForReset"));
       return;
     }
     try {
       await resetPassword(email);
-      setInfo("E-Mail zum Zurücksetzen des Passworts wurde gesendet.");
+      setInfo(t("resetEmailSent"));
     } catch (err) {
-      setError(toGermanAuthErrorMessage(err));
+      setError(tErrors(authErrorKey(err)));
     }
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
-      <PublicHeader />
+      <PublicHeader variant="app" />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
           <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">{t("loginTitle")}</h1>
@@ -103,8 +105,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
+    <AppLocaleProvider>
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+    </AppLocaleProvider>
   );
 }

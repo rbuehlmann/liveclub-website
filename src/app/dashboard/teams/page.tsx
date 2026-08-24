@@ -60,7 +60,7 @@ export default function TeamsPage() {
       setName("");
       setShortName("");
     } catch (err) {
-      setCreateError((err as { message?: string })?.message ?? "Anlegen fehlgeschlagen.");
+      setCreateError((err as { message?: string })?.message ?? t("createFailed"));
     } finally {
       setCreating(false);
     }
@@ -107,21 +107,23 @@ export default function TeamsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {teams.length}/{maxTeams ?? "Unlimited"} Mannschaften
+          {t("teamCount", { count: teams.length, max: maxTeams ?? t("unlimited") })}
         </span>
       </div>
 
       {role === "clubAdmin" && atLimit && (
         <Card className="border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
-            Limit von {maxTeams} Mannschaften erreicht.
+            {t("limitReached", { max: maxTeams })}
           </p>
           <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
-            Für mehr Mannschaften braucht ihr ein Abo der Stufe "15 Teams" oder "Unlimited" —{" "}
-            <Link href="/dashboard" className="underline">
-              jetzt upgraden
-            </Link>
-            .
+            {t.rich("limitReachedUpgradeHint", {
+              link: (chunks) => (
+                <Link href="/dashboard" className="underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </Card>
       )}

@@ -164,7 +164,7 @@ export default function ReportersPage() {
       await updateMemberTeams({ clubId: club.clubId, memberId: editingUid, teamIds: editTeamIds });
       setEditingUid(null);
     } catch (err) {
-      setEditError((err as { message?: string })?.message ?? "Speichern fehlgeschlagen.");
+      setEditError((err as { message?: string })?.message ?? t("saveFailed"));
     } finally {
       setSavingEdit(false);
     }
@@ -226,7 +226,7 @@ export default function ReportersPage() {
           <div className="flex flex-col gap-2">
             {invitations.map((inv) => (
               <div key={inv.invitationId} className="flex items-center justify-between">
-                <span className="text-sm text-gray-700 dark:text-gray-300">{inv.email ?? "Offener Link"}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{inv.email ?? t("openLink")}</span>
                 <Button variant="ghost" onClick={() => handleCancelInvite(inv.invitationId)}>
                   {t("remove")}
                 </Button>
@@ -251,12 +251,12 @@ export default function ReportersPage() {
                     <p className="font-medium text-gray-900 dark:text-white">{member.displayName ?? member.email}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : "Keine Mannschaft zugewiesen"}
+                      {assignedTeamNames.length > 0 ? assignedTeamNames.join(", ") : t("noTeamAssigned")}
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <Button variant="secondary" onClick={() => (isEditing ? setEditingUid(null) : startEdit(member))}>
-                      {isEditing ? tCommon("cancel") : "Bearbeiten"}
+                      {isEditing ? tCommon("cancel") : t("edit")}
                     </Button>
                     <Button variant="danger" onClick={() => handleRemove(member.uid)}>
                       {t("remove")}

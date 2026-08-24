@@ -13,6 +13,7 @@ import { TextField } from "@/components/ui/TextField";
 import { Card } from "@/components/ui/Card";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { AppLocaleProvider } from "@/components/layout/AppLocaleProvider";
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,14 +38,24 @@ async function waitForClubMembership(uid: string, clubId: string) {
   }
 }
 
-// Nur Fussball für den Start — weitere Sportarten folgen später.
+// Nur Fussball für den Start — weitere Sportarten folgen später. Values stay
+// German literals (sent to Firestore as-is, matching existing data) — only
+// the displayed label is translated via t(`sports.${s}`).
 const SPORTS = ["Fussball"];
 
 // Fixe Liste statt Freitext, damit die spätere Länder-Filterung in der
-// öffentlichen Suche konsistente Werte hat.
+// öffentlichen Suche konsistente Werte hat. Same pattern as home/countries.
 const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
 
 export default function CreateClubPage() {
+  return (
+    <AppLocaleProvider>
+      <CreateClubForm />
+    </AppLocaleProvider>
+  );
+}
+
+function CreateClubForm() {
   const t = useTranslations("clubSetup");
   const tCommon = useTranslations("common");
   const { user, authLoading } = useAuth();
@@ -95,7 +106,7 @@ export default function CreateClubPage() {
       }
       setCreatedClubId(clubId);
     } catch (err) {
-      setError((err as { message?: string })?.message ?? "Etwas ist schiefgelaufen.");
+      setError((err as { message?: string })?.message ?? t("genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +126,7 @@ export default function CreateClubPage() {
       setLogoUrl(url);
     } catch (err) {
       setLogoError(
-        (err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? "Logo-Upload fehlgeschlagen."
+        (err as { code?: string; message?: string })?.code ?? (err as Error)?.message ?? t("logoUploadFailed")
       );
     } finally {
       setUploadingLogo(false);
@@ -130,24 +141,26 @@ export default function CreateClubPage() {
   if (createdClubId) {
     return (
       <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
-        <PublicHeader />
+        <PublicHeader variant="app" />
         <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
           <Card>
-            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Vereinslogo (optional)</h1>
-            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              Kannst du auch später jederzeit in den Vereinseinstellungen hinzufügen.
-            </p>
+            <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">{t("logoStepTitle")}</h1>
+            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">{t("logoStepSubtitle")}</p>
             <div className="flex flex-col gap-4">
               {logoUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt="" className="h-20 w-20 rounded object-contain" />
               )}
               <input type="file" accept="image/*" onChange={handleLogoChange} disabled={uploadingLogo} />
-              <p className="text-xs text-gray-500 dark:text-gray-400">Empfehlung: 500×500 px, transparentes PNG.</p>
-              {uploadingLogo && <p className="text-xs text-gray-500 dark:text-gray-400">Wird hochgeladen …</p>}
-              {logoError && <p className="text-xs text-red-600">Fehler: {logoError}</p>}
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t("logoRecommendation")}</p>
+              {uploadingLogo && <p className="text-xs text-gray-500 dark:text-gray-400">{t("uploadingLogo")}</p>}
+              {logoError && (
+                <p className="text-xs text-red-600">
+                  {t("logoErrorPrefix")} {logoError}
+                </p>
+              )}
               <Button onClick={finishOnboarding} fullWidth disabled={uploadingLogo}>
-                {logoUrl ? "Fertig" : "Überspringen"}
+                {logoUrl ? t("done") : t("skip")}
               </Button>
             </div>
           </Card>
@@ -159,7 +172,7 @@ export default function CreateClubPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
-      <PublicHeader />
+      <PublicHeader variant="app" />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <Card>
         <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
@@ -184,11 +197,11 @@ export default function CreateClubPage() {
             >
               {SPORTS.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`sports.${s}`)}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Weitere Sportarten folgen bald.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("sportMoreComingSoon")}</p>
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="country" className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -202,7 +215,7 @@ export default function CreateClubPage() {
             >
               {COUNTRIES.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {t(`countries.${c}`)}
                 </option>
               ))}
             </select>
@@ -224,7 +237,7 @@ export default function CreateClubPage() {
           />
           <div className="flex gap-6">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Heimfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("homeColor")}</label>
               <input
                 type="color"
                 value={primaryColor}
@@ -233,7 +246,7 @@ export default function CreateClubPage() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auswärtsfarbe</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("awayColor")}</label>
               <input
                 type="color"
                 value={secondaryColor}

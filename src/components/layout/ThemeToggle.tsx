@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 // Kept in sync with the inline script in layout.tsx, which applies the
 // saved/default theme before hydration to avoid a flash of the wrong theme.
 const STORAGE_KEY = "liveclub-theme";
 
 export function ThemeToggle() {
+  const t = useTranslations("common");
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={isDark ? "Zum hellen Modus wechseln" : "Zum dunklen Modus wechseln"}
+      aria-label={isDark ? t("switchToLightMode") : t("switchToDarkMode")}
       className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-brand-silver/20 dark:text-gray-300 dark:hover:bg-white/10"
     >
       {isDark ? (
