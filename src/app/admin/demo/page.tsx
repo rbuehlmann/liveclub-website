@@ -43,14 +43,13 @@ export default function AdminDemoClubPage() {
       const { db } = getFirebaseClient();
       const snap = await getDoc(doc(db, "settings", "demoClub"));
       const data = snap.data();
-      let publicClubId: string | undefined;
-      if (data?.clubId) {
-        const clubSnap = await getDoc(doc(db, "clubs", data.clubId));
-        publicClubId = clubSnap.data()?.publicClubId;
-      }
+      // publicClubId is denormalized onto this doc by adminUpdateDemoClub
+      // (Admin SDK) rather than read here directly from clubs/{clubId} —
+      // that collection's read rule is member-only, which a platformAdmin
+      // browsing this page doesn't automatically satisfy.
       setStatus({
         clubId: data?.clubId,
-        publicClubId,
+        publicClubId: data?.publicClubId,
         enabled: data?.enabled ?? false,
         postIntervalHours: data?.postIntervalHours ?? 2,
         pushesPerDay: data?.pushesPerDay ?? 3,

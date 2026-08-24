@@ -36,21 +36,29 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
     throw new HttpsError("failed-precondition", "Demo-Verein ist noch nicht eingerichtet.");
   }
 
+  const clubRef = db.collection("clubs").doc(config.clubId as string);
+  const clubSnap = await clubRef.get();
+  const publicClubId = clubSnap.data()?.publicClubId as string | undefined;
+
+  // Denormalized onto settings/demoClub so the admin page (a regular
+  // client-side read, gated on isPlatformAdmin() in firestore.rules) never
+  // needs a second read of clubs/{clubId} itself — that collection's own
+  // read rule is isClubMember(clubId) only, which a platformAdmin doesn't
+  // automatically satisfy for a club they're not a member of. Refreshed on
+  // every save as a self-healing safeguard rather than a one-off backfill.
   await configRef.set(
     {
       enabled: !!enabled,
       postIntervalHours: Math.max(1, Number(postIntervalHours) || 2),
       pushesPerDay: Math.max(0, Number(pushesPerDay) || 0),
       liveGamesPerDay: Math.max(0, Number(liveGamesPerDay) || 0),
+      ...(publicClubId ? { publicClubId } : {}),
       ...(logoUrl !== undefined ? { logoUrl } : {}),
     },
     { merge: true }
   );
 
   if (logoUrl !== undefined) {
-    const clubRef = db.collection("clubs").doc(config.clubId as string);
-    const clubSnap = await clubRef.get();
-    const publicClubId = clubSnap.data()?.publicClubId as string | undefined;
     await Promise.all([
       clubRef.update({ logoUrl, updatedAt: FieldValue.serverTimestamp() }),
       publicClubId
