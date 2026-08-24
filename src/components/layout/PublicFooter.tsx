@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
@@ -12,6 +14,18 @@ import { Link } from "@/i18n/navigation";
 // before. Inside app/[locale]/ it correctly follows to the current page's
 // locale (e.g. /en/impressum from an /en/... page) instead of always
 // dropping back to German.
+//
+// "use client" is required for that to actually work: when this component
+// is rendered from an async Server Component page (support/page.tsx,
+// impressum/page.tsx, the help section, ...) without it, both the
+// translated labels and the Link's locale resolution fall back to the
+// default locale ("de") instead of the route's real [locale] segment —
+// next-intl's ambient server-side resolution doesn't pick up the locale
+// set via setRequestLocale() in [locale]/layout.tsx the way the
+// NextIntlClientProvider context reliably does. Forcing this to always be
+// a Client Component sidesteps that (already proven correct on every page
+// that happens to have a Client Component in its own tree, e.g. the
+// homepage, login, dashboard).
 export function PublicFooter() {
   const t = useTranslations("footer");
   return (

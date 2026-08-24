@@ -21,3 +21,14 @@ export const routing = defineRouting({
   localePrefix: "as-needed",
   localeDetection: false,
 });
+
+// For internal hrefs built inside an async Server Component (which can't
+// use the locale-aware `Link` from ./navigation reliably — its ambient
+// locale resolution there falls back to the default locale instead of the
+// route's actual [locale] segment, unlike in Client Components where it
+// correctly reads from NextIntlClientProvider's context). Takes the
+// already-known `locale` route param explicitly instead, so it's always
+// correct regardless of that resolution quirk.
+export function localizedPathname(locale: string, path: string): string {
+  return locale === routing.defaultLocale ? path : `/${locale}${path}`;
+}

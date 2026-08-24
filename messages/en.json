@@ -442,6 +442,13 @@
       "fan": "Fan",
       "redaktor": "Editor",
       "admin": "Administrator"
+    },
+    "calloutTypes": {
+      "info": "Info",
+      "tip": "Tip",
+      "warning": "Warning",
+      "important": "Important",
+      "bestPractice": "Best Practice"
     }
   }
 }

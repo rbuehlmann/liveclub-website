@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/i18n/navigation";
 
 export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {

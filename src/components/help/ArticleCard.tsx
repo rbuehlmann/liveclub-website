@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/i18n/navigation";
 import { getCategory } from "@/lib/help/categories";
 import { HelpArticleMeta } from "@/lib/help/types";

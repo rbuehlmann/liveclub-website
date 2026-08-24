@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import { localizedPathname } from "@/i18n/routing";
 import { getAllArticles } from "@/lib/help/content";
 import { HELP_CATEGORIES } from "@/lib/help/categories";
 import { SearchBar } from "@/components/help/SearchBar";
@@ -35,7 +36,7 @@ export default async function HelpHomePage({ params }: { params: Params }) {
           {HELP_CATEGORIES.map((cat) => (
             <Link
               key={cat.slug}
-              href={`/help/${cat.slug}`}
+              href={localizedPathname(locale, `/help/${cat.slug}`)}
               className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-6 text-center transition hover:border-brand-red/40 hover:shadow-sm dark:border-white/10 dark:bg-white/5"
             >
               <span className="text-3xl" aria-hidden>
