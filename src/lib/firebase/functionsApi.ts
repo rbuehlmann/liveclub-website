@@ -325,3 +325,16 @@ export async function submitClubRecommendation(input: {
   const result = await call(input);
   return result.data;
 }
+
+export async function adminUpdateDemoClub(input: {
+  enabled: boolean;
+  postIntervalHours: number;
+  pushesPerDay: number;
+  liveGamesPerDay: number;
+  logoUrl?: string | null;
+}) {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<typeof input, { ok: true }>(functions, "adminUpdateDemoClub");
+  const result = await call(input);
+  return result.data;
+}

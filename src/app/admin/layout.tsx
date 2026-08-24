@@ -22,6 +22,7 @@ const LINKS = [
   { href: "/admin", label: "Übersicht" },
   { href: "/admin/clubs", label: "Vereine" },
   { href: "/admin/team-infos", label: "Team-Infos" },
+  { href: "/admin/demo", label: "Demo-Verein" },
   { href: "/admin/mail-templates", label: "Mail Vorlagen" },
   { href: "/admin/settings", label: "Einstellungen" },
 ];
