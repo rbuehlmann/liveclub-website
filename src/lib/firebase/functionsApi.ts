@@ -338,3 +338,17 @@ export async function adminUpdateDemoClub(input: {
   const result = await call(input);
   return result.data;
 }
+
+export async function adminStartDemoTestGame() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<undefined, { ok: true; gameId: string }>(functions, "adminStartDemoTestGame");
+  const result = await call();
+  return result.data;
+}
+
+export async function adminSendDemoTestPush() {
+  const { functions } = getFirebaseClient();
+  const call = httpsCallable<undefined, { ok: true }>(functions, "adminSendDemoTestPush");
+  const result = await call();
+  return result.data;
+}

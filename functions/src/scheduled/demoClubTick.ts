@@ -1,18 +1,19 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
-import { DEMO_POSTS } from "../lib/demoContent";
-import { sendTeamInfoPush } from "../lib/teamInfoPush";
+import {
+  DemoClubConfig as BaseDemoClubConfig,
+  addRandomGoal,
+  finishDemoGame,
+  postDemoTeamInfo,
+  startDemoGame,
+} from "../lib/demoGame";
 
-const DEMO_OPPONENTS = ["SC Musterhausen", "FC Platzhalter", "SV Test United", "AC Beispiel"];
 // Long enough that a human watching the live page sees a realistic-looking
 // match, short enough that it doesn't sit "live" for hours unattended.
 const GAME_DURATION_MINUTES = 12;
 
-interface DemoClubConfig {
-  clubId?: string;
-  teamId?: string;
-  adminUid?: string;
+interface DemoClubConfig extends BaseDemoClubConfig {
   enabled?: boolean;
   postIntervalHours?: number;
   pushesPerDay?: number;
@@ -24,115 +25,6 @@ interface DemoClubConfig {
   lastGameStartedAt?: Timestamp | null;
   activeGameId?: string | null;
   midGameGoalAdded?: boolean;
-}
-
-function pickRandom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-async function postDemoTeamInfo(config: DemoClubConfig, wantsPush: boolean): Promise<void> {
-  const [clubSnap, teamSnap] = await Promise.all([
-    db.collection("clubs").doc(config.clubId!).get(),
-    db.collection("clubs").doc(config.clubId!).collection("teams").doc(config.teamId!).get(),
-  ]);
-  const club = clubSnap.data();
-  const team = teamSnap.data();
-  if (!club || !team) return;
-
-  const post = pickRandom(DEMO_POSTS);
-  const infoRef = db.collection("teamInfos").doc();
-  await infoRef.set({
-    infoId: infoRef.id,
-    teamId: config.teamId,
-    publicTeamId: team.publicTeamId ?? null,
-    clubId: config.clubId,
-    publicClubId: club.publicClubId ?? null,
-    teamName: team.name,
-    clubName: club.name,
-    clubLogoUrl: club.logoUrl ?? null,
-    title: post.title,
-    text: post.text,
-    createdAt: FieldValue.serverTimestamp(),
-    createdByUid: config.adminUid,
-    pushSent: false,
-    pushSentAt: null,
-    hidden: false,
-  });
-
-  if (wantsPush && team.publicTeamId) {
-    await sendTeamInfoPush(team.publicTeamId, { title: team.name, body: post.title });
-    await infoRef.update({ pushSent: true, pushSentAt: FieldValue.serverTimestamp() });
-  }
-}
-
-async function startDemoGame(config: DemoClubConfig): Promise<string> {
-  const [clubSnap, teamSnap] = await Promise.all([
-    db.collection("clubs").doc(config.clubId!).get(),
-    db.collection("clubs").doc(config.clubId!).collection("teams").doc(config.teamId!).get(),
-  ]);
-  const club = clubSnap.data();
-  const team = teamSnap.data();
-  if (!club || !team) throw new Error("Demo club/team not found");
-
-  const isHomeGame = Math.random() < 0.5;
-  const opponentName = pickRandom(DEMO_OPPONENTS);
-  const homeTeamName = isHomeGame ? team.name : opponentName;
-  const awayTeamName = isHomeGame ? opponentName : team.name;
-
-  const gameRef = db.collection("games").doc();
-  await gameRef.set({
-    homeTeamName,
-    awayTeamName,
-    homeClubId: isHomeGame ? config.clubId : null,
-    awayClubId: isHomeGame ? null : config.clubId,
-    homeClubPublicId: isHomeGame ? (club.publicClubId ?? null) : null,
-    awayClubPublicId: isHomeGame ? null : (club.publicClubId ?? null),
-    homeTeamId: isHomeGame ? config.teamId : null,
-    awayTeamId: isHomeGame ? null : config.teamId,
-    createdByClubId: config.clubId,
-    scheduledStart: FieldValue.serverTimestamp(),
-    status: "scheduled",
-    score: { home: 0, away: 0 },
-    mainEditorUid: config.adminUid,
-    mainEditorClubId: config.clubId,
-    mainEditorDisplayName: "LiveDemo",
-    eligibleEditorUids: [config.adminUid],
-    pendingTransfer: null,
-    hasBeenTransferred: false,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-
-  await gameRef.collection("events").add({
-    gameId: gameRef.id,
-    type: "gameStarted",
-    createdByUid: config.adminUid,
-    correctionOf: null,
-    createdAt: FieldValue.serverTimestamp(),
-  });
-
-  return gameRef.id;
-}
-
-async function addRandomGoal(gameId: string, adminUid: string): Promise<void> {
-  const type = Math.random() < 0.5 ? "goalHome" : "goalAway";
-  await db.collection("games").doc(gameId).collection("events").add({
-    gameId,
-    type,
-    createdByUid: adminUid,
-    correctionOf: null,
-    createdAt: FieldValue.serverTimestamp(),
-  });
-}
-
-async function finishDemoGame(gameId: string, adminUid: string): Promise<void> {
-  await db.collection("games").doc(gameId).collection("events").add({
-    gameId,
-    type: "gameFinished",
-    createdByUid: adminUid,
-    correctionOf: null,
-    createdAt: FieldValue.serverTimestamp(),
-  });
 }
 
 /**

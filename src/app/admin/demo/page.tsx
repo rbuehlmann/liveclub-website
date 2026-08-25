@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirebaseClient } from "@/lib/firebase/client";
-import { adminUpdateDemoClub } from "@/lib/firebase/functionsApi";
+import { adminSendDemoTestPush, adminStartDemoTestGame, adminUpdateDemoClub } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatDateTimeDe } from "@/lib/date";
@@ -22,6 +22,8 @@ interface DemoClubStatus {
   pushesSentToday: number;
   activeGameId: string | null;
   lastGameStartedAt: string | null;
+  testGameId: string | null;
+  testGameStartedAt: string | null;
 }
 
 function toIso(value: Timestamp | undefined | null): string | null {
@@ -36,6 +38,10 @@ export default function AdminDemoClubPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [startingTestGame, setStartingTestGame] = useState(false);
+  const [sendingTestPush, setSendingTestPush] = useState(false);
+  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
 
   async function reload() {
     setLoadError(null);
@@ -60,6 +66,8 @@ export default function AdminDemoClubPage() {
         pushesSentToday: data?.pushesSentToday ?? 0,
         activeGameId: data?.activeGameId ?? null,
         lastGameStartedAt: toIso(data?.lastGameStartedAt),
+        testGameId: data?.testGameId ?? null,
+        testGameStartedAt: toIso(data?.testGameStartedAt),
       });
     } catch (err) {
       setLoadError((err as { message?: string })?.message ?? "Laden fehlgeschlagen.");
@@ -119,6 +127,35 @@ export default function AdminDemoClubPage() {
     }
   }
 
+  async function handleStartTestGame() {
+    setStartingTestGame(true);
+    setTestMessage(null);
+    setTestError(null);
+    try {
+      await adminStartDemoTestGame();
+      setTestMessage("Testspiel gestartet — läuft ca. 5 Minuten.");
+      await reload();
+    } catch (err) {
+      setTestError((err as { message?: string })?.message ?? "Testspiel konnte nicht gestartet werden.");
+    } finally {
+      setStartingTestGame(false);
+    }
+  }
+
+  async function handleSendTestPush() {
+    setSendingTestPush(true);
+    setTestMessage(null);
+    setTestError(null);
+    try {
+      await adminSendDemoTestPush();
+      setTestMessage("Test-Push gesendet ✓");
+    } catch (err) {
+      setTestError((err as { message?: string })?.message ?? "Test-Push fehlgeschlagen.");
+    } finally {
+      setSendingTestPush(false);
+    }
+  }
+
   if (loading) return <p className="text-gray-500 dark:text-gray-400">Wird geladen …</p>;
 
   if (loadError || !status) {
@@ -143,6 +180,33 @@ export default function AdminDemoClubPage() {
         automatisch, sendet Test-Pushs und startet/beendet regelmässig ein kurzes Live-Spiel, solange
         aktiviert.
       </p>
+
+      <Card className="border-blue-200 dark:border-blue-500/20">
+        <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Schnelltest</h2>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Löst sofort ein kurzes (~5 Min.) Testspiel bzw. einen Push aus — unabhängig vom
+          normalen Intervall oben, beliebig oft wiederholbar. Nur zum schnelleren Testen.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={handleStartTestGame} disabled={startingTestGame || !!status.testGameId}>
+            {status.testGameId
+              ? "Testspiel läuft …"
+              : startingTestGame
+                ? "Wird gestartet …"
+                : "Jetzt Testspiel starten (5 Min.)"}
+          </Button>
+          <Button variant="secondary" onClick={handleSendTestPush} disabled={sendingTestPush}>
+            {sendingTestPush ? "Wird gesendet …" : "Jetzt Test-Push senden"}
+          </Button>
+        </div>
+        {status.testGameId && status.testGameStartedAt && (
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Gestartet um {formatDateTimeDe(status.testGameStartedAt)}, endet automatisch nach ~5 Minuten.
+          </p>
+        )}
+        {testError && <p className="mt-2 text-sm text-red-600">{testError}</p>}
+        {testMessage && <p className="mt-2 text-sm text-green-700">{testMessage}</p>}
+      </Card>
 
       <Card>
         <div className="flex flex-col gap-4">
@@ -237,6 +301,7 @@ export default function AdminDemoClubPage() {
             Aktives Live-Spiel: {status.activeGameId ? "ja" : "nein"}
             {status.lastGameStartedAt && ` · zuletzt gestartet ${formatDateTimeDe(status.lastGameStartedAt)}`}
           </p>
+          <p>Aktives Testspiel: {status.testGameId ? "ja" : "nein"}</p>
         </div>
       </Card>
     </div>

@@ -4,6 +4,7 @@ export { onClubWrite } from "./triggers/onClubWrite";
 export { onInvitationCreate } from "./triggers/onInvitationCreate";
 export { onPublicGameWrite } from "./triggers/onPublicGameWrite";
 export { demoClubTick } from "./scheduled/demoClubTick";
+export { demoTestGameTick } from "./scheduled/demoTestGameTick";
 
 export { createClub } from "./callable/createClub";
 export { createTeam } from "./callable/createTeam";
@@ -27,6 +28,8 @@ export { adminListClubs } from "./callable/adminListClubs";
 export { adminDeleteClub } from "./callable/adminDeleteClub";
 export { adminBackfillLogoCacheControl } from "./callable/adminBackfillLogoCacheControl";
 export { adminUpdateDemoClub } from "./callable/adminUpdateDemoClub";
+export { adminStartDemoTestGame } from "./callable/adminStartDemoTestGame";
+export { adminSendDemoTestPush } from "./callable/adminSendDemoTestPush";
 export { devGrantPlatformAdmin } from "./callable/devGrantPlatformAdmin";
 export { grantPlatformAdmin } from "./callable/grantPlatformAdmin";
 export { sendTestEmail } from "./callable/sendTestEmail";
