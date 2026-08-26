@@ -318,15 +318,26 @@ export interface ClubRecommendation {
 // settings/branding — publicly readable, platform-admin writable (see
 // firestore.rules). All fields optional: an unset field just falls back to
 // the static default in globals.css/favicon.ico. iconLight/iconDark are
-// stored for future use but not yet consumed anywhere; favicon IS applied
-// live (see BrandingProvider.tsx's applyFavicon), best-effort only since
-// browsers cache favicons aggressively.
+// stored for future use but not yet consumed anywhere (a website-only
+// re-skin asset, like logoLight/logoDark — do NOT reuse these for
+// clubFallbackIconUrl below, they're a different concept even though the
+// naming is confusingly close: this whole "Branding" block is explicitly
+// website-only per its own /admin/settings copy, never touches the
+// iOS/Android apps). favicon IS applied live (see BrandingProvider.tsx's
+// applyFavicon + src/app/icon.tsx), best-effort only since browsers cache
+// favicons aggressively.
 export interface BrandingSettings {
   logoLight?: string | null;
   logoDark?: string | null;
   iconLight?: string | null;
   iconDark?: string | null;
   favicon?: string | null;
+  // Separate from the website-only Branding block above — shown wherever a
+  // *specific club or team* has no logo of its own (TeamIcon.tsx on the
+  // web, and the Live Activity/Android push payload via
+  // functions/src/triggers/onPublicGameWrite.ts), deliberately platform-wide
+  // (website + apps), 2026-08-26.
+  clubFallbackIconUrl?: string | null;
   backgroundColorLight?: string | null;
   backgroundColorDark?: string | null;
   accentColorLight?: string | null;

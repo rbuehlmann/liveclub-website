@@ -15,8 +15,10 @@ interface TeamIconProps {
  * Shows a team's real club logo when the opposing side is also a LiveClub
  * club (resolved live from publicClubs/{publicClubId}, no cross-club read
  * permissions needed since that collection is public); otherwise the
- * platform-wide fallback icon (settings/branding.iconLight/iconDark, see
- * /admin/settings — same fields the Live Activity push falls back to, see
+ * platform-wide fallback icon (settings/branding.clubFallbackIconUrl, see
+ * /admin/settings — deliberately its own field, not iconLight/iconDark,
+ * which are a separate website-only branding concept; same field the Live
+ * Activity push falls back to, see
  * functions/src/triggers/onPublicGameWrite.ts), and only a neutral
  * initial-letter placeholder if that isn't configured either.
  */
@@ -49,28 +51,15 @@ export function TeamIcon({ publicClubId, teamName, size = 40 }: TeamIconProps) {
     );
   }
 
-  if (branding.iconLight || branding.iconDark) {
+  if (branding.clubFallbackIconUrl) {
     return (
-      <>
-        {branding.iconLight && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={branding.iconLight}
-            alt=""
-            style={style}
-            className={`rounded-full object-contain bg-white ring-1 ring-gray-200 dark:ring-white/10 ${branding.iconDark ? "dark:hidden" : ""}`}
-          />
-        )}
-        {branding.iconDark && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={branding.iconDark}
-            alt=""
-            style={style}
-            className={`rounded-full object-contain bg-white ring-1 ring-gray-200 dark:ring-white/10 ${branding.iconLight ? "hidden dark:block" : ""}`}
-          />
-        )}
-      </>
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={branding.clubFallbackIconUrl}
+        alt=""
+        style={style}
+        className="rounded-full object-contain bg-white ring-1 ring-gray-200 dark:ring-white/10"
+      />
     );
   }
 

@@ -186,6 +186,58 @@ function ImageField({ label, fieldKey, value, onChange }: ImageFieldProps) {
   );
 }
 
+// Deliberately its own component with its own load/save (merge: true),
+// completely decoupled from AdminSettingsPage's `branding` state and its
+// "Alles auf Standard zurücksetzen" button below — that reset is scoped to
+// the (explicitly website-only) Branding card's re-skin fields, and
+// clubFallbackIconUrl living in the same settings/branding doc shouldn't
+// get silently wiped by a click meant for that unrelated feature. Same
+// pattern as TeamInfoSettingsCard above.
+function ClubFallbackIconCard() {
+  const [iconUrl, setIconUrl] = useState<string | null | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    getDoc(doc(db, "settings", "branding")).then((snap) => {
+      setIconUrl((snap.data() as BrandingSettings | undefined)?.clubFallbackIconUrl ?? null);
+      setLoading(false);
+    });
+  }, []);
+
+  async function persist(url: string | null) {
+    setMessage(null);
+    const { db } = getFirebaseClient();
+    await setDoc(doc(db, "settings", "branding"), { clubFallbackIconUrl: url }, { merge: true });
+    setIconUrl(url);
+    setMessage("Gespeichert ✓ — wirkt sofort, ohne Deploy.");
+  }
+
+  if (loading) return null;
+
+  return (
+    <Card>
+      <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Fallback-Icon für Vereine & Mannschaften</h2>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Wird gezeigt, wenn ein Verein oder eine Mannschaft kein eigenes Logo hochgeladen hat — auf
+        der Website (TeamIcon) und in Live-Activity-/Push-Benachrichtigungen der iOS/Android-Apps.
+        Speichert sofort beim Hochladen/Entfernen, unabhängig vom Branding oben. Leer lassen =
+        neutrales Kürzel-Icon (Anfangsbuchstabe) als Fallback.
+      </p>
+      <ImageField
+        label="Fallback-Icon"
+        fieldKey="clubFallbackIconUrl"
+        value={iconUrl}
+        onChange={(_key, url) => {
+          persist(url);
+        }}
+      />
+      {message && <p className="mt-2 text-sm text-green-700">{message}</p>}
+    </Card>
+  );
+}
+
 export default function AdminSettingsPage() {
   const [branding, setBranding] = useState<BrandingSettings>({});
   const [loading, setLoading] = useState(true);
@@ -249,13 +301,11 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <ImageField label="Fallback-Icon (Light Mode)" fieldKey="iconLight" value={branding.iconLight} onChange={update} />
-            <ImageField label="Fallback-Icon (Dark Mode)" fieldKey="iconDark" value={branding.iconDark} onChange={update} />
+            <ImageField label="Icon (Light Mode)" fieldKey="iconLight" value={branding.iconLight} onChange={update} />
+            <ImageField label="Icon (Dark Mode)" fieldKey="iconDark" value={branding.iconDark} onChange={update} />
           </div>
           <p className="-mt-4 text-xs text-gray-400 dark:text-gray-500">
-            Wird gezeigt, wenn ein Verein oder eine Mannschaft kein eigenes Logo hat — auf der
-            Website und (Light-Variante) in Live-Activity-/Push-Benachrichtigungen auf iOS/Android.
-            Leer lassen = neutrales Kürzel-Icon (Anfangsbuchstabe) als Fallback.
+            Icon wird gespeichert, aber aktuell nirgends verwendet — reserviert für später.
           </p>
 
           <ImageField label="Favicon (Browser-Tab-Icon)" fieldKey="favicon" value={branding.favicon} onChange={update} />
@@ -326,6 +376,8 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </Card>
+
+      <ClubFallbackIconCard />
 
       <TeamInfoSettingsCard />
     </div>

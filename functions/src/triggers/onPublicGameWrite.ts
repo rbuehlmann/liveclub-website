@@ -102,11 +102,13 @@ export const onPublicGameWrite = onDocumentWritten(
     // all, or a club that never uploaded one — the LiveDemo club's fake
     // opponents are the common case) otherwise leaves the Watch mirror with
     // nothing to show, since it has no access to the phone's own asset
-    // cache/initials fallback. settings/branding.iconLight (see
-    // /admin/settings) is the same platform-wide fallback TeamIcon.tsx uses
-    // on the web — resolved lazily and only once per invocation, since most
-    // games have real logos on both sides and this is the exception path.
-    const fallbackIconUrl = (brandingSnap.data()?.iconLight as string | undefined) ?? null;
+    // cache/initials fallback. settings/branding.clubFallbackIconUrl (see
+    // /admin/settings — deliberately its own field, NOT iconLight/iconDark,
+    // which are a different, website-only branding concept) is the same
+    // platform-wide fallback TeamIcon.tsx uses on the web — resolved lazily
+    // and only once per invocation, since most games have real logos on
+    // both sides and this is the exception path.
+    const fallbackIconUrl = (brandingSnap.data()?.clubFallbackIconUrl as string | undefined) ?? null;
     let fallbackThumbnail: string | null | undefined;
     async function resolveFallbackThumbnail(): Promise<string | null> {
       if (fallbackThumbnail === undefined) {
