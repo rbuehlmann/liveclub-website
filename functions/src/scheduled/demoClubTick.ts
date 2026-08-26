@@ -19,10 +19,12 @@ interface DemoClubConfig extends BaseDemoClubConfig {
   pushesPerDay?: number;
   liveGamesPerDay?: number;
   lastPostAt?: Timestamp | null;
+  lastPushSentAt?: Timestamp | null;
   postsToday?: number;
   pushesSentToday?: number;
   dayKey?: string;
   lastGameStartedAt?: Timestamp | null;
+  lastGameEndedAt?: Timestamp | null;
   activeGameId?: string | null;
   midGameGoalAdded?: boolean;
 }
@@ -59,6 +61,7 @@ export const demoClubTick = onSchedule("every 15 minutes", async () => {
       await finishDemoGame(activeGameId, config.adminUid);
       activeGameId = null;
       updates.activeGameId = null;
+      updates.lastGameEndedAt = FieldValue.serverTimestamp();
     } else if (minutesRunning >= GAME_DURATION_MINUTES / 2 && !config.midGameGoalAdded) {
       await addRandomGoal(activeGameId, config.adminUid);
       updates.midGameGoalAdded = true;
@@ -78,7 +81,10 @@ export const demoClubTick = onSchedule("every 15 minutes", async () => {
     await postDemoTeamInfo(config, wantsPush);
     updates.lastPostAt = FieldValue.serverTimestamp();
     updates.postsToday = postsToday + 1;
-    if (wantsPush) updates.pushesSentToday = pushesSentToday + 1;
+    if (wantsPush) {
+      updates.pushesSentToday = pushesSentToday + 1;
+      updates.lastPushSentAt = FieldValue.serverTimestamp();
+    }
   }
 
   // 3. Maybe start a new demo live game (only if none is currently running).

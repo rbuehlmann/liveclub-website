@@ -10,6 +10,7 @@ import {
   type DeviceFollow,
 } from "../lib/liveActivity";
 import { notifyAndroidGameEnded, notifyAndroidGameStarted, notifyAndroidGameUpdated } from "../lib/fcm";
+import { fetchLogoThumbnail } from "../lib/logoThumbnail";
 
 const LIVE_STATUSES = new Set(["live", "paused"]);
 const ENDED_STATUSES = new Set(["finished", "cancelled"]);
@@ -83,9 +84,10 @@ export const onPublicGameWrite = onDocumentWritten(
     const clubIdsToFetch = Array.from(new Set([publicClubId, homeClubPublicId, awayClubPublicId].filter(
       (id): id is string => Boolean(id)
     )));
-    const clubSnaps = await Promise.all(
-      clubIdsToFetch.map((id) => db.collection("publicClubs").doc(id).get())
-    );
+    const [clubSnaps, brandingSnap] = await Promise.all([
+      Promise.all(clubIdsToFetch.map((id) => db.collection("publicClubs").doc(id).get())),
+      db.collection("settings").doc("branding").get(),
+    ]);
     const logoByPublicClubId = new Map<string, string | null>(
       clubSnaps.map((snap) => [snap.id, (snap.data()?.logoUrl as string | null | undefined) ?? null])
     );
@@ -96,16 +98,39 @@ export const onPublicGameWrite = onDocumentWritten(
     );
     const clubData = clubSnaps.find((snap) => snap.id === publicClubId)?.data();
 
+    // A side with no logo of its own (no real LiveClub club on that side at
+    // all, or a club that never uploaded one — the LiveDemo club's fake
+    // opponents are the common case) otherwise leaves the Watch mirror with
+    // nothing to show, since it has no access to the phone's own asset
+    // cache/initials fallback. settings/branding.iconLight (see
+    // /admin/settings) is the same platform-wide fallback TeamIcon.tsx uses
+    // on the web — resolved lazily and only once per invocation, since most
+    // games have real logos on both sides and this is the exception path.
+    const fallbackIconUrl = (brandingSnap.data()?.iconLight as string | undefined) ?? null;
+    let fallbackThumbnail: string | null | undefined;
+    async function resolveFallbackThumbnail(): Promise<string | null> {
+      if (fallbackThumbnail === undefined) {
+        fallbackThumbnail = fallbackIconUrl ? await fetchLogoThumbnail(fallbackIconUrl) : null;
+      }
+      return fallbackThumbnail;
+    }
+    const homeLogoUrl = homeClubPublicId ? (logoByPublicClubId.get(homeClubPublicId) ?? null) : null;
+    const awayLogoUrl = awayClubPublicId ? (logoByPublicClubId.get(awayClubPublicId) ?? null) : null;
+
     const game = {
       gameId: event.params.gameId,
       homeTeamName: afterData.homeTeamName as string,
       awayTeamName: afterData.awayTeamName as string,
       homeClubPublicId,
       awayClubPublicId,
-      homeClubLogoUrl: homeClubPublicId ? logoByPublicClubId.get(homeClubPublicId) ?? null : null,
-      awayClubLogoUrl: awayClubPublicId ? logoByPublicClubId.get(awayClubPublicId) ?? null : null,
-      homeClubLogoThumbnail: homeClubPublicId ? thumbnailByPublicClubId.get(homeClubPublicId) ?? null : null,
-      awayClubLogoThumbnail: awayClubPublicId ? thumbnailByPublicClubId.get(awayClubPublicId) ?? null : null,
+      homeClubLogoUrl: homeLogoUrl ?? fallbackIconUrl,
+      awayClubLogoUrl: awayLogoUrl ?? fallbackIconUrl,
+      homeClubLogoThumbnail: homeClubPublicId
+        ? (thumbnailByPublicClubId.get(homeClubPublicId) ?? (await resolveFallbackThumbnail()))
+        : await resolveFallbackThumbnail(),
+      awayClubLogoThumbnail: awayClubPublicId
+        ? (thumbnailByPublicClubId.get(awayClubPublicId) ?? (await resolveFallbackThumbnail()))
+        : await resolveFallbackThumbnail(),
       publicClubId,
       clubName: (clubData?.name as string | undefined) ?? "",
       scoreHome: (afterData.scoreHome as number) ?? 0,

@@ -42,7 +42,16 @@ export const demoTestGameTick = onSchedule("every 1 minutes", async () => {
   if (minutesRunning >= TEST_GAME_DURATION_MINUTES) {
     await finishDemoGame(config.testGameId, config.adminUid);
     await configRef.set(
-      { testGameId: null, testGameStartedAt: null, testGameGoalsAdded: 0 },
+      {
+        testGameId: null,
+        testGameStartedAt: null,
+        testGameGoalsAdded: 0,
+        // Kept even after the fields above reset to null, so /admin/demo
+        // can still show a "last test run: started X, ended Y" history —
+        // testGameId alone can't do that once it's cleared back to null.
+        lastTestGameStartedAt: config.testGameStartedAt,
+        lastTestGameEndedAt: FieldValue.serverTimestamp(),
+      },
       { merge: true }
     );
     return;

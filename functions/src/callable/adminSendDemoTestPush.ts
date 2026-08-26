@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { FieldValue } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
 import { postDemoTeamInfo } from "../lib/demoGame";
 
@@ -27,6 +28,10 @@ export const adminSendDemoTestPush = onCall(async (request) => {
   }
 
   await postDemoTeamInfo({ clubId: config.clubId, teamId: config.teamId, adminUid: config.adminUid }, true);
+  await db
+    .collection("settings")
+    .doc("demoClub")
+    .set({ lastTestPushSentAt: FieldValue.serverTimestamp() }, { merge: true });
 
   return { ok: true };
 });

@@ -12,18 +12,25 @@ import { formatDateTimeDe } from "@/lib/date";
 interface DemoClubStatus {
   clubId?: string;
   publicClubId?: string;
+  clubName: string;
+  teamName: string;
   enabled: boolean;
   postIntervalHours: number;
   pushesPerDay: number;
   liveGamesPerDay: number;
   logoUrl: string | null;
   lastPostAt: string | null;
+  lastPushSentAt: string | null;
   postsToday: number;
   pushesSentToday: number;
   activeGameId: string | null;
   lastGameStartedAt: string | null;
+  lastGameEndedAt: string | null;
   testGameId: string | null;
   testGameStartedAt: string | null;
+  lastTestGameStartedAt: string | null;
+  lastTestGameEndedAt: string | null;
+  lastTestPushSentAt: string | null;
 }
 
 function toIso(value: Timestamp | undefined | null): string | null {
@@ -56,18 +63,25 @@ export default function AdminDemoClubPage() {
       setStatus({
         clubId: data?.clubId,
         publicClubId: data?.publicClubId,
+        clubName: data?.clubName ?? "",
+        teamName: data?.teamName ?? "",
         enabled: data?.enabled ?? false,
         postIntervalHours: data?.postIntervalHours ?? 2,
         pushesPerDay: data?.pushesPerDay ?? 3,
         liveGamesPerDay: data?.liveGamesPerDay ?? 1,
         logoUrl: data?.logoUrl ?? null,
         lastPostAt: toIso(data?.lastPostAt),
+        lastPushSentAt: toIso(data?.lastPushSentAt),
         postsToday: data?.postsToday ?? 0,
         pushesSentToday: data?.pushesSentToday ?? 0,
         activeGameId: data?.activeGameId ?? null,
         lastGameStartedAt: toIso(data?.lastGameStartedAt),
+        lastGameEndedAt: toIso(data?.lastGameEndedAt),
         testGameId: data?.testGameId ?? null,
         testGameStartedAt: toIso(data?.testGameStartedAt),
+        lastTestGameStartedAt: toIso(data?.lastTestGameStartedAt),
+        lastTestGameEndedAt: toIso(data?.lastTestGameEndedAt),
+        lastTestPushSentAt: toIso(data?.lastTestPushSentAt),
       });
     } catch (err) {
       setLoadError((err as { message?: string })?.message ?? "Laden fehlgeschlagen.");
@@ -91,6 +105,8 @@ export default function AdminDemoClubPage() {
         postIntervalHours: status.postIntervalHours,
         pushesPerDay: status.pushesPerDay,
         liveGamesPerDay: status.liveGamesPerDay,
+        clubName: status.clubName,
+        teamName: status.teamName,
       });
       setMessage("Gespeichert ✓");
       await reload();
@@ -117,6 +133,8 @@ export default function AdminDemoClubPage() {
         pushesPerDay: status?.pushesPerDay ?? 3,
         liveGamesPerDay: status?.liveGamesPerDay ?? 1,
         logoUrl,
+        clubName: status?.clubName,
+        teamName: status?.teamName,
       });
       await reload();
     } catch (err) {
@@ -219,6 +237,27 @@ export default function AdminDemoClubPage() {
             Demo-Modus aktiv
           </label>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Vereinsname</label>
+              <input
+                type="text"
+                value={status.clubName}
+                onChange={(e) => setStatus({ ...status, clubName: e.target.value })}
+                className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teamname</label>
+              <input
+                type="text"
+                value={status.teamName}
+                onChange={(e) => setStatus({ ...status, teamName: e.target.value })}
+                className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -277,7 +316,7 @@ export default function AdminDemoClubPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-gray-900 dark:text-white">Status</h2>
+        <h2 className="mb-3 font-semibold text-gray-900 dark:text-white">Status (automatisch)</h2>
         <div className="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
           <p>
             Öffentliche Seite:{" "}
@@ -297,11 +336,34 @@ export default function AdminDemoClubPage() {
           <p>Heute gepostet: {status.postsToday}</p>
           <p>Heute Pushs gesendet: {status.pushesSentToday}</p>
           <p>Letzter Post: {status.lastPostAt ? formatDateTimeDe(status.lastPostAt) : "noch keiner"}</p>
+          <p>Letzter Push: {status.lastPushSentAt ? formatDateTimeDe(status.lastPushSentAt) : "noch keiner"}</p>
           <p>
             Aktives Live-Spiel: {status.activeGameId ? "ja" : "nein"}
             {status.lastGameStartedAt && ` · zuletzt gestartet ${formatDateTimeDe(status.lastGameStartedAt)}`}
+            {status.lastGameEndedAt && ` · zuletzt beendet ${formatDateTimeDe(status.lastGameEndedAt)}`}
           </p>
-          <p>Aktives Testspiel: {status.testGameId ? "ja" : "nein"}</p>
+        </div>
+      </Card>
+
+      <Card className="border-blue-200 dark:border-blue-500/20">
+        <h2 className="mb-3 font-semibold text-gray-900 dark:text-white">Status (manuell/Schnelltest)</h2>
+        <div className="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+          <p>
+            Testspiel:{" "}
+            {status.testGameId
+              ? `läuft — gestartet ${status.testGameStartedAt ? formatDateTimeDe(status.testGameStartedAt) : "–"}`
+              : "läuft nicht"}
+            {!status.testGameId &&
+              status.lastTestGameStartedAt &&
+              ` · zuletzt gestartet ${formatDateTimeDe(status.lastTestGameStartedAt)}`}
+            {!status.testGameId &&
+              status.lastTestGameEndedAt &&
+              ` · beendet ${formatDateTimeDe(status.lastTestGameEndedAt)}`}
+          </p>
+          <p>
+            Test-Push:{" "}
+            {status.lastTestPushSentAt ? `zuletzt gesendet ${formatDateTimeDe(status.lastTestPushSentAt)}` : "noch keiner"}
+          </p>
         </div>
       </Card>
     </div>

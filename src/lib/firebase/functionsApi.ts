@@ -332,6 +332,8 @@ export async function adminUpdateDemoClub(input: {
   pushesPerDay: number;
   liveGamesPerDay: number;
   logoUrl?: string | null;
+  clubName?: string;
+  teamName?: string;
 }) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { ok: true }>(functions, "adminUpdateDemoClub");

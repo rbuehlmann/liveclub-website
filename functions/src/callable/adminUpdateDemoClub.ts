@@ -8,6 +8,8 @@ interface AdminUpdateDemoClubRequest {
   pushesPerDay: number;
   liveGamesPerDay: number;
   logoUrl?: string | null;
+  clubName?: string;
+  teamName?: string;
 }
 
 /**
@@ -27,7 +29,7 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
     throw new HttpsError("permission-denied", "Nur für Plattform-Administratoren.");
   }
 
-  const { enabled, postIntervalHours, pushesPerDay, liveGamesPerDay, logoUrl } = request.data;
+  const { enabled, postIntervalHours, pushesPerDay, liveGamesPerDay, logoUrl, clubName, teamName } = request.data;
 
   const configRef = db.collection("settings").doc("demoClub");
   const configSnap = await configRef.get();
@@ -37,8 +39,11 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
   }
 
   const clubRef = db.collection("clubs").doc(config.clubId as string);
-  const clubSnap = await clubRef.get();
+  const teamRef = clubRef.collection("teams").doc(config.teamId as string);
+  const [clubSnap, teamSnap] = await Promise.all([clubRef.get(), teamRef.get()]);
   const publicClubId = clubSnap.data()?.publicClubId as string | undefined;
+  const resolvedClubName = clubName?.trim() || (clubSnap.data()?.name as string | undefined);
+  const resolvedTeamName = teamName?.trim() || (teamSnap.data()?.name as string | undefined);
 
   // Denormalized onto settings/demoClub so the admin page (a regular
   // client-side read, gated on isPlatformAdmin() in firestore.rules) never
@@ -54,6 +59,8 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
       liveGamesPerDay: Math.max(0, Number(liveGamesPerDay) || 0),
       ...(publicClubId ? { publicClubId } : {}),
       ...(logoUrl !== undefined ? { logoUrl } : {}),
+      ...(resolvedClubName ? { clubName: resolvedClubName } : {}),
+      ...(resolvedTeamName ? { teamName: resolvedTeamName } : {}),
     },
     { merge: true }
   );
@@ -65,6 +72,20 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
         ? db.collection("publicClubs").doc(publicClubId).set({ logoUrl }, { merge: true })
         : Promise.resolve(),
     ]);
+  }
+
+  // Name changes go through the same club/team docs a real clubAdmin would
+  // edit (dashboard/club, dashboard/teams) — onClubWrite/onTeamWrite
+  // already mirror those onto publicClubs/publicTeams, so nothing extra to
+  // sync here.
+  if (clubName?.trim()) {
+    await clubRef.update({ name: clubName.trim(), updatedAt: FieldValue.serverTimestamp() });
+  }
+  if (teamName?.trim()) {
+    await clubRef
+      .collection("teams")
+      .doc(config.teamId as string)
+      .update({ name: teamName.trim() });
   }
 
   return { ok: true };
