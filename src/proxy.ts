@@ -15,7 +15,14 @@ export const config = {
   // path list, for the same underlying reason: a bare top-level segment
   // (a club id) is otherwise indistinguishable from any other top-level
   // route without an explicit exclusion list.
+  //
+  // icon/apple-icon: Next's dynamic favicon file convention (src/app/icon.tsx)
+  // is served at the literal path /icon — no file extension, so the
+  // `.*\..*` exclusion above doesn't catch it, and without this explicit
+  // exclusion this middleware intercepted the request before it ever
+  // reached the route handler (silently 404ing it — 2026-08-26, found
+  // while adding a dynamic branding-aware favicon).
   matcher: [
-    "/((?!api|_next|_vercel|\\.well-known|dashboard|admin|login|register|onboarding|.*\\..*).*)",
+    "/((?!api|_next|_vercel|\\.well-known|dashboard|admin|login|register|onboarding|icon|apple-icon|.*\\..*).*)",
   ],
 };
