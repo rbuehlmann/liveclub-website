@@ -25,6 +25,7 @@ const LINKS = [
   { href: "/admin/demo", label: "Demo-Verein" },
   { href: "/admin/mail-templates", label: "Mail Vorlagen" },
   { href: "/admin/settings", label: "Einstellungen" },
+  { href: "/admin/changelog", label: "Versionsverlauf" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

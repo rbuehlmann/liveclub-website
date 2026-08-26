@@ -17,6 +17,28 @@ function gitShortSha(): string {
   }
 }
 
+// Same motivation as gitShortSha above, one level deeper — /admin/changelog
+// (2026-08-26) shows this so "what changed since I last looked" doesn't
+// need a separate trip to GitHub. Subject lines only (not full bodies) to
+// keep the env value small; %x1f/%x1e are unit/record separators, unlikely
+// to collide with anything a commit message would contain, so this doesn't
+// need real CSV/JSON quoting.
+function gitLog(count: number): { sha: string; date: string; subject: string }[] {
+  try {
+    const raw = execSync(`git log -${count} --pretty=format:%h%x1f%aI%x1f%s%x1e`).toString();
+    return raw
+      .split("\x1e")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [sha, date, subject] = line.split("\x1f");
+        return { sha, date, subject };
+      });
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   // Local browser-automation tooling hits the dev server via 127.0.0.1
   // rather than localhost — without this, Next.js silently blocks the
@@ -25,6 +47,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_SHA: gitShortSha(),
     NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
+    NEXT_PUBLIC_BUILD_LOG: JSON.stringify(gitLog(30)),
   },
   // /agb and /datenschutz were the routes' original (German) slugs, already
   // live in production — permanent redirects so any bookmark/indexed link
