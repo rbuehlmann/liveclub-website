@@ -249,11 +249,13 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <ImageField label="Icon (Light Mode)" fieldKey="iconLight" value={branding.iconLight} onChange={update} />
-            <ImageField label="Icon (Dark Mode)" fieldKey="iconDark" value={branding.iconDark} onChange={update} />
+            <ImageField label="Fallback-Icon (Light Mode)" fieldKey="iconLight" value={branding.iconLight} onChange={update} />
+            <ImageField label="Fallback-Icon (Dark Mode)" fieldKey="iconDark" value={branding.iconDark} onChange={update} />
           </div>
           <p className="-mt-4 text-xs text-gray-400 dark:text-gray-500">
-            Icon wird gespeichert, aber aktuell nirgends verwendet — reserviert für später.
+            Wird gezeigt, wenn ein Verein oder eine Mannschaft kein eigenes Logo hat — auf der
+            Website und (Light-Variante) in Live-Activity-/Push-Benachrichtigungen auf iOS/Android.
+            Leer lassen = neutrales Kürzel-Icon (Anfangsbuchstabe) als Fallback.
           </p>
 
           <ImageField label="Favicon (Browser-Tab-Icon)" fieldKey="favicon" value={branding.favicon} onChange={update} />
