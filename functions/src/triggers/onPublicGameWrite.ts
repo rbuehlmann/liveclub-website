@@ -119,6 +119,21 @@ export const onPublicGameWrite = onDocumentWritten(
     const homeLogoUrl = homeClubPublicId ? (logoByPublicClubId.get(homeClubPublicId) ?? null) : null;
     const awayLogoUrl = awayClubPublicId ? (logoByPublicClubId.get(awayClubPublicId) ?? null) : null;
 
+    // A real logo missing its *precomputed* thumbnail (onClubWrite.ts didn't
+    // run yet, or predates that feature) is not the same thing as "no logo
+    // at all" — falling back to the platform icon here would silently
+    // replace a club's own real logo with the generic one on the Watch
+    // mirror (which only ever sees this embedded thumbnail, never the URL)
+    // even though the phone's own Live Activity view, which uses the URL,
+    // still shows the correct logo. Generate on demand instead; only use
+    // the platform fallback when there's genuinely no logo URL to work from.
+    async function resolveThumbnail(publicClubId: string | null, realLogoUrl: string | null): Promise<string | null> {
+      const precomputed = publicClubId ? thumbnailByPublicClubId.get(publicClubId) : null;
+      if (precomputed) return precomputed;
+      if (realLogoUrl) return await fetchLogoThumbnail(realLogoUrl);
+      return await resolveFallbackThumbnail();
+    }
+
     const game = {
       gameId: event.params.gameId,
       homeTeamName: afterData.homeTeamName as string,
@@ -127,12 +142,8 @@ export const onPublicGameWrite = onDocumentWritten(
       awayClubPublicId,
       homeClubLogoUrl: homeLogoUrl ?? fallbackIconUrl,
       awayClubLogoUrl: awayLogoUrl ?? fallbackIconUrl,
-      homeClubLogoThumbnail: homeClubPublicId
-        ? (thumbnailByPublicClubId.get(homeClubPublicId) ?? (await resolveFallbackThumbnail()))
-        : await resolveFallbackThumbnail(),
-      awayClubLogoThumbnail: awayClubPublicId
-        ? (thumbnailByPublicClubId.get(awayClubPublicId) ?? (await resolveFallbackThumbnail()))
-        : await resolveFallbackThumbnail(),
+      homeClubLogoThumbnail: await resolveThumbnail(homeClubPublicId, homeLogoUrl),
+      awayClubLogoThumbnail: await resolveThumbnail(awayClubPublicId, awayLogoUrl),
       publicClubId,
       clubName: (clubData?.name as string | undefined) ?? "",
       scoreHome: (afterData.scoreHome as number) ?? 0,
