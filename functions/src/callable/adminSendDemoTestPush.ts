@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { FieldValue } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
+import { apnsAuthKey } from "../lib/secrets";
 import { postDemoTeamInfo } from "../lib/demoGame";
 
 /**
@@ -13,7 +14,7 @@ import { postDemoTeamInfo } from "../lib/demoGame";
  * manual test action, not a real cadence event, so it shouldn't eat into
  * the daily quota those track.
  */
-export const adminSendDemoTestPush = onCall(async (request) => {
+export const adminSendDemoTestPush = onCall({ secrets: [apnsAuthKey] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
