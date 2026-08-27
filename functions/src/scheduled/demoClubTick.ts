@@ -1,6 +1,7 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
+import { apnsAuthKey } from "../lib/secrets";
 import {
   DemoClubConfig as BaseDemoClubConfig,
   addRandomGoal,
@@ -38,7 +39,7 @@ interface DemoClubConfig extends BaseDemoClubConfig {
  * so this can safely run on a fixed 15-minute tick without any other
  * scheduling infrastructure. No-ops entirely while `enabled` is false.
  */
-export const demoClubTick = onSchedule("every 15 minutes", async () => {
+export const demoClubTick = onSchedule({ schedule: "every 15 minutes", secrets: [apnsAuthKey] }, async () => {
   const configRef = db.collection("settings").doc("demoClub");
   const configSnap = await configRef.get();
   const config = (configSnap.data() ?? {}) as DemoClubConfig;

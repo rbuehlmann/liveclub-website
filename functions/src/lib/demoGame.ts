@@ -51,8 +51,10 @@ export async function postDemoTeamInfo(config: DemoClubConfig, wantsPush: boolea
   });
 
   if (wantsPush && team.publicTeamId) {
-    await sendTeamInfoPush(team.publicTeamId, { title: team.name, body: post.title });
-    await infoRef.update({ pushSent: true, pushSentAt: FieldValue.serverTimestamp() });
+    const { sent } = await sendTeamInfoPush(team.publicTeamId, { title: team.name, body: post.title });
+    if (sent > 0) {
+      await infoRef.update({ pushSent: true, pushSentAt: FieldValue.serverTimestamp() });
+    }
   }
 }
 
