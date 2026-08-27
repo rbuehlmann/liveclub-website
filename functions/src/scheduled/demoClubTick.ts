@@ -73,10 +73,17 @@ export const demoClubTick = onSchedule("every 15 minutes", async () => {
   const shouldPost =
     !config.lastPostAt || now.getTime() - config.lastPostAt.toDate().getTime() >= postIntervalMs;
   if (shouldPost) {
-    const postsPerDay = Math.max(1, Math.round(24 / (config.postIntervalHours ?? 2)));
     const pushesPerDay = config.pushesPerDay ?? 3;
-    const pushEveryNPosts = Math.max(1, Math.round(postsPerDay / Math.max(1, pushesPerDay)));
-    const wantsPush = pushesSentToday < pushesPerDay && (postsToday + 1) % pushEveryNPosts === 0;
+    // Time-based, mirroring shouldStartGame below — self-correcting off
+    // lastPushSentAt every tick, unlike a "every Nth post" counter check
+    // (the previous approach), which permanently misfires for the rest of
+    // the day if postsToday ever drifts (e.g. stale/manual test data) since
+    // it depends on hitting an exact multiple.
+    const pushIntervalMs = pushesPerDay > 0 ? (24 / pushesPerDay) * 60 * 60 * 1000 : Infinity;
+    const wantsPush =
+      pushesPerDay > 0 &&
+      pushesSentToday < pushesPerDay &&
+      (!config.lastPushSentAt || now.getTime() - config.lastPushSentAt.toDate().getTime() >= pushIntervalMs);
 
     await postDemoTeamInfo(config, wantsPush);
     updates.lastPostAt = FieldValue.serverTimestamp();
