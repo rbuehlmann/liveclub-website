@@ -12,6 +12,8 @@ import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { useMobilePlatform } from "@/lib/useMobilePlatform";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 
 // Values match clubs' stored `country` field exactly (always German —
 // registration itself isn't translated yet, see the 2026-08-24 i18n
@@ -60,6 +62,7 @@ interface TeamNameMatch {
 export default function Home() {
   const t = useTranslations("home");
   const router = useRouter();
+  const platform = useMobilePlatform();
   const [searchTerm, setSearchTerm] = useState("");
   const [country, setCountry] = useState("");
   const [allClubs, setAllClubs] = useState<ClubResult[]>([]);
@@ -217,108 +220,136 @@ export default function Home() {
           </div>
         </div>
 
-        <Card>
-          <div className="flex flex-col gap-4">
-            <TextField
-              label={t("clubNameLabel")}
-              placeholder={t("clubNamePlaceholder")}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("countryLabel")}</label>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
-              >
-                <option value="">{t("allCountries")}</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>
-                    {t(`countries.${c}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {platform ? (
+          // Phone, app not installed (an install has it already open via
+          // Universal/App Links before this ever renders) — the club search
+          // below is built for picking a club to administer on desktop, not
+          // for a fan on their phone, so it's replaced with a single clear
+          // "get the app" CTA instead (2026-08-28 decision).
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-8 text-center dark:border-white/10 dark:bg-white/5">
+            <p className="text-gray-600 dark:text-gray-400">{t("mobileCta")}</p>
+            <a
+              href={platform === "ios" ? APP_STORE_URL : PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button>{platform === "ios" ? "App Store" : "Play Store"}</Button>
+            </a>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
+            {/* /register lives outside the [locale] tree (2026-08-24 scope
+                decision) — plain next/link, not the locale-aware one. */}
+            <NextLink href="/register" className="text-sm text-brand-red hover:underline">
+              {t("registerClub")}
+            </NextLink>
           </div>
-        </Card>
-
-        {!selectedClub && (
-          <div className="flex flex-col gap-2">
-            {visibleClubs.map(({ club, matchingTeam }) => (
-              <Card
-                key={club.publicClubId}
-                className="flex cursor-pointer items-center gap-3"
-                onClick={() => selectClub(club)}
-              >
-                {club.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={club.logoUrl} alt="" className="h-10 w-10 rounded object-contain" />
-                ) : (
-                  <div className="h-10 w-10 shrink-0 rounded bg-gray-200 dark:bg-white/10" />
-                )}
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {matchingTeam ? t("matchingTeam", { name: matchingTeam.name }) : club.sport}
-                  </p>
+        ) : (
+          <>
+            <Card>
+              <div className="flex flex-col gap-4">
+                <TextField
+                  label={t("clubNameLabel")}
+                  placeholder={t("clubNamePlaceholder")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t("countryLabel")}
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="">{t("allCountries")}</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c} value={c}>
+                        {t(`countries.${c}`)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </Card>
-            ))}
-            {searchTerm.trim() && visibleClubs.length === 0 && (
-              <div className="flex flex-col items-center gap-1 py-2 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t("noClubsFound")}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t("missingClub")}{" "}
-                  <Link href="/verein-empfehlen" className="text-brand-red hover:underline">
-                    {t("tellUs")}
-                  </Link>
-                </p>
+              </div>
+            </Card>
+
+            {!selectedClub && (
+              <div className="flex flex-col gap-2">
+                {visibleClubs.map(({ club, matchingTeam }) => (
+                  <Card
+                    key={club.publicClubId}
+                    className="flex cursor-pointer items-center gap-3"
+                    onClick={() => selectClub(club)}
+                  >
+                    {club.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={club.logoUrl} alt="" className="h-10 w-10 rounded object-contain" />
+                    ) : (
+                      <div className="h-10 w-10 shrink-0 rounded bg-gray-200 dark:bg-white/10" />
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {matchingTeam ? t("matchingTeam", { name: matchingTeam.name }) : club.sport}
+                      </p>
+                    </div>
+                  </Card>
+                ))}
+                {searchTerm.trim() && visibleClubs.length === 0 && (
+                  <div className="flex flex-col items-center gap-1 py-2 text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t("noClubsFound")}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {t("missingClub")}{" "}
+                      <Link href="/verein-empfehlen" className="text-brand-red hover:underline">
+                        {t("tellUs")}
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {selectedClub && (
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedClub(null)}
-              className="self-start text-sm text-brand-red hover:underline"
-            >
-              {t("backToSearch")}
-            </button>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t("teamOf", { name: selectedClub.name })}
-            </p>
-            {teams.length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t("noTeamsYet")}</p>
+            {selectedClub && (
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedClub(null)}
+                  className="self-start text-sm text-brand-red hover:underline"
+                >
+                  {t("backToSearch")}
+                </button>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t("teamOf", { name: selectedClub.name })}
+                </p>
+                {teams.length === 0 && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t("noTeamsYet")}</p>
+                )}
+                {teams.map((team) => (
+                  <Card key={team.teamId} className="cursor-pointer" onClick={() => selectTeam(team)}>
+                    <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{team.shortName}</p>
+                  </Card>
+                ))}
+              </div>
             )}
-            {teams.map((team) => (
-              <Card key={team.teamId} className="cursor-pointer" onClick={() => selectTeam(team)}>
-                <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{team.shortName}</p>
-              </Card>
-            ))}
-          </div>
-        )}
 
-        <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
-          <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
-          <div className="flex gap-3">
-            <a href="https://testflight.apple.com/join/VB8bURxn" target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary">App Store</Button>
-            </a>
-            <a href="https://play.google.com/apps/internaltest/4700742118610871712" target="_blank" rel="noopener noreferrer">
-              <Button variant="secondary">Play Store</Button>
-            </a>
-          </div>
-          {/* /register lives outside the [locale] tree (2026-08-24 scope
-              decision) — plain next/link, not the locale-aware one. */}
-          <NextLink href="/register" className="mt-2 text-sm text-brand-red hover:underline">
-            {t("registerClub")}
-          </NextLink>
-        </div>
+            <div className="mt-4 flex flex-col items-center gap-3 border-t border-gray-200 pt-8 dark:border-white/10">
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
+              <div className="flex gap-3">
+                <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary">App Store</Button>
+                </a>
+                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary">Play Store</Button>
+                </a>
+              </div>
+              {/* /register lives outside the [locale] tree (2026-08-24 scope
+                  decision) — plain next/link, not the locale-aware one. */}
+              <NextLink href="/register" className="mt-2 text-sm text-brand-red hover:underline">
+                {t("registerClub")}
+              </NextLink>
+            </div>
+          </>
+        )}
       </div>
       <PublicFooter />
     </main>

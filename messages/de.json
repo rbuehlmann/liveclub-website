@@ -330,7 +330,8 @@
     "teamOf": "Mannschaft von {name}",
     "noTeamsYet": "Noch keine Mannschaften vorhanden.",
     "betaNotice": "LiveClub-App für Fans — jetzt am Beta-Test teilnehmen",
-    "registerClub": "Verein registrieren"
+    "registerClub": "Verein registrieren",
+    "mobileCta": "Verfolge Live-Spielstände deines Vereins direkt in der LiveClub-App."
   },
   "publicClub": {
     "notFound": "Verein wurde nicht gefunden.",
@@ -338,6 +339,7 @@
     "openDetails": "Details öffnen",
     "bookmarkHint": "Diese Seite bookmarken, um deinen Verein zu folgen — beim Aktualisieren siehst du immer den neuesten Stand.",
     "appComingSoon": "Bald verfügbar: die LiveClub-App für Fans",
+    "mobileAppMessage": "Folge {name} live — in der LiveClub-App.",
     "metaDescription": "Live-Spielstände und Infos zu {name} auf LiveClub.",
     "status": {
       "draft": "Entwurf",
@@ -352,6 +354,7 @@
     "notFound": "Mannschaft wurde nicht gefunden.",
     "bookmarkHint": "Diese Seite bookmarken, um dieser Mannschaft zu folgen.",
     "backToClub": "Zum ganzen Verein",
+    "mobileAppMessage": "Folge {name} live — in der LiveClub-App.",
     "metaDescription": "Live-Spielstände und Infos zu {name} von {clubName} auf LiveClub."
   },
   "publicGame": {

@@ -7,12 +7,15 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildGameUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
+import { MobileAppPrompt } from "@/components/MobileAppPrompt";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicClub, PublicGame } from "@/lib/types";
+import { useMobilePlatform } from "@/lib/useMobilePlatform";
 
 export function PublicClubPageClient({ publicClubId }: { publicClubId: string }) {
   const t = useTranslations("publicClub");
+  const platform = useMobilePlatform();
   const [club, setClub] = useState<PublicClub | null>(null);
   const [game, setGame] = useState<PublicGame | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -87,6 +90,21 @@ export function PublicClubPageClient({ publicClubId }: { publicClubId: string })
   }
 
   if (!club) return null;
+
+  if (platform) {
+    return (
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
+        <PublicHeader />
+        <MobileAppPrompt
+          platform={platform}
+          logoUrl={club.logoUrl}
+          name={club.name}
+          message={t("mobileAppMessage", { name: club.name })}
+        />
+        <PublicFooter />
+      </div>
+    );
+  }
 
   const isLive = game && (game.status === "live" || game.status === "paused");
 

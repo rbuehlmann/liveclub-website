@@ -7,15 +7,18 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { buildClubUrl, buildGameUrl } from "@/lib/publicRoutes";
 import { TeamIcon } from "@/components/TeamIcon";
+import { MobileAppPrompt } from "@/components/MobileAppPrompt";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { PublicClub, PublicGame, PublicTeamProfile } from "@/lib/types";
+import { useMobilePlatform } from "@/lib/useMobilePlatform";
 
 export function PublicTeamPageClient({ publicTeamId }: { publicTeamId: string }) {
   const t = useTranslations("publicTeam");
   // Same wording as the club page for the shared bits (status labels,
   // "no live game", "open details") — one namespace, not duplicated.
   const tClub = useTranslations("publicClub");
+  const platform = useMobilePlatform();
   const [team, setTeam] = useState<PublicTeamProfile | null>(null);
   const [club, setClub] = useState<PublicClub | null>(null);
   const [game, setGame] = useState<PublicGame | null>(null);
@@ -111,6 +114,21 @@ export function PublicTeamPageClient({ publicTeamId }: { publicTeamId: string })
   }
 
   if (!team) return null;
+
+  if (platform) {
+    return (
+      <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
+        <PublicHeader />
+        <MobileAppPrompt
+          platform={platform}
+          logoUrl={team.clubLogoUrl}
+          name={team.name}
+          message={t("mobileAppMessage", { name: team.name })}
+        />
+        <PublicFooter />
+      </div>
+    );
+  }
 
   const isLive = game && (game.status === "live" || game.status === "paused");
 

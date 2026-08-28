@@ -320,7 +320,8 @@
     "teamOf": "Teams of {name}",
     "noTeamsYet": "No teams yet.",
     "betaNotice": "LiveClub app for fans — join the beta now",
-    "registerClub": "Register your club"
+    "registerClub": "Register your club",
+    "mobileCta": "Follow your club's live scores right in the LiveClub app."
   },
   "publicClub": {
     "notFound": "Club not found.",
@@ -328,6 +329,7 @@
     "openDetails": "Open details",
     "bookmarkHint": "Bookmark this page to follow your club — refresh anytime to see the latest state.",
     "appComingSoon": "Coming soon: the LiveClub app for fans",
+    "mobileAppMessage": "Follow {name} live — in the LiveClub app.",
     "metaDescription": "Live scores and info for {name} on LiveClub.",
     "status": {
       "draft": "Draft",
@@ -342,6 +344,7 @@
     "notFound": "Team not found.",
     "bookmarkHint": "Bookmark this page to follow this team.",
     "backToClub": "Back to the whole club",
+    "mobileAppMessage": "Follow {name} live — in the LiveClub app.",
     "metaDescription": "Live scores and info for {name} from {clubName} on LiveClub."
   },
   "publicGame": {
