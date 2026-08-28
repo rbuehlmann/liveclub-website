@@ -7,12 +7,12 @@ import { HELP_CATEGORIES } from "@/lib/help/categories";
 export function HelpSidebar() {
   const t = useTranslations("help.categories");
   // The locale-aware usePathname() strips the /en prefix, so comparing
-  // against a plain "/help/{slug}" href works the same for both locales.
+  // against a plain "/support/{slug}" href works the same for both locales.
   const pathname = usePathname();
   return (
     <nav className="flex flex-col gap-1 text-sm">
       {HELP_CATEGORIES.map((cat) => {
-        const href = `/help/${cat.slug}`;
+        const href = `/support/${cat.slug}`;
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link

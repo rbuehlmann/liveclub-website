@@ -5,6 +5,7 @@ import { localizedPathname } from "@/i18n/routing";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { StillNeedHelp } from "@/components/help/StillNeedHelp";
 
 type Params = Promise<{ locale: string }>;
 
@@ -25,11 +26,11 @@ export default async function HelpLayout({ children, params }: { children: React
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-brand-white/80 backdrop-blur dark:border-white/10 dark:bg-brand-black/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href={localizedPathname(locale, "/help")} className="font-teko text-2xl font-bold text-gray-900 dark:text-white">
+          <Link href={localizedPathname(locale, "/support")} className="font-teko text-2xl font-bold text-gray-900 dark:text-white">
             LiveClub <span className="text-brand-red">Docs</span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            <LanguageSwitcher basePath="/help" />
+            <LanguageSwitcher basePath="/support" />
             <Link href={localizedPathname(locale, "/")} className="text-gray-500 hover:text-brand-red dark:text-gray-400">
               {t("backToApp")}
             </Link>
@@ -38,6 +39,9 @@ export default async function HelpLayout({ children, params }: { children: React
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">{children}</main>
+      <div className="mx-auto w-full max-w-6xl px-4 pb-10">
+        <StillNeedHelp locale={locale} />
+      </div>
       <PublicFooter />
     </div>
   );

@@ -35,14 +35,22 @@ const PATHS = [
   "NOT /privacy-policy",
   "NOT /register",
   "NOT /suche",
+  // The docs/support center — the app has no matching deep-link shape for
+  // it (see DeepLinkRouter.swift on the iOS side), so without this a tapped
+  // liveclub.app/support link would be handed to the app instead of Safari
+  // and silently do nothing.
   "NOT /support",
+  "NOT /support/*",
   "NOT /terms-of-service",
   "NOT /verein-empfehlen",
-  // Legacy German slugs (next.config.ts redirects to the routes above) —
-  // without these, tapping an old bookmarked link hands it to the app
-  // instead of letting Safari follow the redirect.
+  // Legacy slugs (next.config.ts redirects to the routes above) — without
+  // these, tapping an old bookmarked link hands it to the app instead of
+  // letting Safari follow the redirect. /help was the docs center's URL
+  // for one day (2026-08-28) before moving to /support.
   "NOT /agb",
   "NOT /datenschutz",
+  "NOT /help",
+  "NOT /help/*",
   "NOT /.well-known/*",
   "/team/*",
   "/*",

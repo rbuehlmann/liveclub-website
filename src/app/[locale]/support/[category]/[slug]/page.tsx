@@ -17,7 +17,7 @@ type Params = Promise<{ locale: string; category: string; slug: string }>;
 
 // Every locale must define the exact same {category, slug} pairs — see
 // content/en/.../*.mdx counterparts of the German articles. If a locale
-// is ever missing one, that specific /xx/help/.../slug just 404s rather
+// is ever missing one, that specific /xx/support/.../slug just 404s rather
 // than silently falling back to the wrong language.
 export function generateStaticParams() {
   return routing.locales.flatMap((locale) =>
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { locale, category, slug } = await params;
   const article = getArticleSource(locale, category, slug);
   if (!article) return {};
-  const url = localizedUrl(locale, `/help/${category}/${slug}`);
+  const url = localizedUrl(locale, `/support/${category}/${slug}`);
   return {
     title: article.frontmatter.title,
     description: article.frontmatter.summary,
@@ -74,8 +74,8 @@ export default async function HelpArticlePage({ params }: { params: Params }) {
       <div className="min-w-0 flex-1">
         <Breadcrumbs
           items={[
-            { label: t("breadcrumbDocs"), href: "/help" },
-            { label: categoryLabel, href: `/help/${category.slug}` },
+            { label: t("breadcrumbDocs"), href: "/support" },
+            { label: categoryLabel, href: `/support/${category.slug}` },
             { label: article.frontmatter.title },
           ]}
         />

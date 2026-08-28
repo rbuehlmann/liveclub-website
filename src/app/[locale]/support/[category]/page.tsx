@@ -36,7 +36,7 @@ export default async function HelpCategoryPage({ params }: { params: Params }) {
         <HelpSidebar />
       </aside>
       <div className="min-w-0 flex-1">
-        <Breadcrumbs items={[{ label: t("breadcrumbDocs"), href: "/help" }, { label: categoryLabel }]} />
+        <Breadcrumbs items={[{ label: t("breadcrumbDocs"), href: "/support" }, { label: categoryLabel }]} />
         <h1 className="mt-2 mb-6 flex items-center gap-3 font-teko text-4xl font-bold text-gray-900 dark:text-white">
           <span aria-hidden>{category.icon}</span>
           {categoryLabel}

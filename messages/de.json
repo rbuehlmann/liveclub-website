@@ -370,42 +370,6 @@
       "cancelled": "Abgesagt"
     }
   },
-  "support": {
-    "title": "Wie können wir helfen?",
-    "faqTitle": "Häufige Fragen",
-    "faq1Question": "Ich habe mein Passwort vergessen.",
-    "faq1Answer": "Auf der <link>Anmelden</link>-Seite kannst du unter „Passwort vergessen?“ eine E-Mail zum Zurücksetzen anfordern.",
-    "faq2Question": "Wie füge ich eine Mannschaft oder ein Spiel hinzu?",
-    "faq2Answer": "Als Vereins-Admin findest du das unter „Mannschaften“ bzw. „Spiele“ in deinem Vereins-Dashboard.",
-    "faq3Question": "Ich habe eine Frage zu meinem Abo/zur Rechnung.",
-    "faq3Answer": "Als Vereins-Admin kannst du dein Abo direkt im Dashboard unter „Abo verwalten“ einsehen und verwalten (läuft über Stripe). Bei weiteren Fragen melde dich direkt bei uns.",
-    "faq4Question": "Ich habe einen Fehler gefunden.",
-    "faq4Answer": "Schreib uns kurz, was passiert ist — am besten mit Verein/Mannschaft, Browser und den Schritten, die zum Fehler geführt haben.",
-    "form": {
-      "title": "Noch offene Fragen?",
-      "doneMessage": "Danke! Wir haben deine Anfrage erhalten und melden uns bei dir.",
-      "platformLabel": "Plattform",
-      "platforms": {
-        "website": "Website",
-        "ios": "iOS",
-        "android": "Android"
-      },
-      "topicLabel": "Anliegen",
-      "topics": {
-        "bug": "Bug melden",
-        "question": "Frage zur App",
-        "feature": "Feature-Idee",
-        "feedback": "Allgemeines Feedback"
-      },
-      "nameLabel": "Name",
-      "emailLabel": "E-Mail",
-      "messageLabel": "Nachricht",
-      "sending": "Wird gesendet …",
-      "send": "Nachricht senden",
-      "recaptchaNotice": "Diese Seite ist durch reCAPTCHA geschützt.",
-      "sendFailed": "Senden fehlgeschlagen."
-    }
-  },
   "recommendClub": {
     "title": "Vermisst du deinen Verein?",
     "subtitle": "Sag uns Bescheid, wir melden uns beim Verein und laden ihn ein.",
@@ -462,6 +426,15 @@
       "warning": "Warnung",
       "important": "Wichtig",
       "bestPractice": "Best Practice"
+    },
+    "stillNeedHelp": {
+      "title": "Nichts gefunden?",
+      "body": "Schreib uns kurz, was du suchst oder was passiert ist – wir melden uns bei dir.",
+      "button": "E-Mail schreiben"
+    },
+    "search": {
+      "noResultsFor": "Keine Treffer für „{query}“",
+      "emailCta": "Schreib uns eine E-Mail"
     }
   }
 }

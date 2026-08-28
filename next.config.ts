@@ -52,10 +52,22 @@ const nextConfig: NextConfig = {
   // /agb and /datenschutz were the routes' original (German) slugs, already
   // live in production — permanent redirects so any bookmark/indexed link
   // to the old URL still lands on the renamed English-slug page.
+  //
+  // The old standalone /support page (FAQ + contact form) was folded into
+  // the docs center (2026-08-28) — that center now lives at /support itself
+  // (not /help; "help" reads wrong as a public-facing URL), with a "still
+  // need help, email us" fallback on every page. /help redirects to /support
+  // for anyone who saw it there briefly. Both locale variants need their own
+  // entry since German is unprefixed ("as-needed" locale prefix, see
+  // src/i18n/routing.ts) while English is not.
   async redirects() {
     return [
       { source: "/agb", destination: "/terms-of-service", permanent: true },
       { source: "/datenschutz", destination: "/privacy-policy", permanent: true },
+      { source: "/help", destination: "/support", permanent: true },
+      { source: "/help/:path*", destination: "/support/:path*", permanent: true },
+      { source: "/en/help", destination: "/en/support", permanent: true },
+      { source: "/en/help/:path*", destination: "/en/support/:path*", permanent: true },
     ];
   },
 };
