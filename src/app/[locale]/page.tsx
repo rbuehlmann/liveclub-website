@@ -339,7 +339,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-brand-white dark:bg-brand-black">
-      <PublicHeader maxWidth="max-w-6xl" />
+      <PublicHeader />
 
       {/* Hero — dark-mode-first (see 2026-08-29 "dark mode first" decision);
           the glow/gradient backdrop below only renders in dark mode, light

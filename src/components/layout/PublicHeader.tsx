@@ -26,14 +26,17 @@ import { useBranding } from "@/components/layout/BrandingProvider";
 // pages like /invite), so it never regresses to always-German like a plain
 // next/link would.
 //
-// maxWidth: the inner container's max-width, matching whatever the page
-// below it uses so the logo/GO LIVE button line up with the page's own
-// left/right edges instead of sitting inside a narrower centered strip
-// (2026-08-29 report on the wide homepage redesign) — every other page
-// still uses the original max-w-2xl default.
+// maxWidth: the header's own inner container width — max-w-6xl everywhere
+// by default so the logo/GO LIVE button sit at the exact same position on
+// every page (2026-08-29 report: switching from the wide homepage to a
+// narrower max-w-2xl page like login visibly shifted them, "sieht beim
+// wechseln scheisse aus"). Pages below the header are still free to use
+// whatever width fits their own content — only the header itself needs to
+// stay consistent. Override only if a page genuinely needs a different
+// header width.
 export function PublicHeader({
   variant = "url",
-  maxWidth = "max-w-2xl",
+  maxWidth = "max-w-6xl",
 }: {
   variant?: "url" | "app";
   maxWidth?: string;
