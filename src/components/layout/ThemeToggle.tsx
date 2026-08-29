@@ -7,6 +7,12 @@ import { useTranslations } from "next-intl";
 // saved/default theme before hydration to avoid a flash of the wrong theme.
 const STORAGE_KEY = "liveclub-theme";
 
+// Hidden for now (2026-08-29): dark mode just became the default and light
+// mode isn't polished yet — no toggle means no one can land in the
+// unfinished light mode. Dark-mode default logic in layout.tsx is
+// unaffected either way; flip this back on once light mode is ready.
+const ENABLED = false;
+
 export function ThemeToggle() {
   const t = useTranslations("common");
   const [isDark, setIsDark] = useState(false);
@@ -21,6 +27,8 @@ export function ThemeToggle() {
     document.documentElement.classList.toggle("dark", next);
     localStorage.setItem(STORAGE_KEY, next ? "dark" : "light");
   }
+
+  if (!ENABLED) return null;
 
   return (
     <button

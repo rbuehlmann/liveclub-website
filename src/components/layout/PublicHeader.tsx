@@ -42,9 +42,7 @@ export function PublicHeader({ variant = "url" }: { variant?: "url" | "app" }) {
               <img src={logoDark ?? logoLight} alt="LiveClub" className="hidden h-9 dark:block" />
             </>
           ) : (
-            <span className="font-teko text-3xl font-bold text-gray-900 dark:text-brand-white">
-              LiveClub
-            </span>
+            <span className="font-teko text-3xl font-bold text-brand-red-link">LiveClub</span>
           )}
         </Link>
         <div className="flex items-center gap-3">

@@ -53,12 +53,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${teko.variable} h-full antialiased`}
     >
       <head>
-        {/* Applied before hydration so a saved dark preference never flashes
-            light first — kept in sync with ThemeToggle's storage key. */}
+        {/* Applied before hydration so the wrong theme never flashes first
+            — kept in sync with ThemeToggle's storage key. Dark is the
+            default (2026-08-29: light mode isn't polished yet, dark ships
+            first) — only an explicit stored "light" opts back out. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `try {
-              if (localStorage.getItem("liveclub-theme") === "dark") {
+              if (localStorage.getItem("liveclub-theme") !== "light") {
                 document.documentElement.classList.add("dark");
               }
             } catch (e) {}`,
