@@ -6,13 +6,13 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { collection, getDocs, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
-import { buildGameUrl, buildTeamUrl } from "@/lib/publicRoutes";
+import { buildTeamUrl } from "@/lib/publicRoutes";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
-import { TeamIcon } from "@/components/TeamIcon";
+import { HeroPhoneMockup, type HeroPhoneGame } from "@/components/home/HeroPhoneMockup";
 import { useMobilePlatform } from "@/lib/useMobilePlatform";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 
@@ -299,6 +299,34 @@ export default function Home() {
     );
   }
 
+  // What the hero's iPhone mockup shows — a real live game when one exists
+  // (isLive: true, drives the pulsing "LIVE" dot), otherwise the same
+  // once-per-load random example the mockup already picked (isLive: false,
+  // labeled "Beispielansicht" instead of claiming to be live).
+  const heroPhoneGame: HeroPhoneGame = exampleGame
+    ? {
+        homeTeamName: exampleGame.homeTeamName,
+        awayTeamName: exampleGame.awayTeamName,
+        homeClubPublicId: exampleGame.homeClubPublicId,
+        awayClubPublicId: exampleGame.awayClubPublicId,
+        scoreHome: exampleGame.scoreHome,
+        scoreAway: exampleGame.scoreAway,
+        statusLabel: tPublicClub.has(`status.${exampleGame.status}`)
+          ? tPublicClub(`status.${exampleGame.status}`)
+          : exampleGame.status,
+        isLive: true,
+      }
+    : {
+        homeTeamName: exampleClubs?.[0].name ?? "FC Musterhausen",
+        awayTeamName: exampleClubs?.[1].name ?? "SV Beispiel",
+        homeClubPublicId: exampleClubs?.[0].publicClubId ?? null,
+        awayClubPublicId: exampleClubs?.[1].publicClubId ?? null,
+        scoreHome: 2,
+        scoreAway: 1,
+        statusLabel: t("exampleLabel"),
+        isLive: false,
+      };
+
   return (
     <main className="min-h-screen bg-brand-white dark:bg-brand-black">
       <PublicHeader maxWidth="max-w-6xl" />
@@ -356,95 +384,9 @@ export default function Home() {
           </div>
 
           {/* Phone mockup — hidden below lg, no room for it next to the
-              headline at narrower widths. */}
+              headline at narrower widths. Desktop-only by construction. */}
           <div className="relative hidden items-center justify-center lg:flex">
-            <div className="absolute h-[26rem] w-[26rem] rounded-full border-4 border-brand-red/20 dark:animate-pulse" />
-            <div className="absolute h-80 w-80 rounded-full border-4 border-brand-red/40" />
-            <div className="relative w-72 rounded-[2.5rem] border-[6px] border-gray-900 bg-gray-900 shadow-2xl dark:border-black dark:bg-black">
-              <div className="flex justify-center pt-2">
-                <div className="h-1.5 w-16 rounded-full bg-gray-700" />
-              </div>
-              <div className="rounded-[2rem] bg-brand-white px-4 py-4 dark:bg-brand-black">
-                <div className="flex items-center justify-between">
-                  <span className="font-teko text-xl font-bold text-gray-900 dark:text-white">LiveClub</span>
-                  <span className="rounded bg-brand-red px-2 py-0.5 text-[10px] font-bold tracking-wide text-brand-red-text">
-                    ● LIVE
-                  </span>
-                </div>
-
-                {exampleGame ? (
-                  <div className="mt-4 rounded-xl bg-gray-100 p-4 dark:bg-white/5">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      {tPublicClub.has(`status.${exampleGame.status}`)
-                        ? tPublicClub(`status.${exampleGame.status}`)
-                        : exampleGame.status}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <div className="flex flex-col items-center gap-1">
-                        <TeamIcon publicClubId={exampleGame.homeClubPublicId} teamName={exampleGame.homeTeamName} size={32} />
-                        <span className="max-w-[4.5rem] truncate text-[11px] text-gray-700 dark:text-gray-200">
-                          {exampleGame.homeTeamName}
-                        </span>
-                      </div>
-                      <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">
-                        {exampleGame.scoreHome}:{exampleGame.scoreAway}
-                      </span>
-                      <div className="flex flex-col items-center gap-1">
-                        <TeamIcon publicClubId={exampleGame.awayClubPublicId} teamName={exampleGame.awayTeamName} size={32} />
-                        <span className="max-w-[4.5rem] truncate text-[11px] text-gray-700 dark:text-gray-200">
-                          {exampleGame.awayTeamName}
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href={buildGameUrl(exampleGame.publicClubId, exampleGame.gameId)}
-                      className="mt-4 block rounded-lg bg-gray-900 py-2 text-center text-xs font-medium text-white dark:bg-white/10"
-                    >
-                      {t("openLiveTicker")}
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-xl bg-gray-100 p-4 dark:bg-white/5">
-                    <p className="text-center text-[10px] font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-                      {t("exampleLabel")}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      {exampleClubs ? (
-                        <>
-                          {exampleClubs[0].logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={exampleClubs[0].logoUrl} alt="" className="h-8 w-8 rounded-full object-contain" />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                              {exampleClubs[0].name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">2:1</span>
-                          {exampleClubs[1].logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={exampleClubs[1].logoUrl} alt="" className="h-8 w-8 rounded-full object-contain" />
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                              {exampleClubs[1].name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                            FC
-                          </div>
-                          <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">2:1</span>
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                            SV
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <HeroPhoneMockup game={heroPhoneGame} />
           </div>
         </div>
       </section>
