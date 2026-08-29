@@ -679,7 +679,7 @@ function GameCard({
                 <button
                   type="button"
                   onClick={() => setShowTransferPicker(true)}
-                  className="self-start text-sm text-brand-red hover:underline"
+                  className="self-start text-sm text-brand-red-link hover:underline"
                 >
                   {t("transferResponsibility")}
                 </button>
@@ -691,7 +691,7 @@ function GameCard({
               type="button"
               disabled={busy}
               onClick={() => runAction(() => requestGameTransfer({ gameId: game.gameId, toOpponentClub: true }))}
-              className="self-start text-sm text-brand-red hover:underline"
+              className="self-start text-sm text-brand-red-link hover:underline"
             >
               {t("returnToOpponent", { team: opponentTeamName })}
             </button>

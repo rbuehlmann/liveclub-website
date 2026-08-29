@@ -31,16 +31,16 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-brand-silver/30 bg-brand-white py-6 dark:border-white/10 dark:bg-brand-black">
       <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 px-4 text-sm text-gray-500 dark:text-gray-400">
-        <Link href="/impressum" className="hover:text-brand-red hover:underline">
+        <Link href="/impressum" className="hover:text-brand-red-link hover:underline">
           {t("legalNotice")}
         </Link>
-        <Link href="/privacy-policy" className="hover:text-brand-red hover:underline">
+        <Link href="/privacy-policy" className="hover:text-brand-red-link hover:underline">
           {t("privacyPolicy")}
         </Link>
-        <Link href="/terms-of-service" className="hover:text-brand-red hover:underline">
+        <Link href="/terms-of-service" className="hover:text-brand-red-link hover:underline">
           {t("termsOfService")}
         </Link>
-        <Link href="/support" className="hover:text-brand-red hover:underline">
+        <Link href="/support" className="hover:text-brand-red-link hover:underline">
           {t("support")}
         </Link>
       </div>

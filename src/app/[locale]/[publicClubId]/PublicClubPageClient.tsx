@@ -138,7 +138,7 @@ export function PublicClubPageClient({ publicClubId }: { publicClubId: string })
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t.has(`status.${game.status}`) ? t(`status.${game.status}`) : game.status}
           </p>
-          <Link href={buildGameUrl(club.publicClubId, game.gameId)} className="text-xs text-brand-red hover:underline">
+          <Link href={buildGameUrl(club.publicClubId, game.gameId)} className="text-xs text-brand-red-link hover:underline">
             {t("openDetails")}
           </Link>
         </div>

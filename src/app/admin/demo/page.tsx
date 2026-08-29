@@ -325,7 +325,7 @@ export default function AdminDemoClubPage() {
                 href={`/${status.publicClubId}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-brand-red hover:underline"
+                className="text-brand-red-link hover:underline"
               >
                 /{status.publicClubId}
               </a>

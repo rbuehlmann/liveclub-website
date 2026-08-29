@@ -21,9 +21,9 @@ export const mdxComponents: MDXComponents = {
   li: (props) => <li {...props} className="pl-1" />,
   a: ({ href, ...props }) =>
     href?.startsWith("/") ? (
-      <Link href={href} {...props} className="text-brand-red hover:underline" />
+      <Link href={href} {...props} className="text-brand-red-link hover:underline" />
     ) : (
-      <a href={href} {...props} target="_blank" rel="noopener noreferrer" className="text-brand-red hover:underline" />
+      <a href={href} {...props} target="_blank" rel="noopener noreferrer" className="text-brand-red-link hover:underline" />
     ),
   strong: (props) => <strong {...props} className="font-semibold text-gray-900 dark:text-white" />,
   code: (props) => (

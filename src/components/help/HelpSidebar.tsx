@@ -20,7 +20,7 @@ export function HelpSidebar() {
             href={href}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
               active
-                ? "bg-brand-red/10 font-medium text-brand-red"
+                ? "bg-brand-red/10 font-medium text-brand-red-link"
                 : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
             }`}
           >

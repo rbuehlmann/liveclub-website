@@ -10,6 +10,13 @@ interface ConfirmDialogProps {
   cancelLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
+  // "danger" (default) for anything destructive/irreversible-ish (delete,
+  // deactivate, hide) — the muted-red Button variant, deliberately never
+  // the bright brand accent, so it reads as a warning. A normal confirm
+  // that isn't destructive (e.g. "send this push now") should pass
+  // "primary" instead — styling a non-destructive action as "danger" reads
+  // as alarming/confusing (2026-08-29 report on the push-send dialog).
+  confirmVariant?: "danger" | "primary";
 }
 
 export function ConfirmDialog({
@@ -20,6 +27,7 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   onCancel,
+  confirmVariant = "danger",
 }: ConfirmDialogProps) {
   if (!open) return null;
 
@@ -36,7 +44,7 @@ export function ConfirmDialog({
           <Button variant="secondary" fullWidth onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button variant="danger" fullWidth onClick={onConfirm}>
+          <Button variant={confirmVariant} fullWidth onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

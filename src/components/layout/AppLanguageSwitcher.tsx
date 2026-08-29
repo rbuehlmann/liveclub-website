@@ -12,7 +12,7 @@ export function AppLanguageSwitcher() {
       <button
         type="button"
         onClick={() => setLocale("de")}
-        className={locale === "de" ? "text-brand-red" : "text-gray-500 hover:text-brand-red dark:text-gray-400"}
+        className={locale === "de" ? "text-brand-red-link" : "text-gray-500 hover:text-brand-red-link dark:text-gray-400"}
       >
         DE
       </button>
@@ -20,7 +20,7 @@ export function AppLanguageSwitcher() {
       <button
         type="button"
         onClick={() => setLocale("en")}
-        className={locale === "en" ? "text-brand-red" : "text-gray-500 hover:text-brand-red dark:text-gray-400"}
+        className={locale === "en" ? "text-brand-red-link" : "text-gray-500 hover:text-brand-red-link dark:text-gray-400"}
       >
         EN
       </button>

@@ -342,14 +342,14 @@ export interface BrandingSettings {
   backgroundColorDark?: string | null;
   accentColorLight?: string | null;
   accentColorDark?: string | null;
-  // The "GO LIVE" header button (GoLiveButton.tsx) — an inline SVG logo
-  // mark, not a text button, so its two visually distinct parts (the
-  // border+broadcast-icon shape, and the "LIVE" wordmark) are colored
-  // independently rather than via a single background/text-color pair like
-  // a normal <Button>. Unset = black in light mode, white in dark mode
-  // (see DEFAULT_GO_LIVE_* in admin/settings), same as any monochrome logo.
-  goLiveFillLight?: string | null;
-  goLiveFillDark?: string | null;
-  goLiveTextLight?: string | null;
-  goLiveTextDark?: string | null;
+  // The "GO LIVE" header button (GoLiveButton.tsx) — a solid pill, not
+  // just an outline mark on the page background: goLiveIcon* colors every
+  // path in the SVG (frame, broadcast icon, and the "LIVE" wordmark all
+  // share one color), goLiveBackground* is the pill's fill behind it.
+  // Unset defaults (see GoLiveButton.tsx) mirror Club Ink/Mist, inverted
+  // between light and dark mode.
+  goLiveIconLight?: string | null;
+  goLiveIconDark?: string | null;
+  goLiveBackgroundLight?: string | null;
+  goLiveBackgroundDark?: string | null;
 }

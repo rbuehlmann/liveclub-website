@@ -10,7 +10,7 @@ const variantClasses: Record<Variant, string> = {
   // Kept as a plain, muted red distinct from brand-red so destructive
   // actions never look like the primary "live/action" brand color.
   danger: "bg-red-800 text-white hover:bg-red-900 disabled:bg-red-300",
-  ghost: "bg-transparent text-brand-red hover:bg-brand-red/10 disabled:text-gray-400",
+  ghost: "bg-transparent text-brand-red-link hover:bg-brand-red/10 disabled:text-gray-400",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

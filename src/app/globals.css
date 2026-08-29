@@ -41,6 +41,16 @@
      legibly, unlike the old dark red. Same value in both themes: Club Ink
      reads fine against every one of those fills regardless of theme. */
   --brand-red-text: #10140c;
+  /* Electric Lime itself as INLINE TEXT (links, active nav/tab labels) —
+     not a fill — is a different legibility problem: pale-on-white in light
+     mode fails contrast (that's the "everything selected is unreadable"
+     report, 2026-08-29). Tailwind's lime-700 is a legible stand-in for
+     light mode; dark mode keeps the real Electric Lime since bright-on-
+     near-black already reads fine there (unlike light mode's bright-on-
+     near-white). Every `text-brand-red` usage that's actual inline text
+     (not a button/badge fill) uses this instead — see the same sweep's
+     component diffs. */
+  --brand-red-link: #4d7c0f;
   --brand-black: #10140c; /* Club Ink */
   --brand-white: #f3f6ec; /* Mist */
   --brand-silver: #a7adb2;
@@ -53,6 +63,7 @@
   --foreground: #f5f7ef; /* Moon White */
   --brand-red: #c6ff00; /* Electric Lime */
   --brand-red-hover: #b0e600;
+  --brand-red-link: #c6ff00;
   --brand-orange: #ff6b00; /* Match Orange, dark */
   --brand-emerald: #00e58b; /* Match Emerald, dark */
 }
@@ -67,6 +78,7 @@
   --color-brand-red: var(--brand-red);
   --color-brand-red-hover: var(--brand-red-hover);
   --color-brand-red-text: var(--brand-red-text);
+  --color-brand-red-link: var(--brand-red-link);
   --color-brand-black: var(--brand-black);
   --color-brand-white: var(--brand-white);
   --color-brand-silver: var(--brand-silver);

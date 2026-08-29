@@ -196,7 +196,7 @@ function SidebarButton({ label, active, onClick }: { label: string; active: bool
       onClick={onClick}
       className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${
         active
-          ? "bg-brand-red/10 text-brand-red"
+          ? "bg-brand-red/10 text-brand-red-link"
           : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
       }`}
     >

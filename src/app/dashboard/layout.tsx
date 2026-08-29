@@ -105,7 +105,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 href={link.href}
                 className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${
                   pathname === link.href
-                    ? "bg-brand-red/10 text-brand-red"
+                    ? "bg-brand-red/10 text-brand-red-link"
                     : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10"
                 }`}
               >

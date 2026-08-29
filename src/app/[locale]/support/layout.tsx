@@ -27,11 +27,11 @@ export default async function HelpLayout({ children, params }: { children: React
       <header className="sticky top-0 z-20 border-b border-gray-100 bg-brand-white/80 backdrop-blur dark:border-white/10 dark:bg-brand-black/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link href={localizedPathname(locale, "/support")} className="font-teko text-2xl font-bold text-gray-900 dark:text-white">
-            LiveClub <span className="text-brand-red">Docs</span>
+            LiveClub <span className="text-brand-red-link">Docs</span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
             <LanguageSwitcher basePath="/support" />
-            <Link href={localizedPathname(locale, "/")} className="text-gray-500 hover:text-brand-red dark:text-gray-400">
+            <Link href={localizedPathname(locale, "/")} className="text-gray-500 hover:text-brand-red-link dark:text-gray-400">
               {t("backToApp")}
             </Link>
             <ThemeToggle />

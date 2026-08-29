@@ -86,13 +86,13 @@ function LoginForm() {
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-sm text-brand-red hover:underline"
+              className="text-sm text-brand-red-link hover:underline"
             >
               {t("forgotPassword")}
             </button>
           </form>
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-            <Link href="/register" className="text-brand-red hover:underline">
+            <Link href="/register" className="text-brand-red-link hover:underline">
               {t("noAccount")}
             </Link>
           </p>

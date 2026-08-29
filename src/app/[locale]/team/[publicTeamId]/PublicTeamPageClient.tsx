@@ -166,7 +166,7 @@ export function PublicTeamPageClient({ publicTeamId }: { publicTeamId: string })
           </p>
           <Link
             href={buildGameUrl(team.publicClubId, game.gameId)}
-            className="text-xs text-brand-red hover:underline"
+            className="text-xs text-brand-red-link hover:underline"
           >
             {tClub("openDetails")}
           </Link>
@@ -176,7 +176,7 @@ export function PublicTeamPageClient({ publicTeamId }: { publicTeamId: string })
       )}
 
       <p className="mt-8 text-xs text-gray-400 dark:text-gray-500">{t("bookmarkHint")}</p>
-      <Link href={buildClubUrl(team.publicClubId)} className="text-xs text-brand-red hover:underline">
+      <Link href={buildClubUrl(team.publicClubId)} className="text-xs text-brand-red-link hover:underline">
         {t("backToClub")}
       </Link>
       </main>

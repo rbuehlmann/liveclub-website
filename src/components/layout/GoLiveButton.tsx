@@ -1,13 +1,12 @@
 import NextLink from "next/link";
 import { useBranding } from "@/components/layout/BrandingProvider";
 
-// Vector source: go_live_button.svg (2026-08-29) — a rounded-rectangle
-// frame + broadcast-icon mark, plus a separate "LIVE" wordmark, originally
-// one fixed-black shape. Split into two fill groups here (frame+icon vs.
-// wordmark) so /admin/settings can color them independently, same as
-// logoLight/logoDark are two separate assets rather than one recolorable
-// one — paths themselves are unchanged from the source file.
-function GoLiveSvg({ fill, text, className }: { fill: string; text: string; className?: string }) {
+// Vector source: go_live_button.svg (2026-08-29). Every path shares one
+// fill (frame, broadcast icon, and the "LIVE" wordmark are all the same
+// color — 2026-08-29 revision, see GoLiveButton below for the separate
+// button-background color) — paths themselves are unchanged from the
+// source file.
+function GoLiveSvg({ color, className }: { color: string; className?: string }) {
   return (
     <svg
       viewBox="0 0 1146 387"
@@ -15,7 +14,7 @@ function GoLiveSvg({ fill, text, className }: { fill: string; text: string; clas
       className={className}
       style={{ fillRule: "evenodd", clipRule: "evenodd", strokeLinejoin: "round", strokeMiterlimit: 2 }}
     >
-      <g fill={fill}>
+      <g fill={color}>
         <g transform="matrix(1,0,0,1,-3432.15,-1293.13)">
           <path
             d="M3452.15,1659.18L4557.97,1659.18L4557.97,1313.13L3452.15,1313.13L3452.15,1659.18ZM4577.97,1679.18L3432.15,1679.18L3432.15,1293.13L4577.97,1293.13L4577.97,1679.18Z"
@@ -54,18 +53,23 @@ function GoLiveSvg({ fill, text, className }: { fill: string; text: string; clas
             />
           </g>
         </g>
-      </g>
-      <g fill={text} transform="matrix(0.88783,0,0,0.88783,-2928.06,-810.384)">
-        <path d="M3910.31,1231.68L3819.34,1231.68L3819.34,1028.68L3856.36,1028.68L3856.36,1203.35L3910.31,1203.35L3910.31,1231.68ZM4009.51,1028.68L4046.54,1028.68L4046.54,1231.68L4009.51,1231.68L4009.51,1028.68ZM4236.7,1028.68L4274.9,1028.68L4234.51,1231.68L4186.13,1231.68L4145.74,1028.68L4183.94,1028.68L4210.16,1192.88L4236.7,1028.68ZM4473.13,1231.68L4374.1,1231.68L4374.1,1028.68L4470.59,1028.68L4470.59,1057.01L4411.31,1057.01L4411.31,1113.41L4461.08,1113.41L4461.08,1141.74L4411.31,1141.74L4411.31,1203.35L4473.13,1203.35L4473.13,1231.68Z" />
+        <g transform="matrix(0.88783,0,0,0.88783,-2928.06,-810.384)">
+          <path d="M3910.31,1231.68L3819.34,1231.68L3819.34,1028.68L3856.36,1028.68L3856.36,1203.35L3910.31,1203.35L3910.31,1231.68ZM4009.51,1028.68L4046.54,1028.68L4046.54,1231.68L4009.51,1231.68L4009.51,1028.68ZM4236.7,1028.68L4274.9,1028.68L4234.51,1231.68L4186.13,1231.68L4145.74,1028.68L4183.94,1028.68L4210.16,1192.88L4236.7,1028.68ZM4473.13,1231.68L4374.1,1231.68L4374.1,1028.68L4470.59,1028.68L4470.59,1057.01L4411.31,1057.01L4411.31,1113.41L4461.08,1113.41L4461.08,1141.74L4411.31,1141.74L4411.31,1203.35L4473.13,1203.35L4473.13,1231.68Z" />
+        </g>
       </g>
     </svg>
   );
 }
 
-const DEFAULT_FILL_LIGHT = "#000000";
-const DEFAULT_FILL_DARK = "#ffffff";
-const DEFAULT_TEXT_LIGHT = "#000000";
-const DEFAULT_TEXT_DARK = "#ffffff";
+// A solid pill, not just an outline mark sitting directly on the page
+// background — icon+text share one color, the pill itself is the second,
+// separately configurable color (2026-08-29 revision: the previous
+// fill/text split read as broken since the mark has no fill of its own,
+// so half of it could end up invisible against the page).
+const DEFAULT_BACKGROUND_LIGHT = "#10140c"; // Club Ink
+const DEFAULT_ICON_LIGHT = "#f3f6ec"; // Mist
+const DEFAULT_BACKGROUND_DARK = "#f5f7ef"; // Moon White
+const DEFAULT_ICON_DARK = "#10140c"; // Club Ink
 
 // Replaces the old plain-text <Button>GO LIVE</Button> in PublicHeader —
 // a plain next/link, not the locale-aware one, since /login is never
@@ -74,17 +78,19 @@ export function GoLiveButton() {
   const branding = useBranding();
 
   return (
-    <NextLink href="/login" aria-label="GO LIVE" className="flex h-9 items-center">
-      <GoLiveSvg
-        fill={branding.goLiveFillLight ?? DEFAULT_FILL_LIGHT}
-        text={branding.goLiveTextLight ?? DEFAULT_TEXT_LIGHT}
-        className="h-full w-auto dark:hidden"
-      />
-      <GoLiveSvg
-        fill={branding.goLiveFillDark ?? DEFAULT_FILL_DARK}
-        text={branding.goLiveTextDark ?? DEFAULT_TEXT_DARK}
-        className="hidden h-full w-auto dark:block"
-      />
+    <NextLink href="/login" aria-label="GO LIVE" className="flex items-center">
+      <span
+        className="flex h-9 items-center rounded-lg px-3 dark:hidden"
+        style={{ backgroundColor: branding.goLiveBackgroundLight ?? DEFAULT_BACKGROUND_LIGHT }}
+      >
+        <GoLiveSvg color={branding.goLiveIconLight ?? DEFAULT_ICON_LIGHT} className="h-5 w-auto" />
+      </span>
+      <span
+        className="hidden h-9 items-center rounded-lg px-3 dark:flex"
+        style={{ backgroundColor: branding.goLiveBackgroundDark ?? DEFAULT_BACKGROUND_DARK }}
+      >
+        <GoLiveSvg color={branding.goLiveIconDark ?? DEFAULT_ICON_DARK} className="h-5 w-auto" />
+      </span>
     </NextLink>
   );
 }

@@ -15,7 +15,7 @@ export default function NotFound() {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Diese Seite gibt es nicht (mehr) — vielleicht wurde der Link falsch kopiert.
         </p>
-        <Link href="/" className="mt-2 text-sm text-brand-red hover:underline">
+        <Link href="/" className="mt-2 text-sm text-brand-red-link hover:underline">
           Zur Startseite
         </Link>
       </main>

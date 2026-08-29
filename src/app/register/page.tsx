@@ -83,7 +83,7 @@ function RegisterForm() {
               <span>
                 {t.rich("termsAcceptance", {
                   link: (chunks) => (
-                    <Link href="/terms-of-service" target="_blank" className="text-brand-red hover:underline">
+                    <Link href="/terms-of-service" target="_blank" className="text-brand-red-link hover:underline">
                       {chunks}
                     </Link>
                   ),
@@ -98,7 +98,7 @@ function RegisterForm() {
           <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
             <Link
               href={redirectTarget ? `/login?redirect=${encodeURIComponent(redirectTarget)}` : "/login"}
-              className="text-brand-red hover:underline"
+              className="text-brand-red-link hover:underline"
             >
               {t("alreadyHaveAccount")}
             </Link>

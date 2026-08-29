@@ -250,7 +250,7 @@ export default function InvitePage() {
                       />
                       <span>
                         Ich habe die{" "}
-                        <Link href="/terms-of-service" target="_blank" className="text-brand-red hover:underline">
+                        <Link href="/terms-of-service" target="_blank" className="text-brand-red-link hover:underline">
                           AGB
                         </Link>{" "}
                         gelesen und akzeptiere sie.
@@ -276,7 +276,7 @@ export default function InvitePage() {
                     setAuthMode(authMode === "create" ? "login" : "create");
                     setAuthError(null);
                   }}
-                  className="mt-4 text-center text-sm text-brand-red hover:underline"
+                  className="mt-4 text-center text-sm text-brand-red-link hover:underline"
                 >
                   {authMode === "create"
                     ? "Du hast schon ein Konto? Anmelden"

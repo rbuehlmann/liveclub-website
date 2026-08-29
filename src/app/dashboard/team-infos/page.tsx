@@ -360,7 +360,7 @@ export default function TeamInfosPage() {
             <br />
             {t.rich("pushConfirmTerms", {
               link: (chunks) => (
-                <Link href="/terms-of-service" target="_blank" className="text-brand-red underline">
+                <Link href="/terms-of-service" target="_blank" className="text-brand-red-link underline">
                   {chunks}
                 </Link>
               ),
@@ -375,6 +375,7 @@ export default function TeamInfosPage() {
         }
         confirmLabel={creating ? t("sending") : t("publishAndSend")}
         cancelLabel={t("cancel")}
+        confirmVariant="primary"
         onConfirm={submit}
         onCancel={() => setConfirmingPush(false)}
       />

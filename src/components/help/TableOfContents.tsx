@@ -13,7 +13,7 @@ export function TableOfContents({ headings }: { headings: HelpHeading[] }) {
         <a
           key={h.id}
           href={`#${h.id}`}
-          className={`text-gray-500 hover:text-brand-red dark:text-gray-400 ${h.depth === 3 ? "pl-3" : ""}`}
+          className={`text-gray-500 hover:text-brand-red-link dark:text-gray-400 ${h.depth === 3 ? "pl-3" : ""}`}
         >
           {h.text}
         </a>

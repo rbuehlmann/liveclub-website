@@ -16,14 +16,14 @@ export function LanguageSwitcher({ basePath = "" }: { basePath?: string }) {
     <div className="flex items-center gap-1 text-xs font-medium">
       <Link
         href={basePath || "/"}
-        className={locale === "de" ? "text-brand-red" : "text-gray-500 hover:text-brand-red dark:text-gray-400"}
+        className={locale === "de" ? "text-brand-red-link" : "text-gray-500 hover:text-brand-red-link dark:text-gray-400"}
       >
         DE
       </Link>
       <span className="text-gray-300 dark:text-gray-600">/</span>
       <Link
         href={`/en${basePath}`}
-        className={locale === "en" ? "text-brand-red" : "text-gray-500 hover:text-brand-red dark:text-gray-400"}
+        className={locale === "en" ? "text-brand-red-link" : "text-gray-500 hover:text-brand-red-link dark:text-gray-400"}
       >
         EN
       </Link>

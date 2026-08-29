@@ -189,7 +189,7 @@ export default function Home() {
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
         <div className="text-center">
           <h1 className="font-teko text-5xl font-bold text-gray-900 dark:text-white">LiveClub</h1>
-          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red">{t("tagline")}</p>
+          <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-brand-red-link">{t("tagline")}</p>
           <p className="mt-3 text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
         </div>
 
@@ -238,7 +238,7 @@ export default function Home() {
             <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
             {/* /register lives outside the [locale] tree (2026-08-24 scope
                 decision) — plain next/link, not the locale-aware one. */}
-            <NextLink href="/register" className="text-sm text-brand-red hover:underline">
+            <NextLink href="/register" className="text-sm text-brand-red-link hover:underline">
               {t("registerClub")}
             </NextLink>
           </div>
@@ -299,7 +299,7 @@ export default function Home() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">{t("noClubsFound")}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {t("missingClub")}{" "}
-                      <Link href="/verein-empfehlen" className="text-brand-red hover:underline">
+                      <Link href="/verein-empfehlen" className="text-brand-red-link hover:underline">
                         {t("tellUs")}
                       </Link>
                     </p>
@@ -313,7 +313,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setSelectedClub(null)}
-                  className="self-start text-sm text-brand-red hover:underline"
+                  className="self-start text-sm text-brand-red-link hover:underline"
                 >
                   {t("backToSearch")}
                 </button>
@@ -344,7 +344,7 @@ export default function Home() {
               </div>
               {/* /register lives outside the [locale] tree (2026-08-24 scope
                   decision) — plain next/link, not the locale-aware one. */}
-              <NextLink href="/register" className="mt-2 text-sm text-brand-red hover:underline">
+              <NextLink href="/register" className="mt-2 text-sm text-brand-red-link hover:underline">
                 {t("registerClub")}
               </NextLink>
             </div>

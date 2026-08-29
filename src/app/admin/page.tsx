@@ -39,7 +39,7 @@ export default function AdminOverviewPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Abgelaufen/inaktiv</p>
         </Card>
       </div>
-      <Link href="/admin/clubs" className="text-sm text-brand-red hover:underline">
+      <Link href="/admin/clubs" className="text-sm text-brand-red-link hover:underline">
         Alle Vereine ansehen →
       </Link>
     </div>

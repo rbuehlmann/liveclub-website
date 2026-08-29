@@ -253,7 +253,7 @@ export default function AdminClubsPage() {
                       href={archiveUrlByClub[club.clubId]}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-brand-red underline"
+                      className="text-brand-red-link underline"
                     >
                       Herunterladen
                     </a>{" "}

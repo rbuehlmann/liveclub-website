@@ -56,7 +56,7 @@ export function SearchBar({ articles }: { articles: HelpArticleMeta[] }) {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t("search.noResultsFor", { query: query.trim() })}
           </p>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className="mt-2 inline-block text-sm font-medium text-brand-red hover:underline">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="mt-2 inline-block text-sm font-medium text-brand-red-link hover:underline">
             {t("search.emailCta")} →
           </a>
         </div>
