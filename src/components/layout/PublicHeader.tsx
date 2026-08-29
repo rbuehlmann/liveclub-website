@@ -1,8 +1,6 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { localizedPathname } from "@/i18n/routing";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { AppLanguageSwitcher } from "@/components/layout/AppLanguageSwitcher";
@@ -40,8 +38,6 @@ export function PublicHeader({
   variant?: "url" | "app";
   maxWidth?: string;
 }) {
-  const t = useTranslations("common");
-  const locale = useLocale();
   const branding = useBranding();
   const logoLight = branding.logoLight;
   const logoDark = branding.logoDark ?? branding.logoLight;
@@ -61,23 +57,6 @@ export function PublicHeader({
             <span className="font-teko text-3xl font-bold text-brand-red-link">LiveClub</span>
           )}
         </Link>
-        {/* Anchors back to homepage sections — meaningful from any page, not
-            just the homepage itself (2026-08-29 "brauch ich ein Menü"
-            request). Plain <a>, not the i18n Link: Next's client router
-            doesn't scroll to a hash when the pathname itself isn't
-            changing (i.e. clicking these while already on the homepage),
-            a real anchor always does since it's the browser's own native
-            behavior — localizedPathname still keeps the /en prefix correct
-            when landing from elsewhere. Hidden below md: no mobile menu
-            system exists yet to hold them without crowding the bar. */}
-        <nav className="hidden items-center gap-6 text-sm font-medium text-gray-600 md:flex dark:text-gray-300">
-          <a href={localizedPathname(locale, "/#funktionen")} className="hover:text-brand-red-link">
-            {t("navFeatures")}
-          </a>
-          <a href={localizedPathname(locale, "/#preise")} className="hover:text-brand-red-link">
-            {t("navPricing")}
-          </a>
-        </nav>
         <div className="flex items-center gap-3">
           {variant === "app" ? <AppLanguageSwitcher /> : <LanguageSwitcher />}
           <ThemeToggle />

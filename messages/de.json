@@ -9,9 +9,7 @@
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert",
     "switchToLightMode": "Zum hellen Modus wechseln",
-    "switchToDarkMode": "Zum dunklen Modus wechseln",
-    "navFeatures": "Funktionen",
-    "navPricing": "Preise"
+    "switchToDarkMode": "Zum dunklen Modus wechseln"
   },
   "auth": {
     "registerTitle": "Verein registrieren",
@@ -316,7 +314,7 @@
     "heroFeatureLive": "LIVE in Echtzeit",
     "heroFeaturePush": "PUSH für Fans",
     "heroFeatureTeam": "TEAM vereint",
-    "heroCtaSecondary": "So funktioniert's",
+    "followClub": "Verein folgen",
     "trialNotice": "30 Tage kostenlos testen — keine Kreditkarte nötig",
     "pricingHeading": "Preise",
     "pricingSubtitle": "Ein Preis pro Verein, nicht pro Mannschaft — je nachdem, wie viele Teams ihr verwaltet.",

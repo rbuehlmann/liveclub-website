@@ -9,9 +9,7 @@
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode",
-    "navFeatures": "Features",
-    "navPricing": "Pricing"
+    "switchToDarkMode": "Switch to dark mode"
   },
   "auth": {
     "registerTitle": "Register your club",
@@ -306,7 +304,7 @@
     "heroFeatureLive": "LIVE in real time",
     "heroFeaturePush": "PUSH for fans",
     "heroFeatureTeam": "TEAM united",
-    "heroCtaSecondary": "How it works",
+    "followClub": "Follow your club",
     "trialNotice": "Try free for 30 days — no credit card required",
     "pricingHeading": "Pricing",
     "pricingSubtitle": "One price per club, not per team — based on how many teams you manage.",

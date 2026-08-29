@@ -379,17 +379,24 @@ export default function Home() {
               <NextLink href="/register">
                 <Button className="px-6 py-3.5 text-base">{t("registerClub")}</Button>
               </NextLink>
-              {/* Not <Button variant="secondary"> — that variant's
-                  bg-brand-silver/25 is nearly invisible against the hero's
-                  own light-mode background (2026-08-29 report), since both
-                  are pale/neutral tones. A visible border does the job in
-                  both themes instead. */}
-              <Link
-                href="/support/erste-schritte"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-3.5 text-base font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+              {/* Deliberately NOT another route to /register: someone who
+                  only wants to follow their club as a fan shouldn't ever
+                  end up creating a club-admin account just to do that
+                  (2026-08-29 report) — this goes straight to the app
+                  download instead. Plain <a>, not the i18n Link: Next's
+                  client router doesn't scroll to a hash when the pathname
+                  itself isn't changing (already on the homepage), a real
+                  anchor always does. Not <Button variant="secondary">
+                  either — that variant's bg-brand-silver/25 is nearly
+                  invisible against the hero's own light-mode background, a
+                  visible border reads in both themes instead. */}
+              <a
+                href="#app-download"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3.5 text-base font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
               >
-                {t("heroCtaSecondary")}
-              </Link>
+                <BellIcon className="h-4 w-4" />
+                {t("followClub")}
+              </a>
             </div>
             <p className="mt-4 flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
               <CheckIcon className="h-4 w-4 text-brand-emerald" />
@@ -580,7 +587,7 @@ export default function Home() {
 
         {/* Bottom CTA cards */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="flex flex-col justify-between gap-4">
+          <Card id="app-download" className="flex scroll-mt-6 flex-col justify-between gap-4">
             <div>
               <h3 className="font-teko text-2xl font-bold text-brand-red">{t("appCardTitle")}</h3>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t("appCardBody")}</p>
