@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { HeroPhoneMockup, type HeroPhoneGame } from "@/components/home/HeroPhoneMockup";
+import { SearchMapDecoration } from "@/components/home/SearchMapDecoration";
 import { useMobilePlatform } from "@/lib/useMobilePlatform";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 
@@ -420,39 +421,50 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-          <Card>
-            <h2 className="mb-4 text-center font-teko text-2xl font-bold text-gray-900 dark:text-white">
-              {t("searchHeading")}
-            </h2>
-            <div className="flex flex-col gap-4">
-              <TextField
-                label={t("clubNameLabel")}
-                placeholder={t("clubNamePlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {t("countryLabel")}
-                </label>
-                <select
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
-                >
-                  <option value="">{t("allCountries")}</option>
-                  {COUNTRIES.map((c) => (
-                    <option key={c} value={c}>
-                      {t(`countries.${c}`)}
-                    </option>
-                  ))}
-                </select>
+        {/* Search — full-width card (matches the stats strip above), with a
+            decorative map alongside the fields on large screens. The
+            results/selected-club lists below stay in their own narrower
+            column — a list of clubs stretched edge-to-edge would be harder
+            to scan, not easier. */}
+        <Card>
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+            <div>
+              <h2 className="mb-4 font-teko text-2xl font-bold text-gray-900 dark:text-white">
+                {t("searchHeading")}
+              </h2>
+              <div className="flex flex-col gap-4">
+                <TextField
+                  label={t("clubNameLabel")}
+                  placeholder={t("clubNamePlaceholder")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t("countryLabel")}
+                  </label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="">{t("allCountries")}</option>
+                    {COUNTRIES.map((c) => (
+                      <option key={c} value={c}>
+                        {t(`countries.${c}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-          </Card>
+            <div className="hidden lg:block">
+              <SearchMapDecoration />
+            </div>
+          </div>
+        </Card>
 
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           {!selectedClub && (
             <div className="flex flex-col gap-2">
               {visibleClubs.map(({ club, matchingTeam }) => (
