@@ -25,14 +25,26 @@ import { useBranding } from "@/components/layout/BrandingProvider";
 // login/register/onboarding, or the root's static "de" one for untouched
 // pages like /invite), so it never regresses to always-German like a plain
 // next/link would.
-export function PublicHeader({ variant = "url" }: { variant?: "url" | "app" }) {
+//
+// maxWidth: the inner container's max-width, matching whatever the page
+// below it uses so the logo/GO LIVE button line up with the page's own
+// left/right edges instead of sitting inside a narrower centered strip
+// (2026-08-29 report on the wide homepage redesign) — every other page
+// still uses the original max-w-2xl default.
+export function PublicHeader({
+  variant = "url",
+  maxWidth = "max-w-2xl",
+}: {
+  variant?: "url" | "app";
+  maxWidth?: string;
+}) {
   const branding = useBranding();
   const logoLight = branding.logoLight;
   const logoDark = branding.logoDark ?? branding.logoLight;
 
   return (
     <header className="border-b border-brand-silver/30 bg-brand-white dark:border-white/10 dark:bg-brand-black">
-      <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
+      <div className={`mx-auto flex ${maxWidth} items-center justify-between px-4 py-4`}>
         <Link href="/" className="flex items-center">
           {logoLight ? (
             <>

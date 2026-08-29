@@ -300,6 +300,7 @@
     "deleting": "Wird gelöscht …"
   },
   "footer": {
+    "madeInSwitzerland": "Entwickelt in der Schweiz",
     "legalNotice": "Impressum",
     "privacyPolicy": "Datenschutz",
     "termsOfService": "AGB",
@@ -319,9 +320,6 @@
     "appCardBody": "Für Fans. Für Teams. Für euch.",
     "clubCardTitle": "Du bist von einem Verein?",
     "clubCardBody": "Registriere deinen Verein und starte mit LiveClub durch.",
-    "trustSecure": "Sicher & DSGVO-konform",
-    "trustSwiss": "Entwickelt in der Schweiz",
-    "trustSupport": "Support & Hilfe",
     "exampleLabel": "Beispielansicht",
     "openLiveTicker": "Live-Ticker anzeigen",
     "statsTeams": "Registrierte Teams",

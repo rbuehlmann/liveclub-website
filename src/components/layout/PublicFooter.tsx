@@ -31,6 +31,7 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-brand-silver/30 bg-brand-white py-6 dark:border-white/10 dark:bg-brand-black">
       <div className="mx-auto flex max-w-2xl flex-wrap justify-center gap-x-6 gap-y-2 px-4 text-sm text-gray-500 dark:text-gray-400">
+        <span className="flex items-center gap-1.5">🇨🇭 {t("madeInSwitzerland")}</span>
         <Link href="/impressum" className="hover:text-brand-red-link hover:underline">
           {t("legalNotice")}
         </Link>

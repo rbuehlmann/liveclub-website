@@ -215,6 +215,19 @@ export default function Home() {
     [rawGames, licensedClubIds]
   );
 
+  // Two random real clubs for the phone mockup's fallback state (no live
+  // game right now) — picked once per page load, not on every Firestore
+  // tick, so it doesn't reshuffle under the visitor; a fresh reload picks
+  // again (2026-08-29 "random ein Clubicon" request).
+  const [exampleClubs, setExampleClubs] = useState<[ClubResult, ClubResult] | null>(null);
+  useEffect(() => {
+    if (exampleClubs) return;
+    const pool = allClubs.filter(isClubLicenseOk);
+    if (pool.length < 2) return;
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    setExampleClubs([shuffled[0], shuffled[1]]);
+  }, [allClubs, exampleClubs]);
+
   const visibleClubs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     // No search term yet -> show nothing (the homepage is search-first, it
@@ -288,7 +301,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-brand-white dark:bg-brand-black">
-      <PublicHeader />
+      <PublicHeader maxWidth="max-w-6xl" />
 
       {/* Hero — dark-mode-first (see 2026-08-29 "dark mode first" decision);
           the glow/gradient backdrop below only renders in dark mode, light
@@ -396,13 +409,37 @@ export default function Home() {
                       {t("exampleLabel")}
                     </p>
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                        FC
-                      </div>
-                      <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">2:1</span>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
-                        SV
-                      </div>
+                      {exampleClubs ? (
+                        <>
+                          {exampleClubs[0].logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={exampleClubs[0].logoUrl} alt="" className="h-8 w-8 rounded-full object-contain" />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
+                              {exampleClubs[0].name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">2:1</span>
+                          {exampleClubs[1].logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={exampleClubs[1].logoUrl} alt="" className="h-8 w-8 rounded-full object-contain" />
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
+                              {exampleClubs[1].name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
+                            FC
+                          </div>
+                          <span className="font-teko text-3xl font-bold tabular-nums text-brand-emerald">2:1</span>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-500 dark:bg-white/10">
+                            SV
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -568,15 +605,6 @@ export default function Home() {
               <Button>{t("registerClub")}</Button>
             </NextLink>
           </Card>
-        </div>
-
-        {/* Trust strip */}
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-gray-200 pt-6 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
-          <span className="flex items-center gap-2">🔒 {t("trustSecure")}</span>
-          <span className="flex items-center gap-2">🇨🇭 {t("trustSwiss")}</span>
-          <Link href="/support" className="flex items-center gap-2 hover:text-brand-red-link hover:underline">
-            ❓ {t("trustSupport")}
-          </Link>
         </div>
       </div>
 

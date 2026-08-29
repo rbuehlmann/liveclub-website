@@ -290,6 +290,7 @@
     "deleting": "Deleting …"
   },
   "footer": {
+    "madeInSwitzerland": "Made in Switzerland",
     "legalNotice": "Legal Notice",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
@@ -309,9 +310,6 @@
     "appCardBody": "For fans. For teams. For you.",
     "clubCardTitle": "Are you from a club?",
     "clubCardBody": "Register your club and get started with LiveClub.",
-    "trustSecure": "Secure & GDPR compliant",
-    "trustSwiss": "Made in Switzerland",
-    "trustSupport": "Support & help",
     "exampleLabel": "Example view",
     "openLiveTicker": "Open live ticker",
     "statsTeams": "Registered teams",

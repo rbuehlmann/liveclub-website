@@ -80,14 +80,24 @@ export default function PublicLiveGamePage() {
             LIVE
           </span>
         )}
-        <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
-          <span>{game.homeTeamName}</span>
-          <span className="font-teko text-6xl font-bold tabular-nums text-brand-emerald">
+        {/* grid, not a plain flex row: "SV Test United" vs. "FC Haase" are
+            very different lengths, and a flex row centers the *row as a
+            whole* rather than keeping the score itself at the true visual
+            center — two equal-width 1fr side columns pin the score in the
+            middle regardless of how long either name is (2026-08-29
+            report). */}
+        <div className="grid w-full max-w-2xl grid-cols-[1fr_auto_1fr] items-center gap-4 text-2xl font-semibold text-gray-900 dark:text-white">
+          <div className="flex items-center justify-end gap-3 overflow-hidden">
+            <span className="truncate">{game.homeTeamName}</span>
+            <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
+          </div>
+          <span className="px-2 font-teko text-6xl font-bold tabular-nums text-brand-emerald">
             {game.scoreHome}:{game.scoreAway}
           </span>
-          <span>{game.awayTeamName}</span>
-          <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={48} />
+          <div className="flex items-center justify-start gap-3 overflow-hidden">
+            <TeamIcon publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} size={48} />
+            <span className="truncate">{game.awayTeamName}</span>
+          </div>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t.has(`status.${game.status}`) ? t(`status.${game.status}`) : game.status}
