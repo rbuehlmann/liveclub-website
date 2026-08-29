@@ -11,6 +11,13 @@ import { Button } from "@/components/ui/Button";
 const DEFAULT_ACCENT = "#f02b22";
 const DEFAULT_BACKGROUND_LIGHT = "#f3efe5";
 const DEFAULT_BACKGROUND_DARK = "#080808";
+// Matches GoLiveButton.tsx's own fallback — kept as separate constants
+// (not shared) since the color-picker default and the component's
+// no-branding-loaded-yet default only need to agree in value, not in code.
+const DEFAULT_GO_LIVE_FILL_LIGHT = "#000000";
+const DEFAULT_GO_LIVE_FILL_DARK = "#ffffff";
+const DEFAULT_GO_LIVE_TEXT_LIGHT = "#000000";
+const DEFAULT_GO_LIVE_TEXT_DARK = "#ffffff";
 
 // Hardcoded fallback if settings/teamInfo doesn't exist yet — kept in sync
 // with functions/src/lib/teamInfo.ts's TEAM_INFO_DEFAULTS.
@@ -362,6 +369,60 @@ export default function AdminSettingsPage() {
                 onChange={(e) => update("backgroundColorDark", e.target.value)}
                 className="h-10 w-16 rounded border border-gray-300"
               />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-1 font-medium text-gray-900 dark:text-white">GO LIVE Button</h3>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+              Das Logo/Icon oben rechts im Header (verlinkt zu /login) — Rahmen+Icon und der
+              „LIVE“-Schriftzug lassen sich unabhängig voneinander einfärben.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Füllung — Rahmen/Icon (Light Mode)
+                </label>
+                <input
+                  type="color"
+                  value={branding.goLiveFillLight ?? DEFAULT_GO_LIVE_FILL_LIGHT}
+                  onChange={(e) => update("goLiveFillLight", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Füllung — Rahmen/Icon (Dark Mode)
+                </label>
+                <input
+                  type="color"
+                  value={branding.goLiveFillDark ?? DEFAULT_GO_LIVE_FILL_DARK}
+                  onChange={(e) => update("goLiveFillDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Text „LIVE“ (Light Mode)
+                </label>
+                <input
+                  type="color"
+                  value={branding.goLiveTextLight ?? DEFAULT_GO_LIVE_TEXT_LIGHT}
+                  onChange={(e) => update("goLiveTextLight", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Text „LIVE“ (Dark Mode)
+                </label>
+                <input
+                  type="color"
+                  value={branding.goLiveTextDark ?? DEFAULT_GO_LIVE_TEXT_DARK}
+                  onChange={(e) => update("goLiveTextDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
             </div>
           </div>
 

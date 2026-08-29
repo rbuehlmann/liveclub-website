@@ -1,11 +1,10 @@
 "use client";
 
-import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { AppLanguageSwitcher } from "@/components/layout/AppLanguageSwitcher";
+import { GoLiveButton } from "@/components/layout/GoLiveButton";
 import { useBranding } from "@/components/layout/BrandingProvider";
 
 // Shared top bar for every public-facing page (homepage/search, login,
@@ -51,9 +50,7 @@ export function PublicHeader({ variant = "url" }: { variant?: "url" | "app" }) {
         <div className="flex items-center gap-3">
           {variant === "app" ? <AppLanguageSwitcher /> : <LanguageSwitcher />}
           <ThemeToggle />
-          <NextLink href="/login">
-            <Button>GO LIVE</Button>
-          </NextLink>
+          <GoLiveButton />
         </div>
       </div>
     </header>
