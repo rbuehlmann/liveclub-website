@@ -64,30 +64,16 @@ function usePointerTilt() {
   return { ref, tilt, handleMouseMove, handleMouseLeave };
 }
 
-function StatusBarIcons() {
-  // Minimal hand-drawn iOS-style glyphs (cellular bars, wifi, battery) — no
-  // icon library in this project, and three tiny one-off SVGs are cheaper
-  // than adding one for a purely decorative status bar.
+function BatteryIcon() {
+  // Just the battery — cellular/wifi/time removed from the status bar per
+  // 2026-08-29 feedback (cleaner look, and one less thing tying this to a
+  // specific carrier/connectivity state that was never real anyway).
   return (
-    <div className="flex items-center gap-[3px]">
-      <svg width="17" height="11" viewBox="0 0 17 11" fill="none">
-        <rect x="0" y="7" width="3" height="4" rx="0.5" fill="white" />
-        <rect x="4.5" y="5" width="3" height="6" rx="0.5" fill="white" />
-        <rect x="9" y="3" width="3" height="8" rx="0.5" fill="white" />
-        <rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="white" />
-      </svg>
-      <svg width="15" height="11" viewBox="0 0 15 11" fill="none">
-        <path
-          d="M7.5 9.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm-3-3.2a4.3 4.3 0 0 1 6 0l-1.1 1.1a2.7 2.7 0 0 0-3.8 0L4.5 6.3Zm-2.7-2.7a8 8 0 0 1 11.4 0L14 4.7a6.4 6.4 0 0 0-9 0L3.8 3.4Z"
-          fill="white"
-        />
-      </svg>
-      <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
-        <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="white" strokeOpacity="0.4" />
-        <rect x="2" y="2" width="18" height="8" rx="1.5" fill="white" />
-        <rect x="22.5" y="4" width="1.5" height="4" rx="0.75" fill="white" fillOpacity="0.4" />
-      </svg>
-    </div>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+      <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="white" strokeOpacity="0.4" />
+      <rect x="2" y="2" width="18" height="8" rx="1.5" fill="white" />
+      <rect x="22.5" y="4" width="1.5" height="4" rx="0.75" fill="white" fillOpacity="0.4" />
+    </svg>
   );
 }
 
@@ -142,12 +128,6 @@ export function HeroPhoneMockup({ game }: { game: HeroPhoneGame }) {
         }}
         className="relative w-[280px] rounded-[3.1rem] p-[3px]"
       >
-        {/* Side buttons — small raised strips on the titanium edge. */}
-        <span className="absolute top-[108px] -left-[3px] h-6 w-[3px] rounded-l-sm bg-gradient-to-b from-gray-500 to-gray-800" />
-        <span className="absolute top-[150px] -left-[3px] h-10 w-[3px] rounded-l-sm bg-gradient-to-b from-gray-500 to-gray-800" />
-        <span className="absolute top-[198px] -left-[3px] h-10 w-[3px] rounded-l-sm bg-gradient-to-b from-gray-500 to-gray-800" />
-        <span className="absolute top-[165px] -right-[3px] h-16 w-[3px] rounded-r-sm bg-gradient-to-b from-gray-500 to-gray-800" />
-
         {/* --- Screen --- */}
         <div
           style={{
@@ -170,9 +150,8 @@ export function HeroPhoneMockup({ game }: { game: HeroPhoneGame }) {
           <div className="absolute top-[14px] left-1/2 z-20 h-[26px] w-[92px] -translate-x-1/2 rounded-full bg-black" />
 
           {/* Status bar */}
-          <div className="relative z-10 flex items-center justify-between px-7 pt-4">
-            <span className="text-[13px] font-semibold text-white">{timeLabel}</span>
-            <StatusBarIcons />
+          <div className="relative z-10 flex items-center justify-end px-7 pt-4">
+            <BatteryIcon />
           </div>
 
           {/* Lock screen clock */}
