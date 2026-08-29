@@ -61,11 +61,15 @@ function GoLiveSvg({ color, className }: { color: string; className?: string }) 
   );
 }
 
-// A solid pill, not just an outline mark sitting directly on the page
-// background — icon+text share one color, the pill itself is the second,
-// separately configurable color (2026-08-29 revision: the previous
-// fill/text split read as broken since the mark has no fill of its own,
-// so half of it could end up invisible against the page).
+// A solid, square-cornered block, not just an outline mark sitting
+// directly on the page background — icon+text share one color, the block
+// itself is the second, separately configurable color (2026-08-29
+// revision: the previous fill/text split read as broken since the mark
+// has no fill of its own, so half of it could end up invisible against
+// the page). No padding around the SVG and no border-radius on the
+// wrapper — the mark's own sharp-edged frame IS the button's edge, so the
+// two must exactly coincide rather than sit inside a visibly larger,
+// rounded pill.
 const DEFAULT_BACKGROUND_LIGHT = "#10140c"; // Club Ink
 const DEFAULT_ICON_LIGHT = "#f3f6ec"; // Mist
 const DEFAULT_BACKGROUND_DARK = "#f5f7ef"; // Moon White
@@ -80,16 +84,16 @@ export function GoLiveButton() {
   return (
     <NextLink href="/login" aria-label="GO LIVE" className="flex items-center">
       <span
-        className="flex h-9 items-center rounded-lg px-3 dark:hidden"
+        className="flex h-9 dark:hidden"
         style={{ backgroundColor: branding.goLiveBackgroundLight ?? DEFAULT_BACKGROUND_LIGHT }}
       >
-        <GoLiveSvg color={branding.goLiveIconLight ?? DEFAULT_ICON_LIGHT} className="h-5 w-auto" />
+        <GoLiveSvg color={branding.goLiveIconLight ?? DEFAULT_ICON_LIGHT} className="h-full w-auto" />
       </span>
       <span
-        className="hidden h-9 items-center rounded-lg px-3 dark:flex"
+        className="hidden h-9 dark:flex"
         style={{ backgroundColor: branding.goLiveBackgroundDark ?? DEFAULT_BACKGROUND_DARK }}
       >
-        <GoLiveSvg color={branding.goLiveIconDark ?? DEFAULT_ICON_DARK} className="h-5 w-auto" />
+        <GoLiveSvg color={branding.goLiveIconDark ?? DEFAULT_ICON_DARK} className="h-full w-auto" />
       </span>
     </NextLink>
   );
