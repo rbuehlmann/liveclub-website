@@ -9,7 +9,9 @@
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode"
+    "switchToDarkMode": "Switch to dark mode",
+    "navFeatures": "Features",
+    "navPricing": "Pricing"
   },
   "auth": {
     "registerTitle": "Register your club",
@@ -305,6 +307,17 @@
     "heroFeaturePush": "PUSH for fans",
     "heroFeatureTeam": "TEAM united",
     "heroCtaSecondary": "How it works",
+    "trialNotice": "Try free for 30 days — no credit card required",
+    "pricingHeading": "Pricing",
+    "pricingSubtitle": "One price per club, not per team — based on how many teams you manage.",
+    "pricingPerMonth": "/ month",
+    "pricingOrYearly": "or {price} / year",
+    "pricingCta": "Get started",
+    "pricingTiers": {
+      "team5": "Up to 5 teams",
+      "team15": "Up to 15 teams",
+      "unlimited": "Unlimited"
+    },
     "searchHeading": "Find your club and stay live",
     "appCardTitle": "The LiveClub app",
     "appCardBody": "For fans. For teams. For you.",

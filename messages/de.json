@@ -9,7 +9,9 @@
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert",
     "switchToLightMode": "Zum hellen Modus wechseln",
-    "switchToDarkMode": "Zum dunklen Modus wechseln"
+    "switchToDarkMode": "Zum dunklen Modus wechseln",
+    "navFeatures": "Funktionen",
+    "navPricing": "Preise"
   },
   "auth": {
     "registerTitle": "Verein registrieren",
@@ -315,6 +317,17 @@
     "heroFeaturePush": "PUSH für Fans",
     "heroFeatureTeam": "TEAM vereint",
     "heroCtaSecondary": "So funktioniert's",
+    "trialNotice": "30 Tage kostenlos testen — keine Kreditkarte nötig",
+    "pricingHeading": "Preise",
+    "pricingSubtitle": "Ein Preis pro Verein, nicht pro Mannschaft — je nachdem, wie viele Teams ihr verwaltet.",
+    "pricingPerMonth": "/ Monat",
+    "pricingOrYearly": "oder {price} / Jahr",
+    "pricingCta": "Jetzt starten",
+    "pricingTiers": {
+      "team5": "Bis 5 Teams",
+      "team15": "Bis 15 Teams",
+      "unlimited": "Unbegrenzt"
+    },
     "searchHeading": "Finde deinen Verein und bleib live dabei",
     "appCardTitle": "Die LiveClub-App",
     "appCardBody": "Für Fans. Für Teams. Für euch.",

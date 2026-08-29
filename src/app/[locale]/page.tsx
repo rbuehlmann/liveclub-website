@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { HeroPhoneMockup, type HeroPhoneGame } from "@/components/home/HeroPhoneMockup";
 import { SearchMapDecoration } from "@/components/home/SearchMapDecoration";
+import { LICENSE_TIERS } from "@/lib/licenseTiers";
 import { useMobilePlatform } from "@/lib/useMobilePlatform";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 
@@ -88,6 +89,14 @@ function BellIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" />
       <path d="M10 21a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 }
@@ -335,7 +344,7 @@ export default function Home() {
       {/* Hero — dark-mode-first (see 2026-08-29 "dark mode first" decision);
           the glow/gradient backdrop below only renders in dark mode, light
           mode keeps the plain page background. */}
-      <section className="relative overflow-hidden">
+      <section id="funktionen" className="relative overflow-hidden scroll-mt-6">
         <div className="pointer-events-none absolute inset-0 hidden dark:block">
           <div className="absolute -top-40 right-0 h-[34rem] w-[34rem] rounded-full bg-brand-emerald/10 blur-3xl" />
           <div className="absolute top-1/2 left-0 h-[26rem] w-[26rem] -translate-y-1/2 rounded-full bg-brand-red/10 blur-3xl" />
@@ -382,6 +391,10 @@ export default function Home() {
                 {t("heroCtaSecondary")}
               </Link>
             </div>
+            <p className="mt-4 flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+              <CheckIcon className="h-4 w-4 text-brand-emerald" />
+              {t("trialNotice")}
+            </p>
           </div>
 
           {/* Phone mockup — hidden below lg, no room for it next to the
@@ -524,6 +537,45 @@ export default function Home() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Pricing — real tiers/prices from licenseTiers.ts (the same file
+            the dashboard billing page uses), tier *labels* re-translated
+            here rather than pulled from that file's hardcoded German
+            strings, same as the dashboard's own pricingTiers keys do. */}
+        <div id="preise" className="scroll-mt-6 text-center">
+          <h2 className="font-teko text-3xl font-bold text-gray-900 dark:text-white">
+            {t("pricingHeading")}
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-gray-600 dark:text-gray-400">
+            {t("pricingSubtitle")}
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {LICENSE_TIERS.map((tier) => (
+              <Card key={tier.id} className="flex flex-col items-center gap-4 text-center">
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                  {t(`pricingTiers.${tier.id}`)}
+                </p>
+                <div>
+                  <span className="font-teko text-4xl font-bold text-gray-900 dark:text-white">
+                    {tier.monthlyPrice}
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400"> {t("pricingPerMonth")}</span>
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {t("pricingOrYearly", { price: tier.yearlyPrice })}
+                </p>
+                {/* /register lives outside the [locale] tree (2026-08-24
+                    scope decision) — plain next/link, not the locale-aware
+                    one. */}
+                <NextLink href="/register" className="mt-2 w-full">
+                  <Button variant="secondary" fullWidth>
+                    {t("pricingCta")}
+                  </Button>
+                </NextLink>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Bottom CTA cards */}
