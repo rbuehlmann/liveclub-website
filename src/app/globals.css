@@ -8,11 +8,21 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * LiveClub corporate palette ("Impact Red" brand guide, 2026-07-31):
- * Racing Red is the single primary/action color (buttons, links, focus
- * states, "live" indicators) in both themes; Bone White is the light-mode
- * page background, Pitch Black the dark-mode one; Metallic Silver is used
- * for secondary surfaces/borders.
+ * LiveClub corporate palette ("Match Vision" brand guide, 2026-08-29 —
+ * replaces the earlier "Impact Red" guide). Electric Lime is the single
+ * primary/action color (buttons, links, focus states, highlights) in both
+ * themes; Club Ink is the light-mode text/navigation color and doubles as
+ * the dark-mode page background; Mist/Moon White is the light-mode page
+ * background and doubles as the dark-mode text/icon color; Match Orange is
+ * reserved specifically for live-game indicators (not the general accent —
+ * see the "LIVE" badges/live-count usages below); Match Emerald is
+ * reserved for score displays.
+ *
+ * Variable names below (brand-red/brand-red-hover/brand-black/brand-white)
+ * predate this palette and are kept as-is rather than renamed — renaming
+ * would mean touching every one of their ~60 existing usages for a pure
+ * naming change with no visual effect, so only the *values* moved to the
+ * new palette.
  *
  * These live as plain custom properties (not baked into @theme) so
  * BrandingProvider can override them at runtime per settings/branding
@@ -22,20 +32,29 @@
  * inlining a fixed hex value.
  */
 :root {
-  --background: #f3efe5;
-  --foreground: #171717;
-  --brand-red: #f02b22;
-  --brand-red-hover: #d0211a;
-  --brand-black: #080808;
-  --brand-white: #f3efe5;
+  --background: #f3f6ec; /* Mist */
+  --foreground: #10140c; /* Club Ink */
+  --brand-red: #c6ff00; /* Electric Lime — see naming note above */
+  --brand-red-hover: #b0e600;
+  /* Text color for anything filled solid with brand-red/orange/emerald —
+     those are all bright/mid-tone colors that white text can't sit on
+     legibly, unlike the old dark red. Same value in both themes: Club Ink
+     reads fine against every one of those fills regardless of theme. */
+  --brand-red-text: #10140c;
+  --brand-black: #10140c; /* Club Ink */
+  --brand-white: #f3f6ec; /* Mist */
   --brand-silver: #a7adb2;
+  --brand-orange: #ff8128; /* Match Orange, light */
+  --brand-emerald: #00aa68; /* Match Emerald, light */
 }
 
 .dark {
-  --background: #080808;
-  --foreground: #f3efe5;
-  --brand-red: #f02b22;
-  --brand-red-hover: #d0211a;
+  --background: #10140c; /* Club Ink */
+  --foreground: #f5f7ef; /* Moon White */
+  --brand-red: #c6ff00; /* Electric Lime */
+  --brand-red-hover: #b0e600;
+  --brand-orange: #ff6b00; /* Match Orange, dark */
+  --brand-emerald: #00e58b; /* Match Emerald, dark */
 }
 
 @theme inline {
@@ -47,9 +66,12 @@
 
   --color-brand-red: var(--brand-red);
   --color-brand-red-hover: var(--brand-red-hover);
+  --color-brand-red-text: var(--brand-red-text);
   --color-brand-black: var(--brand-black);
   --color-brand-white: var(--brand-white);
   --color-brand-silver: var(--brand-silver);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-emerald: var(--brand-emerald);
 }
 
 body {

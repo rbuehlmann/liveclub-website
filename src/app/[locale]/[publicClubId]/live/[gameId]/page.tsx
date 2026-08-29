@@ -76,14 +76,14 @@ export default function PublicLiveGamePage() {
       <PublicHeader />
       <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
         {isLive && (
-          <span className="animate-pulse rounded-full bg-brand-red px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
+          <span className="animate-pulse rounded-full bg-brand-orange px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
             LIVE
           </span>
         )}
         <div className="flex items-center gap-6 text-2xl font-semibold text-gray-900 dark:text-white">
           <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={48} />
           <span>{game.homeTeamName}</span>
-          <span className="font-teko text-6xl font-bold tabular-nums">
+          <span className="font-teko text-6xl font-bold tabular-nums text-brand-emerald">
             {game.scoreHome}:{game.scoreAway}
           </span>
           <span>{game.awayTeamName}</span>

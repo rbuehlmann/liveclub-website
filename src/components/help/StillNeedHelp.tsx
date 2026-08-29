@@ -20,7 +20,7 @@ export async function StillNeedHelp({ locale }: { locale: string }) {
       <p className="max-w-md text-sm text-gray-500 dark:text-gray-400">{t("body")}</p>
       <a
         href={`mailto:${SUPPORT_EMAIL}`}
-        className="mt-1 inline-flex items-center justify-center rounded-lg bg-brand-red px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-red-hover"
+        className="mt-1 inline-flex items-center justify-center rounded-lg bg-brand-red px-5 py-3 text-base font-semibold text-brand-red-text transition-colors hover:bg-brand-red-hover"
       >
         {t("button")}
       </a>

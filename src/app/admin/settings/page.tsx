@@ -8,9 +8,13 @@ import { BrandingSettings } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 
-const DEFAULT_ACCENT = "#f02b22";
-const DEFAULT_BACKGROUND_LIGHT = "#f3efe5";
-const DEFAULT_BACKGROUND_DARK = "#080808";
+// Match the "Match Vision" palette's actual globals.css defaults (2026-08-29)
+// — purely cosmetic here (pre-fills the <input type="color"> swatch when
+// nothing's overridden yet), the real default color always comes straight
+// from globals.css regardless of what's shown here.
+const DEFAULT_ACCENT = "#c6ff00";
+const DEFAULT_BACKGROUND_LIGHT = "#f3f6ec";
+const DEFAULT_BACKGROUND_DARK = "#10140c";
 // Matches GoLiveButton.tsx's own fallback — kept as separate constants
 // (not shared) since the color-picker default and the component's
 // no-branding-loaded-yet default only need to agree in value, not in code.

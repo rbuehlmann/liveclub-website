@@ -30,7 +30,7 @@ const UPCOMING_STATUSES = new Set<Game["status"]>(["draft", "scheduled", "live",
 const STATUS_BADGE_CLASSES: Record<Game["status"], string> = {
   draft: "bg-gray-200 text-gray-700 dark:bg-white/10 dark:text-gray-300",
   scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
-  live: "animate-pulse bg-brand-red text-white",
+  live: "animate-pulse bg-brand-orange text-white",
   paused: "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300",
   finished: "bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400",
   cancelled: "bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-gray-500",

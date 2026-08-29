@@ -174,7 +174,7 @@ export default function LiveControlPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{tGames(`status.${game.status}`)}</p>
         </div>
-        <p className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white">
+        <p className="text-3xl font-bold tabular-nums text-brand-emerald">
           {game.score.home}:{game.score.away}
         </p>
       </div>

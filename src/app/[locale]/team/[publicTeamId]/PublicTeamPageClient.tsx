@@ -148,14 +148,14 @@ export function PublicTeamPageClient({ publicTeamId }: { publicTeamId: string })
       {game ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5 px-8 py-6">
           {isLive && (
-            <span className="animate-pulse rounded-full bg-brand-red px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
+            <span className="animate-pulse rounded-full bg-brand-orange px-4 py-1 text-sm font-bold uppercase tracking-wide text-white">
               LIVE
             </span>
           )}
           <div className="flex items-center gap-4">
             <TeamIcon publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} size={40} />
             <span className="text-lg font-semibold text-gray-900 dark:text-white">{game.homeTeamName}</span>
-            <span className="font-teko text-4xl font-bold tabular-nums text-gray-900 dark:text-white">
+            <span className="font-teko text-4xl font-bold tabular-nums text-brand-emerald">
               {game.scoreHome}:{game.scoreAway}
             </span>
             <span className="text-lg font-semibold text-gray-900 dark:text-white">{game.awayTeamName}</span>

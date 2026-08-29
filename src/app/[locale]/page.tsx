@@ -211,7 +211,7 @@ export default function Home() {
           <div className="flex flex-col items-center gap-1">
             <p
               className={`font-teko text-3xl font-bold ${
-                gameStatusCounts.live > 0 ? "text-brand-red" : "text-gray-900 dark:text-white"
+                gameStatusCounts.live > 0 ? "text-brand-orange" : "text-gray-900 dark:text-white"
               }`}
             >
               {gameStatusCounts.live}
