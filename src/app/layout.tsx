@@ -53,17 +53,19 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${teko.variable} h-full antialiased`}
     >
       <head>
-        {/* Applied before hydration so the wrong theme never flashes first
-            — kept in sync with ThemeToggle's storage key. Dark is the
-            default (2026-08-29: light mode isn't polished yet, dark ships
-            first) — only an explicit stored "light" opts back out. */}
+        {/* Dark mode, unconditionally — no exceptions, not even a stored
+            "light" preference from earlier testing (2026-08-30: a machine
+            with an old localStorage value from before dark became the
+            default, or from testing the toggle back when it was still
+            visible, was still showing light mode — "ich hab keine
+            Kontrolle darüber"). The toggle is hidden (ThemeToggle.tsx's
+            ENABLED flag) and light mode isn't polished yet, so there's
+            currently no supported way to see anything but dark, on any
+            device, ever — this matches that exactly instead of leaving a
+            leftover per-browser escape hatch nothing can reach anymore. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try {
-              if (localStorage.getItem("liveclub-theme") !== "light") {
-                document.documentElement.classList.add("dark");
-              }
-            } catch (e) {}`,
+            __html: `document.documentElement.classList.add("dark");`,
           }}
         />
       </head>
