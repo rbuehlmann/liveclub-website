@@ -112,6 +112,14 @@ function UsersIcon({ className }: { className?: string }) {
   );
 }
 
+function HeartIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const t = useTranslations("home");
   // Reused for the hero mockup's game-status label — same wording as every
@@ -276,43 +284,11 @@ export default function Home() {
     router.push(buildTeamUrl(team.publicTeamId));
   }
 
-  if (platform) {
-    // Phone, app not installed (an install has it already open via
-    // Universal/App Links before this ever renders) — the desktop hero/
-    // search below is built for picking a club to administer, not for a
-    // fan on their phone, so it's replaced with a single clear "get the
-    // app" CTA instead (2026-08-28 decision).
-    return (
-      <main className="min-h-screen bg-brand-white dark:bg-brand-black">
-        <PublicHeader />
-        <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10">
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-6 py-8 text-center dark:border-white/10 dark:bg-white/5">
-            <p className="text-gray-600 dark:text-gray-400">{t("mobileCta")}</p>
-            <a href={platform === "ios" ? APP_STORE_URL : PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={platform === "ios" ? "/badges/app-store-badge.svg" : "/badges/google-play-badge.svg"}
-                alt={platform === "ios" ? "App Store" : "Google Play"}
-                className="h-11"
-              />
-            </a>
-            <p className="text-xs text-gray-400 dark:text-gray-500">{t("betaNotice")}</p>
-            {/* /register lives outside the [locale] tree (2026-08-24 scope
-                decision) — plain next/link, not the locale-aware one. */}
-            <NextLink href="/register" className="text-sm text-brand-red-link hover:underline">
-              {t("registerClub")}
-            </NextLink>
-          </div>
-        </div>
-        <PublicFooter />
-      </main>
-    );
-  }
-
   // What the hero's iPhone mockup shows — a real live game when one exists
   // (isLive: true, drives the pulsing "LIVE" dot), otherwise the same
   // once-per-load random example the mockup already picked (isLive: false,
-  // labeled "Beispielansicht" instead of claiming to be live).
+  // labeled "Beispielansicht" instead of claiming to be live). Shared by
+  // both the desktop hero and the mobile app-first view below.
   const heroPhoneGame: HeroPhoneGame = exampleGame
     ? {
         homeTeamName: exampleGame.homeTeamName,
@@ -336,6 +312,116 @@ export default function Home() {
         statusLabel: t("exampleLabel"),
         isLive: false,
       };
+
+  if (platform) {
+    // Phone, app not installed (an install has it already open via
+    // Universal/App Links before this ever renders) — the desktop hero/
+    // search below is built for picking a club to administer, not for a
+    // fan on their phone, so this is its own fan-first hero instead
+    // (2026-08-28 decision, redesigned 2026-08-30 — reuses the same
+    // HeroPhoneMockup and heroPhoneGame data as the desktop hero, just a
+    // different surrounding layout). PublicHeader itself is untouched —
+    // shared with desktop, not a mobile-specific concern.
+    const storeUrl = platform === "ios" ? APP_STORE_URL : PLAY_STORE_URL;
+    return (
+      <main className="min-h-screen bg-brand-white dark:bg-brand-black">
+        <PublicHeader />
+        <div className="relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 hidden dark:block">
+            <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-brand-emerald/10 blur-3xl" />
+            <div className="absolute top-1/3 left-0 h-64 w-64 rounded-full bg-brand-red/10 blur-3xl" />
+          </div>
+          <div className="relative mx-auto flex max-w-md flex-col items-center gap-6 px-4 py-10 text-center">
+            {heroPhoneGame.isLive && (
+              <span className="flex items-center gap-1.5 rounded-full border border-brand-orange/30 bg-brand-orange/10 px-3 py-1 text-xs font-bold text-brand-orange">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-orange" />
+                LIVE
+              </span>
+            )}
+            <h1 className="font-teko text-5xl leading-[0.95] font-bold uppercase text-gray-900 dark:text-white">
+              {t("heroTitleLine1")}
+              <br />
+              <span className="text-brand-red">{t("heroTitleLine2")}</span>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">{t("mobileHeroSubtitle")}</p>
+
+            <div className="flex w-full flex-col gap-3">
+              <a
+                href={storeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl bg-brand-red px-6 py-4 text-base font-bold text-brand-red-text uppercase"
+              >
+                {t("mobileAppCta")} →
+              </a>
+              {/* /register lives outside the [locale] tree (2026-08-24
+                  scope decision) — plain next/link, not the locale-aware
+                  one. */}
+              <NextLink
+                href="/register"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-4 text-base font-bold text-gray-900 uppercase dark:border-white/20 dark:text-white"
+              >
+                {t("registerClub")} →
+              </NextLink>
+            </div>
+
+            <div className="py-2">
+              <HeroPhoneMockup game={heroPhoneGame} />
+            </div>
+
+            <div className="grid w-full grid-cols-3 gap-3">
+              <div className="flex flex-col items-center gap-1">
+                <BoltIcon className="h-6 w-6 text-brand-red" />
+                <span className="text-xs font-bold text-gray-900 uppercase dark:text-white">
+                  {t("mobileFeatureLiveTitle")}
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {t("mobileFeatureLiveBody")}
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <BellIcon className="h-6 w-6 text-brand-red" />
+                <span className="text-xs font-bold text-gray-900 uppercase dark:text-white">
+                  {t("mobileFeaturePushTitle")}
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {t("mobileFeaturePushBody")}
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <HeartIcon className="h-6 w-6 text-brand-red" />
+                <span className="text-xs font-bold text-gray-900 uppercase dark:text-white">
+                  {t("mobileFeatureClubTitle")}
+                </span>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {t("mobileFeatureClubBody")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/badges/app-store-badge.svg" alt="App Store" className="h-10" />
+              </a>
+              <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/badges/google-play-badge.svg" alt="Google Play" className="h-10" />
+              </a>
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-brand-emerald">
+                🔒 {t("freeForeverTitle")}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{t("freeForeverBody")}</p>
+            </div>
+          </div>
+        </div>
+        <PublicFooter />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-brand-white dark:bg-brand-black">

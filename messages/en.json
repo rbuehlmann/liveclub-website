@@ -345,7 +345,16 @@
     "noTeamsYet": "No teams yet.",
     "betaNotice": "LiveClub app for fans — join the beta now",
     "registerClub": "Register your club",
-    "mobileCta": "Follow your club's live scores right in the LiveClub app."
+    "mobileHeroSubtitle": "Follow games live on your phone. Get a push notification for every goal.",
+    "mobileAppCta": "Get the app for free",
+    "mobileFeatureLiveTitle": "LIVE",
+    "mobileFeatureLiveBody": "Scores in real time",
+    "mobileFeaturePushTitle": "PUSH",
+    "mobileFeaturePushBody": "Goals, the moment they happen",
+    "mobileFeatureClubTitle": "Your club",
+    "mobileFeatureClubBody": "Follow your team, anywhere",
+    "freeForeverTitle": "100% free for fans.",
+    "freeForeverBody": "No registration. No subscription. No cost."
   },
   "publicClub": {
     "notFound": "Club not found.",

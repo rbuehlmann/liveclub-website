@@ -355,7 +355,16 @@
     "noTeamsYet": "Noch keine Mannschaften vorhanden.",
     "betaNotice": "LiveClub-App für Fans — jetzt am Beta-Test teilnehmen",
     "registerClub": "Verein registrieren",
-    "mobileCta": "Verfolge Live-Spielstände deines Vereins direkt in der LiveClub-App."
+    "mobileHeroSubtitle": "Verfolge Spiele live auf deinem Handy. Erhalte Push-Mitteilungen bei jedem Tor.",
+    "mobileAppCta": "App kostenlos laden",
+    "mobileFeatureLiveTitle": "LIVE",
+    "mobileFeatureLiveBody": "Spielstände in Echtzeit",
+    "mobileFeaturePushTitle": "PUSH",
+    "mobileFeaturePushBody": "Tore sofort erhalten",
+    "mobileFeatureClubTitle": "Dein Verein",
+    "mobileFeatureClubBody": "Folge deinem Team, überall",
+    "freeForeverTitle": "100% kostenlos für Fans.",
+    "freeForeverBody": "Keine Registrierung. Kein Abo. Keine Kosten."
   },
   "publicClub": {
     "notFound": "Verein wurde nicht gefunden.",
