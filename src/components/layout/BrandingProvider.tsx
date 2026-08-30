@@ -11,6 +11,46 @@ export function useBranding() {
   return useContext(BrandingContext);
 }
 
+// Small hex color helpers — just enough to derive the two colors
+// deliberately NOT exposed as their own admin fields (see types.ts):
+// the accent's hover shade and its on-fill text color. Both need to track
+// whatever custom accentColorDark an admin picks, or a bright custom
+// accent could end up with illegible (e.g. dark-on-dark) auto-generated
+// text/hover instead of the values globals.css's own defaults happen to
+// suit.
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "");
+  const value = parseInt(clean.length === 3 ? clean.replace(/(.)/g, "$1$1") : clean, 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+}
+
+function toHexByte(n: number): string {
+  return Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+}
+
+// WCAG relative luminance — cheap enough for a one-off UI decision (pick
+// dark or light text for a given fill), no need for full contrast-ratio
+// math against both candidates.
+function relativeLuminance([r, g, b]: [number, number, number]): number {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+// Matches globals.css's own Club Ink / Moon White pair — the same two
+// colors every other on-fill text in this palette already uses.
+function textColorFor(fillHex: string): string {
+  return relativeLuminance(hexToRgb(fillHex)) > 0.5 ? "#10140c" : "#f5f7ef";
+}
+
+function darken(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const factor = 1 - amount;
+  return `#${toHexByte(r * factor)}${toHexByte(g * factor)}${toHexByte(b * factor)}`;
+}
+
 // A style tag appended after globals.css wins the cascade for
 // same-specificity :root/.dark rules, so this can override --brand-red
 // etc. without touching the compiled stylesheet — the whole point being a
@@ -32,11 +72,21 @@ function applyOverrides(branding: BrandingSettings) {
   const rootCss = lines.length ? `:root:not(.dark) { ${lines.join(" ")} }` : "";
 
   const darkLines: string[] = [];
-  if (branding.accentColorDark) darkLines.push(`--brand-red: ${branding.accentColorDark};`);
+  if (branding.accentColorDark) {
+    darkLines.push(`--brand-red: ${branding.accentColorDark};`);
+    // Derived, not admin-editable — see the helpers above.
+    darkLines.push(`--brand-red-hover: ${darken(branding.accentColorDark, 0.12)};`);
+    darkLines.push(`--brand-red-text: ${textColorFor(branding.accentColorDark)};`);
+    darkLines.push(`--brand-red-link: ${branding.accentColorDark};`);
+  }
   if (branding.backgroundColorDark) {
     darkLines.push(`--background: ${branding.backgroundColorDark};`);
     darkLines.push(`--brand-black: ${branding.backgroundColorDark};`);
   }
+  if (branding.foregroundColorDark) darkLines.push(`--foreground: ${branding.foregroundColorDark};`);
+  if (branding.silverColorDark) darkLines.push(`--brand-silver: ${branding.silverColorDark};`);
+  if (branding.orangeColorDark) darkLines.push(`--brand-orange: ${branding.orangeColorDark};`);
+  if (branding.emeraldColorDark) darkLines.push(`--brand-emerald: ${branding.emeraldColorDark};`);
   const darkCss = darkLines.length ? `.dark { ${darkLines.join(" ")} }` : "";
 
   let styleTag = document.getElementById("branding-overrides") as HTMLStyleElement | null;

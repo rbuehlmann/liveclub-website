@@ -342,6 +342,19 @@ export interface BrandingSettings {
   backgroundColorDark?: string | null;
   accentColorLight?: string | null;
   accentColorDark?: string | null;
+  // Dark-mode-only additions (2026-08-30) — light-mode isn't reachable
+  // without the theme toggle right now (see ThemeToggle.tsx's ENABLED
+  // flag), so these skip the Light/Dark pairing the two fields above have
+  // and just override the .dark palette directly. Deliberately NOT
+  // exposed here: the accent's hover shade and its on-fill text color —
+  // both are derived automatically from accentColorDark (see
+  // BrandingProvider.tsx's textColorFor/darken) rather than independently
+  // editable, so a custom accent can't end up paired with illegible or
+  // mismatched auto-generated text.
+  foregroundColorDark?: string | null;
+  silverColorDark?: string | null;
+  orangeColorDark?: string | null;
+  emeraldColorDark?: string | null;
   // The "GO LIVE" header button (GoLiveButton.tsx) — a solid pill, not
   // just an outline mark on the page background: goLiveIcon* colors every
   // path in the SVG (frame, broadcast icon, and the "LIVE" wordmark all

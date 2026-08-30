@@ -15,6 +15,12 @@ import { Button } from "@/components/ui/Button";
 const DEFAULT_ACCENT = "#c6ff00";
 const DEFAULT_BACKGROUND_LIGHT = "#f3f6ec";
 const DEFAULT_BACKGROUND_DARK = "#10140c";
+// Dark-mode-only additions (2026-08-30) — no Light-mode counterpart on
+// purpose, see BrandingSettings.foregroundColorDark's own comment for why.
+const DEFAULT_FOREGROUND_DARK = "#f5f7ef";
+const DEFAULT_SILVER_DARK = "#a7adb2";
+const DEFAULT_ORANGE_DARK = "#ff6b00";
+const DEFAULT_EMERALD_DARK = "#00e58b";
 // Matches GoLiveButton.tsx's own fallback — kept as separate constants
 // (not shared) since the color-picker default and the component's
 // no-branding-loaded-yet default only need to agree in value, not in code.
@@ -373,6 +379,63 @@ export default function AdminSettingsPage() {
                 onChange={(e) => update("backgroundColorDark", e.target.value)}
                 className="h-10 w-16 rounded border border-gray-300"
               />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-1 font-medium text-gray-900 dark:text-white">
+              Weitere Markenfarben (nur Dark Mode)
+            </h3>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+              Kein Light-Mode-Gegenstück, solange der Umschalter ausgeblendet ist. Textfarbe und
+              Hover-/Text-auf-Akzent-Farbe werden automatisch aus der Akzentfarbe oben berechnet,
+              nicht separat gesetzt.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Textfarbe
+                </label>
+                <input
+                  type="color"
+                  value={branding.foregroundColorDark ?? DEFAULT_FOREGROUND_DARK}
+                  onChange={(e) => update("foregroundColorDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Rahmen-/Sekundärfarbe
+                </label>
+                <input
+                  type="color"
+                  value={branding.silverColorDark ?? DEFAULT_SILVER_DARK}
+                  onChange={(e) => update("silverColorDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Live-Anzeige (Match Orange)
+                </label>
+                <input
+                  type="color"
+                  value={branding.orangeColorDark ?? DEFAULT_ORANGE_DARK}
+                  onChange={(e) => update("orangeColorDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Spielstand (Match Emerald)
+                </label>
+                <input
+                  type="color"
+                  value={branding.emeraldColorDark ?? DEFAULT_EMERALD_DARK}
+                  onChange={(e) => update("emeraldColorDark", e.target.value)}
+                  className="h-10 w-16 rounded border border-gray-300"
+                />
+              </div>
             </div>
           </div>
 
