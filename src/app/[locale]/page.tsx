@@ -405,13 +405,6 @@ export default function Home() {
                 <img src="/badges/google-play-badge.svg" alt="Google Play" className="h-10" />
               </a>
             </div>
-
-            <div className="flex flex-col gap-0.5">
-              <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-brand-emerald">
-                🔒 {t("freeForeverTitle")}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t("freeForeverBody")}</p>
-            </div>
           </div>
         </div>
         <PublicFooter />
