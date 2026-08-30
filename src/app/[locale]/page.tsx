@@ -322,7 +322,6 @@ export default function Home() {
     // HeroPhoneMockup and heroPhoneGame data as the desktop hero, just a
     // different surrounding layout). PublicHeader itself is untouched —
     // shared with desktop, not a mobile-specific concern.
-    const storeUrl = platform === "ios" ? APP_STORE_URL : PLAY_STORE_URL;
     return (
       <main className="min-h-screen bg-brand-white dark:bg-brand-black">
         <PublicHeader />
@@ -344,26 +343,23 @@ export default function Home() {
               <span className="text-brand-red">{t("heroTitleLine2")}</span>
             </h1>
             <p className="text-gray-600 dark:text-gray-300">{t("mobileHeroSubtitle")}</p>
+            <p className="font-teko text-2xl font-bold text-brand-red">{t("freeForeverTitle")}</p>
 
-            <div className="flex w-full flex-col gap-3">
-              <a
-                href={storeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl bg-brand-red px-6 py-4 text-base font-bold text-brand-red-text uppercase"
-              >
-                {t("mobileAppCta")} →
-              </a>
-              {/* /register lives outside the [locale] tree (2026-08-24
-                  scope decision) — plain next/link, not the locale-aware
-                  one. */}
-              <NextLink
-                href="/register"
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-4 text-base font-bold text-gray-900 uppercase dark:border-white/20 dark:text-white"
-              >
-                {t("registerClub")} →
-              </NextLink>
-            </div>
+            {/* Scrolls to the real store badges below instead of opening a
+                store URL directly — one identical page/flow for iOS and
+                Android alike (2026-08-30 report), rather than trusting UA
+                sniffing to pick the right store. Plain <a>, not the i18n
+                Link: Next's client router doesn't scroll to a hash when
+                the pathname itself isn't changing, a real anchor always
+                does. "Verein registrieren" removed — this page is for
+                fans, not club admins (still reachable from the desktop
+                hero/footer). */}
+            <a
+              href="#store-badges"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-red px-6 py-4 text-base font-bold text-brand-red-text uppercase"
+            >
+              {t("mobileAppCta")} →
+            </a>
 
             <div className="py-2">
               <HeroPhoneMockup game={heroPhoneGame} />
@@ -399,7 +395,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div id="store-badges" className="flex scroll-mt-6 gap-3">
               <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/badges/app-store-badge.svg" alt="App Store" className="h-10" />
