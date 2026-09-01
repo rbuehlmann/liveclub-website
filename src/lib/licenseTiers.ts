@@ -15,7 +15,7 @@ export interface LicenseTierInfo {
 export const LICENSE_TIERS: LicenseTierInfo[] = [
   { id: "team5", label: "Bis 5 Teams", maxTeams: 5, monthlyPrice: "CHF 9.–", yearlyPrice: "CHF 99.–" },
   { id: "team15", label: "Bis 15 Teams", maxTeams: 15, monthlyPrice: "CHF 19.–", yearlyPrice: "CHF 199.–" },
-  { id: "unlimited", label: "Unlimited", maxTeams: null, monthlyPrice: "CHF 29.–", yearlyPrice: "CHF 299.–" },
+  { id: "unlimited", label: "Bis 99 Teams", maxTeams: 99, monthlyPrice: "CHF 29.–", yearlyPrice: "CHF 299.–" },
 ];
 
 export function tierLabel(tier: LicenseTier | null | undefined): string {

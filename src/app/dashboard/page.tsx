@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
@@ -17,6 +17,13 @@ import { LicenseTier, GameStatus } from "@/lib/types";
 
 const RENEWAL_WINDOW_DAYS = 14;
 const UPCOMING_STATUSES = new Set<GameStatus>(["draft", "scheduled", "live", "paused"]);
+
+interface DowngradePrompt {
+  tier: LicenseTier;
+  interval: "monthly" | "yearly";
+  maxTeams: number;
+  teams: { teamId: string; name: string }[];
+}
 
 interface ClaimableGame {
   gameId: string;
@@ -51,6 +58,8 @@ export default function DashboardOverviewPage() {
   const [claimableGames, setClaimableGames] = useState<ClaimableGame[]>([]);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [downgradePrompt, setDowngradePrompt] = useState<DowngradePrompt | null>(null);
+  const [keepTeamIds, setKeepTeamIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!club || !user) return;
@@ -118,17 +127,63 @@ export default function DashboardOverviewPage() {
   // — shown here purely so the buttons don't appear only to then fail.
   const canBuy = !isSuspended && (isExpired || (remaining !== null && remaining <= RENEWAL_WINDOW_DAYS));
 
-  async function handleUpgrade(tier: LicenseTier, interval: "monthly" | "yearly") {
+  async function startCheckout(tier: LicenseTier, interval: "monthly" | "yearly", keep?: string[]) {
     if (!club) return;
     setRedirecting(`${tier}-${interval}`);
     setBillingError(null);
     try {
-      const { url } = await createCheckoutSession({ clubId: club.clubId, tier, interval });
+      const { url } = await createCheckoutSession({ clubId: club.clubId, tier, interval, keepTeamIds: keep });
       window.location.href = url;
     } catch (err) {
       setBillingError((err as { message?: string })?.message ?? t("checkoutFailed"));
       setRedirecting(null);
     }
+  }
+
+  async function handleUpgrade(tier: LicenseTier, interval: "monthly" | "yearly") {
+    if (!club) return;
+    const tierInfo = LICENSE_TIERS.find((tt) => tt.id === tier);
+    if (!tierInfo || tierInfo.maxTeams === null) {
+      await startCheckout(tier, interval);
+      return;
+    }
+    // A downgrade — the chosen tier's cap is below the club's current
+    // active team count — needs the admin to pick which teams to keep
+    // *before* checkout even opens, so ask first instead of finding out
+    // server-side only after they've already been sent to Stripe
+    // (2026-09-01).
+    setBillingError(null);
+    const { db } = getFirebaseClient();
+    const snap = await getDocs(collection(db, "clubs", club.clubId, "teams"));
+    const activeTeams = snap.docs
+      .filter((d) => d.data().archived !== true)
+      .map((d) => ({ teamId: d.id, name: d.data().name as string }));
+    if (activeTeams.length <= tierInfo.maxTeams) {
+      await startCheckout(tier, interval);
+      return;
+    }
+    setKeepTeamIds(new Set());
+    setDowngradePrompt({ tier, interval, maxTeams: tierInfo.maxTeams, teams: activeTeams });
+  }
+
+  function toggleKeepTeam(teamId: string) {
+    if (!downgradePrompt) return;
+    setKeepTeamIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(teamId)) {
+        next.delete(teamId);
+      } else if (next.size < downgradePrompt.maxTeams) {
+        next.add(teamId);
+      }
+      return next;
+    });
+  }
+
+  async function handleConfirmDowngrade() {
+    if (!downgradePrompt || keepTeamIds.size !== downgradePrompt.maxTeams) return;
+    const { tier, interval } = downgradePrompt;
+    setDowngradePrompt(null);
+    await startCheckout(tier, interval, Array.from(keepTeamIds));
   }
 
   return (
@@ -287,6 +342,53 @@ export default function DashboardOverviewPage() {
             <h2 className="font-semibold text-gray-900 dark:text-white">{t("games")}</h2>
           </Card>
         </Link>
+      )}
+
+      {downgradePrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex max-h-[90vh] w-full max-w-sm flex-col rounded-xl bg-white p-6 shadow-lg dark:bg-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("downgradeTitle")}</h2>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {t("downgradeBody", { max: downgradePrompt.maxTeams })}
+            </p>
+            <div className="mt-4 flex flex-col gap-1 overflow-y-auto">
+              {downgradePrompt.teams.map((team) => (
+                <label
+                  key={team.teamId}
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={keepTeamIds.has(team.teamId)}
+                    onChange={() => toggleKeepTeam(team.teamId)}
+                    disabled={!keepTeamIds.has(team.teamId) && keepTeamIds.size >= downgradePrompt.maxTeams}
+                  />
+                  {team.name}
+                </label>
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+              {t("downgradeSelectedCount", { count: keepTeamIds.size, max: downgradePrompt.maxTeams })}
+            </p>
+            {billingError && <p className="mt-2 text-sm text-red-600">{billingError}</p>}
+            <div className="mt-4 flex gap-3">
+              <Button variant="secondary" fullWidth onClick={() => setDowngradePrompt(null)}>
+                {t("downgradeCancel")}
+              </Button>
+              <Button
+                fullWidth
+                onClick={handleConfirmDowngrade}
+                disabled={keepTeamIds.size !== downgradePrompt.maxTeams || redirecting !== null}
+              >
+                {redirecting !== null ? t("opening") : t("downgradeConfirm")}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

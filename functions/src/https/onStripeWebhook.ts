@@ -1,5 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import type Stripe from "stripe";
 import { db } from "../firebaseAdmin";
 import { getStripeClient } from "../lib/stripeClient";
@@ -38,6 +38,40 @@ async function applyOneTimePurchase(clubId: string, tier: LicenseTier, interval:
     createdBy: "stripe-webhook",
     source: "stripe",
   });
+
+  await archivePendingDowngradeTeams(clubId);
+}
+
+/**
+ * Downgrade team-selection (2026-09-01): createCheckoutSession.ts parks the
+ * admin's "which teams to keep" choice on the club doc before payment,
+ * since a downgrade only actually takes effect once payment succeeds here
+ * — never at checkout-creation time, same as every other license change in
+ * this file. Archives (active:false + archived:true) every team not on the
+ * keep-list; onTeamWrite.ts already removes an inactive team's public
+ * mirrors, so this alone is what makes them "nicht mehr auffindbar". A
+ * no-op whenever nothing was parked (the common case — no downgrade, or
+ * the club was already at/under the new cap).
+ */
+async function archivePendingDowngradeTeams(clubId: string) {
+  const clubRef = db.collection("clubs").doc(clubId);
+  const clubSnap = await clubRef.get();
+  const keepTeamIds = clubSnap.data()?.pendingDowngradeKeepTeamIds as string[] | null | undefined;
+  if (!Array.isArray(keepTeamIds) || keepTeamIds.length === 0) return;
+
+  const keepSet = new Set(keepTeamIds);
+  const teamsSnap = await clubRef.collection("teams").get();
+  const batch = db.batch();
+  let archivedAny = false;
+  for (const teamDoc of teamsSnap.docs) {
+    const data = teamDoc.data();
+    if (data.archived === true || keepSet.has(teamDoc.id)) continue;
+    batch.update(teamDoc.ref, { active: false, archived: true });
+    archivedAny = true;
+  }
+  if (archivedAny) await batch.commit();
+
+  await clubRef.update({ pendingDowngradeKeepTeamIds: FieldValue.delete() });
 }
 
 /**

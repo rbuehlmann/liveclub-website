@@ -7,6 +7,7 @@ import { fetchLogoThumbnail } from "../lib/logoThumbnail";
 // renaming their club or changing the logo would only ever update the
 // private clubs/{clubId} doc. This mirrors every subsequent write too.
 export const onClubWrite = onDocumentWritten("clubs/{clubId}", async (event) => {
+  const { clubId } = event.params;
   const after = event.data?.after;
   const afterData = after?.exists ? after.data() : null;
   if (!afterData) return;
@@ -22,6 +23,7 @@ export const onClubWrite = onDocumentWritten("clubs/{clubId}", async (event) => 
   // actually changed since the last mirror.
   const existing = await publicClubRef.get();
   const logoChanged = existing.data()?.logoUrl !== logoUrl;
+  const nameChanged = existing.data()?.name !== afterData.name;
   const logoThumbnailBase64 = logoChanged
     ? logoUrl
       ? await fetchLogoThumbnail(logoUrl)
@@ -49,4 +51,25 @@ export const onClubWrite = onDocumentWritten("clubs/{clubId}", async (event) => 
     },
     { merge: true }
   );
+
+  // publicTeams/{publicTeamId}.clubLogoUrl/clubName (what the iOS/Android
+  // apps actually read for a followed team, see onTeamWrite.ts) are
+  // denormalized copies written only when the TEAM doc itself is written —
+  // so changing the club's logo/name here previously left every existing
+  // team showing the old one until each team happened to get edited for an
+  // unrelated reason (2026-09-01 bug report: "Bild ändert sich nicht bei
+  // jedem Team"). Cascaded here instead, but only when logo/name actually
+  // changed — querying by clubId (not going through clubs/{clubId}/teams)
+  // so this only ever touches teams that already have a live publicTeams
+  // doc, never resurrects one for an inactive/deleted team.
+  if (logoChanged || nameChanged) {
+    const teamsSnap = await db.collection("publicTeams").where("clubId", "==", clubId).get();
+    if (!teamsSnap.empty) {
+      const batch = db.batch();
+      for (const teamDoc of teamsSnap.docs) {
+        batch.set(teamDoc.ref, { clubLogoUrl: logoUrl, clubName: afterData.name }, { merge: true });
+      }
+      await batch.commit();
+    }
+  }
 });

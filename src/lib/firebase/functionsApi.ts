@@ -286,6 +286,7 @@ export async function createCheckoutSession(input: {
   clubId: string;
   tier: LicenseTier;
   interval: "monthly" | "yearly";
+  keepTeamIds?: string[];
 }) {
   const { functions } = getFirebaseClient();
   const call = httpsCallable<typeof input, { url: string }>(functions, "createCheckoutSession");

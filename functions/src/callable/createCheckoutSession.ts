@@ -10,7 +10,7 @@ import {
   stripePriceIdUnlimitedMonthly,
   stripePriceIdUnlimitedYearly,
 } from "../lib/secrets";
-import { LicenseTier } from "../lib/license";
+import { LicenseTier, TIER_MAX_TEAMS } from "../lib/license";
 
 const SITE_ORIGIN = "https://liveclub.app";
 const RENEWAL_WINDOW_DAYS = 14;
@@ -23,6 +23,13 @@ interface CreateCheckoutSessionRequest {
   clubId: string;
   tier: LicenseTier;
   interval: "monthly" | "yearly";
+  // Required only for a downgrade (the chosen tier's cap is below the
+  // club's current active team count) — the teams the admin picked to keep
+  // in dashboard/page.tsx's team-picker (2026-09-01). Validated below and
+  // parked on the club doc for onStripeWebhook.ts to act on once payment
+  // actually succeeds — not sent through Stripe metadata, which has a
+  // 500-char-per-value limit a club with many teams could exceed.
+  keepTeamIds?: string[];
 }
 
 /**
@@ -43,7 +50,7 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
     }
-    const { clubId, tier, interval } = request.data;
+    const { clubId, tier, interval, keepTeamIds } = request.data;
     if (typeof clubId !== "string" || !clubId) {
       throw new HttpsError("invalid-argument", "clubId fehlt.");
     }
@@ -83,6 +90,29 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
       }
     }
 
+    // Downgrade check: if the chosen tier's cap is below the club's current
+    // active (non-archived) team count, the admin must have already picked
+    // exactly `maxTeams` teams to keep — enforced here server-side, not
+    // just as a UI gate, since a downgrade is a real, mostly-irreversible
+    // action (the rest get archived once payment succeeds).
+    const newMaxTeams = TIER_MAX_TEAMS[tier];
+    if (typeof newMaxTeams === "number") {
+      const teamsSnap = await clubRef.collection("teams").get();
+      const activeTeamIds = teamsSnap.docs.filter((d) => d.data().archived !== true).map((d) => d.id);
+      if (activeTeamIds.length > newMaxTeams) {
+        if (!Array.isArray(keepTeamIds) || keepTeamIds.length !== newMaxTeams) {
+          throw new HttpsError(
+            "invalid-argument",
+            `Diese Stufe erlaubt ${newMaxTeams} Teams — bitte genau ${newMaxTeams} Team(s) zum Behalten auswählen.`
+          );
+        }
+        const activeTeamIdSet = new Set(activeTeamIds);
+        if (!keepTeamIds.every((id) => activeTeamIdSet.has(id))) {
+          throw new HttpsError("invalid-argument", "Ungültige Team-Auswahl.");
+        }
+      }
+    }
+
     const stripe = getStripeClient();
 
     let customerId = club.stripeCustomerId as string | undefined;
@@ -107,6 +137,13 @@ export const createCheckoutSession = onCall<CreateCheckoutSessionRequest>(
       },
     };
     const priceId = PRICE_IDS[tier][interval];
+
+    // Parked on the club doc (not Stripe metadata, see the interface
+    // comment above) so onStripeWebhook.ts can archive the excess teams
+    // the moment this purchase actually succeeds. Always written (even as
+    // null) so a stale selection from an earlier abandoned downgrade
+    // attempt can never leak into a later, unrelated purchase.
+    await clubRef.update({ pendingDowngradeKeepTeamIds: keepTeamIds ?? null });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

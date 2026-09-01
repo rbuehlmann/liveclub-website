@@ -40,6 +40,16 @@ export interface Team {
   shortName: string;
   sport: string;
   active: boolean;
+  // Set when a license downgrade drops the club below its previous
+  // team-count tier and the admin picks which teams to keep (2026-09-01,
+  // see createCheckoutSession.ts/onStripeWebhook.ts) — distinct from
+  // `active`, which a clubAdmin can toggle freely (e.g. off-season) without
+  // it ever counting against their license's team cap. An archived team
+  // also gets `active: false` (same public-mirror removal as a manual
+  // deactivation), but only an archived team is excluded from the cap
+  // count and needs a fresh "Reaktivieren" click gated on having headroom
+  // again, rather than being freely reversible any time.
+  archived?: boolean;
 }
 
 export type GameStatus =

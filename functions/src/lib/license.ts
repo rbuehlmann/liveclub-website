@@ -9,10 +9,13 @@ export type LicenseStatus = "active" | "expired" | "cancelled" | "suspended";
 // anything numerically, just extends access past the trial.
 export type LicenseTier = "team5" | "team15" | "unlimited";
 
+// "unlimited" keeps its id (Stripe Price IDs/data are keyed on it, and the
+// user manages the Stripe-side display name separately) but is no longer
+// actually unlimited — capped at 99 teams (2026-09-01 pricing change).
 export const TIER_MAX_TEAMS: Record<LicenseTier, number | null> = {
   team5: 5,
   team15: 15,
-  unlimited: null,
+  unlimited: 99,
 };
 
 export interface UpsertLicenseInput {

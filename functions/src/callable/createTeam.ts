@@ -45,18 +45,28 @@ export const createTeam = onCall<CreateTeamRequest>(async (request) => {
   if (typeof clubPublicClubId !== "string") {
     throw new HttpsError("failed-precondition", "Verein hat keine öffentliche ID.");
   }
-  const existingTeamsCount = (await clubRef.collection("teams").count().get()).data().count;
+  const existingTeamsSnap = await clubRef.collection("teams").get();
+  const existingTeamsCount = existingTeamsSnap.size;
 
   // null = unlimited. Missing field (pre-tier-system licenses) also means
   // unlimited — never retroactively blocks a club that predates this limit.
+  // Archived teams (2026-09-01 downgrade flow, see onStripeWebhook.ts) don't
+  // count against the cap — they were deliberately dropped to fit a lower
+  // tier, so the freed-up slot must actually be usable — but a plain
+  // manual deactivation still does, same as before.
+  const activeTeamsCount = existingTeamsSnap.docs.filter((d) => d.data().archived !== true).length;
   const maxTeams = clubSnap.data()?.currentMaxTeams as number | null | undefined;
-  if (typeof maxTeams === "number" && existingTeamsCount >= maxTeams) {
+  if (typeof maxTeams === "number" && activeTeamsCount >= maxTeams) {
     throw new HttpsError(
       "resource-exhausted",
-      `Limit von ${maxTeams} Mannschaften erreicht. Für mehr Mannschaften ist ein Abo der Stufe "15 Teams" oder "Unlimited" nötig.`
+      `Limit von ${maxTeams} Mannschaften erreicht. Für mehr Mannschaften ist ein Abo der Stufe "15 Teams" oder "99 Teams" nötig.`
     );
   }
 
+  // Deliberately the *total* count (including archived/inactive), not
+  // activeTeamsCount — a deactivated or archived team's number must never
+  // be reused (see publicTeamId.ts's own comment); it also has its own
+  // collision-retry loop as a second safety net regardless.
   const publicTeamId = await generateUniquePublicTeamId(db, clubPublicClubId, existingTeamsCount);
   const teamRef = clubRef.collection("teams").doc();
 

@@ -116,10 +116,15 @@
     "checkoutFailed": "Checkout failed.",
     "claiming": "Claiming …",
     "claim": "Claim",
+    "downgradeTitle": "Choose teams",
+    "downgradeBody": "This tier only allows {max} teams. Choose which {max} teams stay active — the rest will be archived and no longer publicly findable afterwards (their data is kept).",
+    "downgradeSelectedCount": "{count}/{max} selected",
+    "downgradeConfirm": "Continue to payment",
+    "downgradeCancel": "Cancel",
     "licenseTiers": {
       "team5": "Up to 5 teams",
       "team15": "Up to 15 teams",
-      "unlimited": "Unlimited"
+      "unlimited": "Up to 99 teams"
     }
   },
   "teams": {
@@ -137,7 +142,9 @@
     "teamCount": "{count}/{max} teams",
     "unlimited": "Unlimited",
     "limitReached": "Limit of {max} teams reached.",
-    "limitReachedUpgradeHint": "For more teams you need a \"15 Teams\" or \"Unlimited\" subscription — <link>upgrade now</link>."
+    "limitReachedUpgradeHint": "For more teams you need a \"15 Teams\" or \"99 Teams\" subscription — <link>upgrade now</link>.",
+    "archivedTitle": "Archived",
+    "archivedBody": "Not selected during the last downgrade — no longer publicly findable, data is kept. Can be reactivated once there's room in the team limit again."
   },
   "games": {
     "title": "Games",
@@ -314,7 +321,7 @@
     "pricingTiers": {
       "team5": "Up to 5 teams",
       "team15": "Up to 15 teams",
-      "unlimited": "Unlimited"
+      "unlimited": "Up to 99 teams"
     },
     "searchHeading": "Find your club and stay live",
     "appCardTitle": "The LiveClub app",

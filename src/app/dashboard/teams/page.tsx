@@ -43,6 +43,7 @@ export default function TeamsPage() {
           shortName: d.data().shortName,
           sport: d.data().sport,
           active: d.data().active ?? true,
+          archived: d.data().archived ?? false,
         }))
       );
     });
@@ -99,15 +100,30 @@ export default function TeamsPage() {
     });
   }
 
+  // A downgrade-archived team (2026-09-01, see createCheckoutSession.ts/
+  // onStripeWebhook.ts) is distinct from a plain deactivation — it doesn't
+  // count against the license cap while archived, so un-archiving it must
+  // respect the cap again, same as creating a brand-new team would.
+  async function reactivateArchivedTeam(team: Team) {
+    if (!club || activeTeams.length >= (maxTeams ?? Infinity)) return;
+    const { db } = getFirebaseClient();
+    await updateDoc(doc(db, "clubs", club.clubId, "teams", team.teamId), {
+      active: true,
+      archived: false,
+    });
+  }
+
+  const activeTeams = teams.filter((team) => !team.archived);
+  const archivedTeams = teams.filter((team) => team.archived);
   const maxTeams = club.currentMaxTeams ?? null;
-  const atLimit = maxTeams !== null && teams.length >= maxTeams;
+  const atLimit = maxTeams !== null && activeTeams.length >= maxTeams;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {t("teamCount", { count: teams.length, max: maxTeams ?? t("unlimited") })}
+          {t("teamCount", { count: activeTeams.length, max: maxTeams ?? t("unlimited") })}
         </span>
       </div>
 
@@ -152,8 +168,8 @@ export default function TeamsPage() {
       )}
 
       <div className="flex flex-col gap-3">
-        {teams.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t("empty")}</p>}
-        {teams.map((team) => {
+        {activeTeams.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">{t("empty")}</p>}
+        {activeTeams.map((team) => {
           const isEditing = editingTeamId === team.teamId;
           return (
             <Card key={team.teamId} className={team.active ? "" : "opacity-60"}>
@@ -209,6 +225,32 @@ export default function TeamsPage() {
           );
         })}
       </div>
+
+      {archivedTeams.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t("archivedTitle")}</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{t("archivedBody")}</p>
+          {archivedTeams.map((team) => (
+            <Card key={team.teamId} className="opacity-60">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">{team.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{team.shortName}</p>
+                </div>
+                {role === "clubAdmin" && (
+                  <Button
+                    variant="secondary"
+                    disabled={maxTeams !== null && activeTeams.length >= maxTeams}
+                    onClick={() => reactivateArchivedTeam(team)}
+                  >
+                    {t("reactivate")}
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
