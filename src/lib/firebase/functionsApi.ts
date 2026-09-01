@@ -328,9 +328,12 @@ export async function submitClubRecommendation(input: {
 
 export async function adminUpdateDemoClub(input: {
   enabled: boolean;
-  postIntervalHours: number;
+  postsPerDay: number;
   pushesPerDay: number;
   liveGamesPerDay: number;
+  postStartTime: string;
+  pushStartTime: string;
+  liveGameStartTime: string;
   logoUrl?: string | null;
   clubName?: string;
   teamName?: string;

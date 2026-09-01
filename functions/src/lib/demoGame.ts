@@ -58,6 +58,36 @@ export async function postDemoTeamInfo(config: DemoClubConfig, wantsPush: boolea
   }
 }
 
+/**
+ * The 2026-09-01 redesign gives Push its own anchored schedule, independent
+ * of Post — so unlike the old wantsPush flag riding along a fresh
+ * postDemoTeamInfo call, this can fire on a tick where no new post was
+ * created at all. Re-notifies about the most recent Team-Info post for the
+ * demo team (never fabricates content); a no-op (returns false) only in the
+ * unlikely case no post exists yet at all.
+ */
+export async function sendDemoPush(config: DemoClubConfig): Promise<boolean> {
+  const teamSnap = await db.collection("clubs").doc(config.clubId!).collection("teams").doc(config.teamId!).get();
+  const team = teamSnap.data();
+  if (!team?.publicTeamId) return false;
+
+  const latest = await db
+    .collection("teamInfos")
+    .where("teamId", "==", config.teamId)
+    .orderBy("createdAt", "desc")
+    .limit(1)
+    .get();
+  if (latest.empty) return false;
+
+  const infoDoc = latest.docs[0];
+  const info = infoDoc.data();
+  const { sent } = await sendTeamInfoPush(team.publicTeamId, { title: team.name, body: info.title });
+  if (sent > 0 && !info.pushSent) {
+    await infoDoc.ref.update({ pushSent: true, pushSentAt: FieldValue.serverTimestamp() });
+  }
+  return sent > 0;
+}
+
 export async function startDemoGame(config: DemoClubConfig): Promise<string> {
   const [clubSnap, teamSnap] = await Promise.all([
     db.collection("clubs").doc(config.clubId!).get(),

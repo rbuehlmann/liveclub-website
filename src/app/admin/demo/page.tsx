@@ -9,15 +9,29 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatDateTimeDe } from "@/lib/date";
 
+const ALLOWED_DAILY_COUNTS = [6, 12, 24, 48] as const;
+
+// Matches functions/src/lib/demoSchedule.ts's intervalMinutesForCount —
+// duplicated here purely for the admin UI's "(alle X Std.)" label, not
+// worth sharing a module across the Next.js/Functions boundary for one
+// formula.
+function intervalLabel(count: number): string {
+  const minutes = (24 * 60) / count;
+  return minutes % 60 === 0 ? `alle ${minutes / 60} Std.` : `alle ${minutes} Min.`;
+}
+
 interface DemoClubStatus {
   clubId?: string;
   publicClubId?: string;
   clubName: string;
   teamName: string;
   enabled: boolean;
-  postIntervalHours: number;
+  postsPerDay: number;
   pushesPerDay: number;
   liveGamesPerDay: number;
+  postStartTime: string;
+  pushStartTime: string;
+  liveGameStartTime: string;
   logoUrl: string | null;
   lastPostAt: string | null;
   lastPushSentAt: string | null;
@@ -66,9 +80,12 @@ export default function AdminDemoClubPage() {
         clubName: data?.clubName ?? "",
         teamName: data?.teamName ?? "",
         enabled: data?.enabled ?? false,
-        postIntervalHours: data?.postIntervalHours ?? 2,
-        pushesPerDay: data?.pushesPerDay ?? 3,
-        liveGamesPerDay: data?.liveGamesPerDay ?? 1,
+        postsPerDay: data?.postsPerDay ?? 24,
+        pushesPerDay: data?.pushesPerDay ?? 12,
+        liveGamesPerDay: data?.liveGamesPerDay ?? 12,
+        postStartTime: data?.postStartTime ?? "09:00",
+        pushStartTime: data?.pushStartTime ?? "09:30",
+        liveGameStartTime: data?.liveGameStartTime ?? "09:15",
         logoUrl: data?.logoUrl ?? null,
         lastPostAt: toIso(data?.lastPostAt),
         lastPushSentAt: toIso(data?.lastPushSentAt),
@@ -102,9 +119,12 @@ export default function AdminDemoClubPage() {
     try {
       await adminUpdateDemoClub({
         enabled: status.enabled,
-        postIntervalHours: status.postIntervalHours,
+        postsPerDay: status.postsPerDay,
         pushesPerDay: status.pushesPerDay,
         liveGamesPerDay: status.liveGamesPerDay,
+        postStartTime: status.postStartTime,
+        pushStartTime: status.pushStartTime,
+        liveGameStartTime: status.liveGameStartTime,
         clubName: status.clubName,
         teamName: status.teamName,
       });
@@ -129,9 +149,12 @@ export default function AdminDemoClubPage() {
       const logoUrl = await getDownloadURL(fileRef);
       await adminUpdateDemoClub({
         enabled: status?.enabled ?? false,
-        postIntervalHours: status?.postIntervalHours ?? 2,
-        pushesPerDay: status?.pushesPerDay ?? 3,
-        liveGamesPerDay: status?.liveGamesPerDay ?? 1,
+        postsPerDay: status?.postsPerDay ?? 24,
+        pushesPerDay: status?.pushesPerDay ?? 12,
+        liveGamesPerDay: status?.liveGamesPerDay ?? 12,
+        postStartTime: status?.postStartTime ?? "09:00",
+        pushStartTime: status?.pushStartTime ?? "09:30",
+        liveGameStartTime: status?.liveGameStartTime ?? "09:15",
         logoUrl,
         clubName: status?.clubName,
         teamName: status?.teamName,
@@ -258,38 +281,79 @@ export default function AdminDemoClubPage() {
             </div>
           </div>
 
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Anzahl pro Tag bestimmt den Abstand (in Klammern), die Startzeit verankert den Takt — z. B.
+            9:00 Post, 9:15 Spiel, 9:30 Push, danach im gewählten Abstand weiter.
+          </p>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Post-Intervall (Stunden)
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anzahl Post</label>
+              <select
+                value={status.postsPerDay}
+                onChange={(e) => setStatus({ ...status, postsPerDay: Number(e.target.value) })}
+                className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              >
+                {ALLOWED_DAILY_COUNTS.map((count) => (
+                  <option key={count} value={count}>
+                    {count} ({intervalLabel(count)})
+                  </option>
+                ))}
+              </select>
+              <label className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Startzeit Post
               </label>
               <input
-                type="number"
-                min={1}
-                value={status.postIntervalHours}
-                onChange={(e) => setStatus({ ...status, postIntervalHours: Number(e.target.value) })}
+                type="time"
+                value={status.postStartTime}
+                onChange={(e) => setStatus({ ...status, postStartTime: e.target.value })}
                 className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pushs pro Tag</label>
-              <input
-                type="number"
-                min={0}
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Anzahl Push</label>
+              <select
                 value={status.pushesPerDay}
                 onChange={(e) => setStatus({ ...status, pushesPerDay: Number(e.target.value) })}
                 className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              >
+                {ALLOWED_DAILY_COUNTS.map((count) => (
+                  <option key={count} value={count}>
+                    {count} ({intervalLabel(count)})
+                  </option>
+                ))}
+              </select>
+              <label className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Startzeit Push
+              </label>
+              <input
+                type="time"
+                value={status.pushStartTime}
+                onChange={(e) => setStatus({ ...status, pushStartTime: e.target.value })}
+                className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Live-Spiele pro Tag
+                Anzahl Live-Spiele
               </label>
-              <input
-                type="number"
-                min={0}
+              <select
                 value={status.liveGamesPerDay}
                 onChange={(e) => setStatus({ ...status, liveGamesPerDay: Number(e.target.value) })}
+                className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              >
+                {ALLOWED_DAILY_COUNTS.map((count) => (
+                  <option key={count} value={count}>
+                    {count} ({intervalLabel(count)})
+                  </option>
+                ))}
+              </select>
+              <label className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Startzeit Spiel
+              </label>
+              <input
+                type="time"
+                value={status.liveGameStartTime}
+                onChange={(e) => setStatus({ ...status, liveGameStartTime: e.target.value })}
                 className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>

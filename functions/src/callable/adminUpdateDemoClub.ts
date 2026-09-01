@@ -4,12 +4,31 @@ import { db } from "../firebaseAdmin";
 
 interface AdminUpdateDemoClubRequest {
   enabled: boolean;
-  postIntervalHours: number;
+  postsPerDay: number;
   pushesPerDay: number;
   liveGamesPerDay: number;
+  postStartTime: string;
+  pushStartTime: string;
+  liveGameStartTime: string;
   logoUrl?: string | null;
   clubName?: string;
   teamName?: string;
+}
+
+// Post/Push/Live-Spiel cadence is deliberately restricted to these four —
+// each divides 1440 (minutes/day) evenly, so a fixed start time repeats at
+// the same wall-clock times every day with no drift (2026-09-01 redesign,
+// see functions/src/lib/demoSchedule.ts). 48/day (every 30 min) is the
+// explicit max — no free-form values.
+const ALLOWED_DAILY_COUNTS = new Set([6, 12, 24, 48]);
+function clampDailyCount(value: unknown, fallback: number): number {
+  const n = Number(value);
+  return ALLOWED_DAILY_COUNTS.has(n) ? n : fallback;
+}
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+function sanitizeTime(value: unknown, fallback: string): string {
+  return typeof value === "string" && TIME_RE.test(value) ? value : fallback;
 }
 
 /**
@@ -29,7 +48,18 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
     throw new HttpsError("permission-denied", "Nur für Plattform-Administratoren.");
   }
 
-  const { enabled, postIntervalHours, pushesPerDay, liveGamesPerDay, logoUrl, clubName, teamName } = request.data;
+  const {
+    enabled,
+    postsPerDay,
+    pushesPerDay,
+    liveGamesPerDay,
+    postStartTime,
+    pushStartTime,
+    liveGameStartTime,
+    logoUrl,
+    clubName,
+    teamName,
+  } = request.data;
 
   const configRef = db.collection("settings").doc("demoClub");
   const configSnap = await configRef.get();
@@ -54,9 +84,12 @@ export const adminUpdateDemoClub = onCall<AdminUpdateDemoClubRequest>(async (req
   await configRef.set(
     {
       enabled: !!enabled,
-      postIntervalHours: Math.max(1, Number(postIntervalHours) || 2),
-      pushesPerDay: Math.max(0, Number(pushesPerDay) || 0),
-      liveGamesPerDay: Math.max(0, Number(liveGamesPerDay) || 0),
+      postsPerDay: clampDailyCount(postsPerDay, 24),
+      pushesPerDay: clampDailyCount(pushesPerDay, 12),
+      liveGamesPerDay: clampDailyCount(liveGamesPerDay, 12),
+      postStartTime: sanitizeTime(postStartTime, "09:00"),
+      pushStartTime: sanitizeTime(pushStartTime, "09:30"),
+      liveGameStartTime: sanitizeTime(liveGameStartTime, "09:15"),
       ...(publicClubId ? { publicClubId } : {}),
       ...(logoUrl !== undefined ? { logoUrl } : {}),
       ...(resolvedClubName ? { clubName: resolvedClubName } : {}),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteField, doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { BrandingSettings } from "@/lib/types";
@@ -28,6 +28,33 @@ const DEFAULT_GO_LIVE_ICON_LIGHT = "#f3f6ec";
 const DEFAULT_GO_LIVE_ICON_DARK = "#10140c";
 const DEFAULT_GO_LIVE_BACKGROUND_LIGHT = "#10140c";
 const DEFAULT_GO_LIVE_BACKGROUND_DARK = "#f5f7ef";
+
+// Every settings/branding field this "Branding" card itself owns —
+// deliberately excludes clubFallbackIconUrl, which has its own separate
+// load/save further down and must survive this card's Save/Reset
+// untouched (2026-09-01 fix: Save used to setDoc(..., {merge:false}) and
+// Reset used to setDoc(..., {}), both silently wiping the whole document
+// including clubFallbackIconUrl — the reported "icon keeps disappearing"
+// bug).
+const BRANDING_CARD_FIELDS: (keyof BrandingSettings)[] = [
+  "logoLight",
+  "logoDark",
+  "iconLight",
+  "iconDark",
+  "favicon",
+  "backgroundColorLight",
+  "backgroundColorDark",
+  "accentColorLight",
+  "accentColorDark",
+  "foregroundColorDark",
+  "silverColorDark",
+  "orangeColorDark",
+  "emeraldColorDark",
+  "goLiveIconLight",
+  "goLiveIconDark",
+  "goLiveBackgroundLight",
+  "goLiveBackgroundDark",
+];
 
 // Hardcoded fallback if settings/teamInfo doesn't exist yet — kept in sync
 // with functions/src/lib/teamInfo.ts's TEAM_INFO_DEFAULTS.
@@ -278,7 +305,13 @@ export default function AdminSettingsPage() {
     setMessage(null);
     try {
       const { db } = getFirebaseClient();
-      await setDoc(doc(db, "settings", "branding"), branding, { merge: false });
+      // Scoped to this card's own fields + merge:true (2026-09-01 fix) —
+      // previously {merge:false} replaced the *entire* settings/branding
+      // document with just what this card tracks, silently deleting
+      // clubFallbackIconUrl (owned by the separate card below) whenever
+      // this card was saved.
+      const payload = Object.fromEntries(BRANDING_CARD_FIELDS.map((key) => [key, branding[key] ?? null]));
+      await setDoc(doc(db, "settings", "branding"), payload, { merge: true });
       setMessage("Gespeichert ✓ — wirkt sofort, ohne Deploy.");
     } finally {
       setSaving(false);
@@ -290,8 +323,17 @@ export default function AdminSettingsPage() {
     setMessage(null);
     try {
       const { db } = getFirebaseClient();
-      await setDoc(doc(db, "settings", "branding"), {});
-      setBranding({});
+      // Scoped deleteField() per owned key + merge:true (2026-09-01 fix) —
+      // previously setDoc(..., {}) replaced the whole document with an
+      // empty one, wiping clubFallbackIconUrl too even though this button
+      // is meant only for this card's own re-skin fields.
+      const payload = Object.fromEntries(BRANDING_CARD_FIELDS.map((key) => [key, deleteField()]));
+      await setDoc(doc(db, "settings", "branding"), payload, { merge: true });
+      setBranding((prev) => {
+        const next = { ...prev };
+        for (const key of BRANDING_CARD_FIELDS) delete next[key];
+        return next;
+      });
       setMessage("Zurückgesetzt ✓");
     } finally {
       setSaving(false);
