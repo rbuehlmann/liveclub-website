@@ -71,6 +71,10 @@ export const onGameEventCreate = onDocumentCreated(
     if (sport === "iceHockey") {
       updates.penalties = { home: state.penaltiesHome, away: state.penaltiesAway };
     }
+    if (sport === "volleyball") {
+      updates.currentSetScore = { home: state.currentSetScoreHome, away: state.currentSetScoreAway };
+      updates.setsHistory = state.setsHistory;
+    }
 
     if (state.status === "live" && !gameData.actualStart) {
       updates.actualStart = FieldValue.serverTimestamp();
@@ -183,7 +187,14 @@ export const onGameEventCreate = onDocumentCreated(
           status: state.status,
           period: state.period,
           lastEventType: state.lastEventType,
+          sport: gameData.sport ?? null,
           updatedAt: FieldValue.serverTimestamp(),
+          // Volleyball only — the public live page shows this alongside the
+          // main score (sets won), since it resets every set and wouldn't
+          // otherwise be visible to a fan watching along.
+          ...(sport === "volleyball"
+            ? { currentSetScore: { home: state.currentSetScoreHome, away: state.currentSetScoreAway } }
+            : {}),
         },
         { merge: true }
       ),

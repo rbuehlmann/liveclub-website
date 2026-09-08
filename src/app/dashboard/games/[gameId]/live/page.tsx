@@ -78,6 +78,7 @@ export default function LiveControlPage() {
         sport: data.sport ?? null,
         score: data.score ?? { home: 0, away: 0 },
         cards: data.cards,
+        currentSetScore: data.currentSetScore,
         mainEditorUid: data.mainEditorUid,
         mainEditorClubId: data.mainEditorClubId,
         eligibleEditorUids: data.eligibleEditorUids ?? [],
@@ -107,7 +108,7 @@ export default function LiveControlPage() {
 
   useEffect(() => {
     if (!pending || !game) return;
-    const signature = `${game.status}|${game.period}|${game.score.home}|${game.score.away}`;
+    const signature = `${game.status}|${game.period}|${game.score.home}|${game.score.away}|${game.currentSetScore?.home ?? 0}|${game.currentSetScore?.away ?? 0}`;
     if (pendingBaselineRef.current !== null && signature !== pendingBaselineRef.current) {
       setPending(false);
       pendingBaselineRef.current = null;
@@ -137,7 +138,7 @@ export default function LiveControlPage() {
     if (!club || !user || !game) return;
     if (submittingRef.current) return; // synchronous guard — see submittingRef above
     submittingRef.current = true;
-    pendingBaselineRef.current = `${game.status}|${game.period}|${game.score.home}|${game.score.away}`;
+    pendingBaselineRef.current = `${game.status}|${game.period}|${game.score.home}|${game.score.away}|${game.currentSetScore?.home ?? 0}|${game.currentSetScore?.away ?? 0}`;
     setPending(true);
     setSubmitting(true);
     try {
@@ -181,9 +182,19 @@ export default function LiveControlPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{tGames(`status.${game.status}`)}</p>
         </div>
-        <p className="text-3xl font-bold tabular-nums text-brand-emerald">
-          {game.score.home}:{game.score.away}
-        </p>
+        <div className="text-right">
+          <p className="text-3xl font-bold tabular-nums text-brand-emerald">
+            {game.score.home}:{game.score.away}
+          </p>
+          {/* Volleyball's top-level score is sets won — the live point
+              count within the current set resets every set, so it's shown
+              separately here rather than replacing the main number. */}
+          {sport === "volleyball" && (
+            <p className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+              {t("currentSet")}: {game.currentSetScore?.home ?? 0}:{game.currentSetScore?.away ?? 0}
+            </p>
+          )}
+        </div>
       </div>
 
       {confirmationMessage && (
@@ -411,6 +422,28 @@ export default function LiveControlPage() {
                 onClick={() => recordEvent("safetyAway")}
               >
                 {t("safetyAway")}
+              </Button>
+            </div>
+          )}
+
+          {/* Volleyball: just 2 buttons — the set boundary is data-driven
+              (see computeVolleyballState), no manual "end set" button at
+              all, unlike every other multi-segment sport here. */}
+          {sport === "volleyball" && (
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("pointHomeVolleyball")}
+                className="h-24 text-xl"
+              >
+                {t("pointHome")}
+              </Button>
+              <Button
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("pointAwayVolleyball")}
+                className="h-24 text-xl"
+              >
+                {t("pointAway")}
               </Button>
             </div>
           )}

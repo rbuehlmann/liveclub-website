@@ -8,7 +8,7 @@ import { getFirebaseClient } from "@/lib/firebase/client";
 import { TeamIcon } from "@/components/TeamIcon";
 import { PublicHeader } from "@/components/layout/PublicHeader";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { PublicGame } from "@/lib/types";
+import { PublicGame, normalizeSport } from "@/lib/types";
 
 export default function PublicLiveGamePage() {
   const t = useTranslations("publicGame");
@@ -37,6 +37,8 @@ export default function PublicLiveGamePage() {
           status: data.status,
           period: data.period,
           lastEventType: data.lastEventType,
+          sport: data.sport ?? null,
+          currentSetScore: data.currentSetScore,
         });
       },
       // A club with an expired/cancelled license is denied by
@@ -70,6 +72,7 @@ export default function PublicLiveGamePage() {
   }
 
   const isLive = game.status === "live" || game.status === "paused";
+  const sport = normalizeSport(game.sport);
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-white dark:bg-brand-black">
@@ -99,6 +102,11 @@ export default function PublicLiveGamePage() {
             <span className="truncate">{game.awayTeamName}</span>
           </div>
         </div>
+        {sport === "volleyball" && (
+          <p className="text-sm tabular-nums text-gray-500 dark:text-gray-400">
+            {t("currentSet")}: {game.currentSetScore?.home ?? 0}:{game.currentSetScore?.away ?? 0}
+          </p>
+        )}
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t.has(`status.${game.status}`) ? t(`status.${game.status}`) : game.status}
           {game.status === "paused" ? ` (${t("pausedSuffix")})` : ""}

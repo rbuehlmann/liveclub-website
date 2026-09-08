@@ -63,7 +63,8 @@
       "Basketball": "Basketball",
       "Eishockey": "Ice hockey",
       "Handball": "Handball",
-      "American Football": "American Football"
+      "American Football": "American Football",
+      "Volleyball": "Volleyball"
     },
     "countries": {
       "Schweiz": "Switzerland",
@@ -242,7 +243,10 @@
     "fieldGoalHome": "Field goal home (+3)",
     "fieldGoalAway": "Field goal away (+3)",
     "safetyHome": "Safety home (+2)",
-    "safetyAway": "Safety away (+2)"
+    "safetyAway": "Safety away (+2)",
+    "pointHome": "Point home",
+    "pointAway": "Point away",
+    "currentSet": "Current set"
   },
   "reporters": {
     "title": "Editors",
@@ -422,6 +426,7 @@
     "notFound": "Game not found.",
     "loading": "Loading …",
     "pausedSuffix": "paused",
+    "currentSet": "Current set",
     "status": {
       "draft": "Draft",
       "scheduled": "Scheduled",

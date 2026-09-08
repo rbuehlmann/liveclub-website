@@ -146,6 +146,8 @@ service cloud.firestore {
             'twoPointHome', 'twoPointAway',
             'fieldGoalHome', 'fieldGoalAway',
             'safetyHome', 'safetyAway',
+            // Volleyball
+            'pointHomeVolleyball', 'pointAwayVolleyball',
             // Shared between basketball, ice hockey, handball, and
             // american football
             'periodEnded', 'periodStarted'

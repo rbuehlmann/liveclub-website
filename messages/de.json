@@ -63,7 +63,8 @@
       "Basketball": "Basketball",
       "Eishockey": "Eishockey",
       "Handball": "Handball",
-      "American Football": "American Football"
+      "American Football": "American Football",
+      "Volleyball": "Volleyball"
     },
     "countries": {
       "Schweiz": "Schweiz",
@@ -242,7 +243,10 @@
     "fieldGoalHome": "Field Goal Heim (+3)",
     "fieldGoalAway": "Field Goal Gast (+3)",
     "safetyHome": "Safety Heim (+2)",
-    "safetyAway": "Safety Gast (+2)"
+    "safetyAway": "Safety Gast (+2)",
+    "pointHome": "Punkt Heim",
+    "pointAway": "Punkt Gast",
+    "currentSet": "Aktueller Satz"
   },
   "reporters": {
     "title": "Redaktoren",
@@ -432,6 +436,7 @@
     "notFound": "Spiel wurde nicht gefunden.",
     "loading": "Wird geladen …",
     "pausedSuffix": "pausiert",
+    "currentSet": "Aktueller Satz",
     "status": {
       "draft": "Entwurf",
       "scheduled": "Geplant",

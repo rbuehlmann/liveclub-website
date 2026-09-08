@@ -79,14 +79,18 @@ export type GamePeriod =
   | "periodBreak2"
   | "period3"
   | "periodBreak3"
-  | "period4";
+  | "period4"
+  // Volleyball's 5th (deciding) set — no periodBreak4, volleyball never
+  // pauses between sets (see functions/src/lib/score.ts's
+  // computeVolleyballState).
+  | "period5";
 
 // 2026-09-08: one club = one sport, fixed at club creation (see
 // onboarding/create-club/page.tsx's SPORTS list) — a game's sport is always
 // its creating club's sport, denormalized once onto the game doc by
 // createGame.ts. "football" is the default/legacy value for every
 // club/game created before this existed (no `sport` field at all).
-export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball" | "volleyball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data), so this is the one place that turns
@@ -97,6 +101,7 @@ export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
   if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
+  if (raw === "Volleyball" || raw === "volleyball") return "volleyball";
   return "football";
 }
 
@@ -141,6 +146,12 @@ export interface Game {
   fouls?: { home: number; away: number };
   // Ice-hockey-only; absent on every other sport's games.
   penalties?: { home: number; away: number };
+  // Volleyball-only. `score` above stays the top-level result — sets won —
+  // consistent with every other sport; this carries the *live* point count
+  // within the current set, which resets every set.
+  currentSetScore?: { home: number; away: number };
+  // Volleyball-only — completed sets' final scores, oldest first.
+  setsHistory?: { home: number; away: number }[];
   lastEventType?: string | null;
   // Exactly one uid may administer (start/score/etc.) this game at a time —
   // enforced in firestore.rules on the events subcollection, not just in
@@ -239,6 +250,11 @@ export type GameEventType =
   | "fieldGoalAway"
   | "safetyHome"
   | "safetyAway"
+  // Volleyball — just 2 events; the set boundary is data-driven (see
+  // functions/src/lib/score.ts's computeVolleyballState), not a manual
+  // "end this segment" click like every other multi-segment sport here.
+  | "pointHomeVolleyball"
+  | "pointAwayVolleyball"
   // Shared between basketball (4 quarters), ice hockey (3 periods), and
   // handball (2 halves) — see GamePeriod's own comment.
   | "periodEnded"
@@ -331,6 +347,10 @@ export interface PublicGame {
   status: GameStatus;
   period?: GamePeriod;
   lastEventType?: string | null;
+  // Missing = "football" (see normalizeSport), same convention as Game.sport.
+  sport?: string | null;
+  // Volleyball-only — see Game.currentSetScore's own comment.
+  currentSetScore?: { home: number; away: number };
 }
 
 // A short, manually-authored team announcement, mixed chronologically into

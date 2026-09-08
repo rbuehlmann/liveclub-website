@@ -26,7 +26,11 @@ export type GamePeriod =
   | "periodBreak2"
   | "period3"
   | "periodBreak3"
-  | "period4";
+  | "period4"
+  // Volleyball's 5th (deciding) set — no periodBreak4, since volleyball
+  // never pauses between sets the way the tick-driven sports do (see
+  // computeVolleyballState below).
+  | "period5";
 
 // 2026-09-08: one club = one sport, fixed at club creation (see
 // src/app/onboarding/create-club/page.tsx's SPORTS list) — a game's sport is
@@ -34,7 +38,7 @@ export type GamePeriod =
 // createGame.ts. "football" is the default/legacy value: every club/game
 // created before this existed has no `sport` field at all, and must keep
 // behaving exactly as before.
-export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball" | "volleyball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data — see that file's own comment on why),
@@ -47,6 +51,7 @@ export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
   if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
+  if (raw === "Volleyball" || raw === "volleyball") return "volleyball";
   return "football";
 }
 
@@ -77,6 +82,18 @@ export interface ComputedGameState {
   // and wasn't asked for yet).
   penaltiesHome: number;
   penaltiesAway: number;
+  // Volleyball-only (always 0/[] for other sports). scoreHome/scoreAway
+  // stay "the top instance" (sets won) for volleyball, consistent with
+  // what score means for every other sport — these two carry the *live*
+  // point count within the current set, which resets every set, alongside
+  // it rather than replacing it. Keeping this convention (score = the
+  // single top-level result, sport-specific detail lives in its own
+  // fields) is what would let a future sport with even deeper nesting
+  // (e.g. tennis: sets > games > points) slot in the same way, without
+  // needing to touch how score itself works for anyone else.
+  currentSetScoreHome: number;
+  currentSetScoreAway: number;
+  setsHistory: { home: number; away: number }[];
   lastEventType: string | null;
   statusBeforePause: GameStatus | null;
 }
@@ -95,6 +112,9 @@ function emptyState(): ComputedGameState {
     foulsAway: 0,
     penaltiesHome: 0,
     penaltiesAway: 0,
+    currentSetScoreHome: 0,
+    currentSetScoreAway: 0,
+    setsHistory: [],
     lastEventType: null,
     statusBeforePause: null,
   };
@@ -143,6 +163,7 @@ export function computeGameState(events: GameEventRecord[], sport: Sport = "foot
   if (sport === "iceHockey") return computeIceHockeyState(events);
   if (sport === "handball") return computeHandballState(events);
   if (sport === "americanFootball") return computeAmericanFootballState(events);
+  if (sport === "volleyball") return computeVolleyballState(events);
   return computeFootballState(events);
 }
 
@@ -370,4 +391,77 @@ function computeAmericanFootballState(events: GameEventRecord[]): ComputedGameSt
     },
     {}
   );
+}
+
+const VOLLEYBALL_TOTAL_SETS = 5;
+const VOLLEYBALL_REGULAR_SET_TARGET = 25;
+const VOLLEYBALL_DECIDING_SET_TARGET = 15;
+
+// A set ends the instant either side crosses the win threshold with a
+// 2-point lead — data-driven, unlike every other sport here, where a human
+// always clicks an explicit "end this segment" button. No fouls/violations
+// tracking (matches the same "skip granular secondary detail" call made for
+// American football's penalties).
+function volleyballSetWinner(home: number, away: number, target: number): "home" | "away" | null {
+  if (home >= target && home - away >= 2) return "home";
+  if (away >= target && away - home >= 2) return "away";
+  return null;
+}
+
+function computeVolleyballState(events: GameEventRecord[]): ComputedGameState {
+  const state = emptyState();
+  let setNumber = 1; // 1-based; set 5 is the deciding set (target 15, not 25)
+
+  for (const event of relevantEvents(events)) {
+    switch (event.type) {
+      case "gameStarted":
+        state.status = "live";
+        state.period = "period1";
+        setNumber = 1;
+        break;
+      case "pointHomeVolleyball":
+      case "pointAwayVolleyball": {
+        if (event.type === "pointHomeVolleyball") state.currentSetScoreHome += 1;
+        else state.currentSetScoreAway += 1;
+
+        const target = setNumber >= VOLLEYBALL_TOTAL_SETS ? VOLLEYBALL_DECIDING_SET_TARGET : VOLLEYBALL_REGULAR_SET_TARGET;
+        const winner = volleyballSetWinner(state.currentSetScoreHome, state.currentSetScoreAway, target);
+        if (winner) {
+          state.setsHistory.push({ home: state.currentSetScoreHome, away: state.currentSetScoreAway });
+          if (winner === "home") state.scoreHome += 1;
+          else state.scoreAway += 1;
+          state.currentSetScoreHome = 0;
+          state.currentSetScoreAway = 0;
+          if (setNumber < VOLLEYBALL_TOTAL_SETS) {
+            setNumber += 1;
+            state.period = `period${setNumber}` as GamePeriod;
+          }
+        }
+        break;
+      }
+      case "gamePaused":
+        state.statusBeforePause = state.status;
+        state.status = "paused";
+        break;
+      case "gameResumed":
+        state.status = state.statusBeforePause ?? "live";
+        state.statusBeforePause = null;
+        break;
+      case "gameFinished":
+        // Always an explicit reporter action, same as every other sport —
+        // never auto-finished just because one side reached 3 sets, so a
+        // human always confirms the actual finish.
+        state.status = "finished";
+        state.period = "finished";
+        break;
+      case "gameCancelled":
+        state.status = "cancelled";
+        break;
+      default:
+        break;
+    }
+    state.lastEventType = event.type;
+  }
+
+  return state;
 }
