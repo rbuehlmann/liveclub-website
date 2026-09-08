@@ -62,7 +62,8 @@
       "Fussball": "Fussball",
       "Basketball": "Basketball",
       "Eishockey": "Eishockey",
-      "Handball": "Handball"
+      "Handball": "Handball",
+      "American Football": "American Football"
     },
     "countries": {
       "Schweiz": "Schweiz",
@@ -231,7 +232,17 @@
     "yellowCardHome": "Gelbe Karte Heim",
     "yellowCardAway": "Gelbe Karte Gast",
     "redCardHome": "Rote Karte Heim",
-    "redCardAway": "Rote Karte Gast"
+    "redCardAway": "Rote Karte Gast",
+    "touchdownHome": "Touchdown Heim (+6)",
+    "touchdownAway": "Touchdown Gast (+6)",
+    "extraPointHome": "Extra Point Heim (+1)",
+    "extraPointAway": "Extra Point Gast (+1)",
+    "twoPointHome": "2-Punkte-Conversion Heim (+2)",
+    "twoPointAway": "2-Punkte-Conversion Gast (+2)",
+    "fieldGoalHome": "Field Goal Heim (+3)",
+    "fieldGoalAway": "Field Goal Gast (+3)",
+    "safetyHome": "Safety Heim (+2)",
+    "safetyAway": "Safety Gast (+2)"
   },
   "reporters": {
     "title": "Redaktoren",

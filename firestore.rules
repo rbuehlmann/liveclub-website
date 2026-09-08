@@ -140,7 +140,14 @@ service cloud.firestore {
             'goalHomeHandball', 'goalAwayHandball',
             'yellowCardHomeHandball', 'yellowCardAwayHandball',
             'redCardHomeHandball', 'redCardAwayHandball',
-            // Shared between basketball, ice hockey, and handball
+            // American football
+            'touchdownHome', 'touchdownAway',
+            'extraPointHome', 'extraPointAway',
+            'twoPointHome', 'twoPointAway',
+            'fieldGoalHome', 'fieldGoalAway',
+            'safetyHome', 'safetyAway',
+            // Shared between basketball, ice hockey, handball, and
+            // american football
             'periodEnded', 'periodStarted'
           ] &&
           // A club with an expired/inactive license can no longer start a

@@ -34,7 +34,7 @@ export type GamePeriod =
 // createGame.ts. "football" is the default/legacy value: every club/game
 // created before this existed has no `sport` field at all, and must keep
 // behaving exactly as before.
-export type Sport = "football" | "basketball" | "iceHockey" | "handball";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data — see that file's own comment on why),
@@ -46,6 +46,7 @@ export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
+  if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
   return "football";
 }
 
@@ -141,6 +142,7 @@ export function computeGameState(events: GameEventRecord[], sport: Sport = "foot
   if (sport === "basketball") return computeBasketballState(events);
   if (sport === "iceHockey") return computeIceHockeyState(events);
   if (sport === "handball") return computeHandballState(events);
+  if (sport === "americanFootball") return computeAmericanFootballState(events);
   return computeFootballState(events);
 }
 
@@ -339,5 +341,33 @@ function computeHandballState(events: GameEventRecord[]): ComputedGameState {
       redCardHomeHandball: "redCardHome",
       redCardAwayHandball: "redCardAway",
     }
+  );
+}
+
+// 4 quarters, same generic segmented model as basketball. Five flat,
+// independent scoring buttons per team (2026-09-08 decision) rather than a
+// guided "touchdown, then ask for the PAT result" flow — a touchdown and
+// its extra-point/2-point attempt are just two separate taps, same
+// reliability model as every other sport here (misclick → "Letztes
+// Ereignis korrigieren", not a dedicated undo). No penalty/foul tracking —
+// yard-level penalty detail is deliberately out of scope for a simple live
+// scoreboard.
+function computeAmericanFootballState(events: GameEventRecord[]): ComputedGameState {
+  return computeSegmentedState(
+    events,
+    4,
+    {
+      touchdownHome: { home: 6 },
+      touchdownAway: { away: 6 },
+      extraPointHome: { home: 1 },
+      extraPointAway: { away: 1 },
+      twoPointHome: { home: 2 },
+      twoPointAway: { away: 2 },
+      fieldGoalHome: { home: 3 },
+      fieldGoalAway: { away: 3 },
+      safetyHome: { home: 2 },
+      safetyAway: { away: 2 },
+    },
+    {}
   );
 }

@@ -86,7 +86,7 @@ export type GamePeriod =
 // its creating club's sport, denormalized once onto the game doc by
 // createGame.ts. "football" is the default/legacy value for every
 // club/game created before this existed (no `sport` field at all).
-export type Sport = "football" | "basketball" | "iceHockey" | "handball";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data), so this is the one place that turns
@@ -96,6 +96,7 @@ export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
+  if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
   return "football";
 }
 
@@ -226,6 +227,18 @@ export type GameEventType =
   | "yellowCardAwayHandball"
   | "redCardHomeHandball"
   | "redCardAwayHandball"
+  // American football — 5 flat, independent scoring buttons per team
+  // (2026-09-08 decision), no guided touchdown->PAT flow.
+  | "touchdownHome"
+  | "touchdownAway"
+  | "extraPointHome"
+  | "extraPointAway"
+  | "twoPointHome"
+  | "twoPointAway"
+  | "fieldGoalHome"
+  | "fieldGoalAway"
+  | "safetyHome"
+  | "safetyAway"
   // Shared between basketball (4 quarters), ice hockey (3 periods), and
   // handball (2 halves) — see GamePeriod's own comment.
   | "periodEnded"

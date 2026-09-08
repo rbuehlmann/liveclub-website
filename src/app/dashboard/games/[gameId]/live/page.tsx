@@ -348,6 +348,73 @@ export default function LiveControlPage() {
             </>
           )}
 
+          {sport === "americanFootball" && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("touchdownHome")}>
+                {t("touchdownHome")}
+              </Button>
+              <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("touchdownAway")}>
+                {t("touchdownAway")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("extraPointHome")}
+              >
+                {t("extraPointHome")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("extraPointAway")}
+              >
+                {t("extraPointAway")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("twoPointHome")}
+              >
+                {t("twoPointHome")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("twoPointAway")}
+              >
+                {t("twoPointAway")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("fieldGoalHome")}
+              >
+                {t("fieldGoalHome")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("fieldGoalAway")}
+              >
+                {t("fieldGoalAway")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("safetyHome")}
+              >
+                {t("safetyHome")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("safetyAway")}
+              >
+                {t("safetyAway")}
+              </Button>
+            </div>
+          )}
+
           {sport === "football" && game.status === "live" && game.period === "firstHalf" && (
             <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("halfTime")}>
               {t("halfTime")}
@@ -384,6 +451,25 @@ export default function LiveControlPage() {
               </Button>
             )}
           {sport === "basketball" &&
+            game.status === "live" &&
+            ["periodBreak1", "periodBreak2", "periodBreak3"].includes(game.period ?? "") && (
+              <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
+                {t("startNextQuarter")}
+              </Button>
+            )}
+
+          {/* American football also plays in quarters — reuses the exact
+              same "Viertelende"/"Nächstes Viertel starten" copy as
+              basketball (same German words), wired to the same generic
+              periodEnded/periodStarted mechanic. */}
+          {sport === "americanFootball" &&
+            game.status === "live" &&
+            ["period1", "period2", "period3"].includes(game.period ?? "") && (
+              <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+                {t("endQuarter")}
+              </Button>
+            )}
+          {sport === "americanFootball" &&
             game.status === "live" &&
             ["periodBreak1", "periodBreak2", "periodBreak3"].includes(game.period ?? "") && (
               <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
