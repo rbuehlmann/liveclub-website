@@ -38,10 +38,12 @@ async function waitForClubMembership(uid: string, clubId: string) {
   }
 }
 
-// Nur Fussball für den Start — weitere Sportarten folgen später. Values stay
-// German literals (sent to Firestore as-is, matching existing data) — only
-// the displayed label is translated via t(`sports.${s}`).
-const SPORTS = ["Fussball"];
+// Values stay German literals (sent to Firestore as-is, matching existing
+// data) — only the displayed label is translated via t(`sports.${s}`).
+// functions/src/lib/score.ts's normalizeSport() is what turns these into
+// the stable "football"/"basketball"/"iceHockey" ids that live-scoring
+// actually branches on (2026-09-08).
+const SPORTS = ["Fussball", "Basketball", "Eishockey"];
 
 // Fixe Liste statt Freitext, damit die spätere Länder-Filterung in der
 // öffentlichen Suche konsistente Werte hat. Same pattern as home/countries.
@@ -201,7 +203,6 @@ function CreateClubForm() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t("sportMoreComingSoon")}</p>
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="country" className="text-sm font-medium text-gray-700 dark:text-gray-300">

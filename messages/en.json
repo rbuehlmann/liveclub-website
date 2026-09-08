@@ -56,11 +56,12 @@
     "logoErrorPrefix": "Error:",
     "done": "Done",
     "skip": "Skip",
-    "sportMoreComingSoon": "More sports coming soon.",
     "homeColor": "Home color",
     "awayColor": "Away color",
     "sports": {
-      "Fussball": "Football"
+      "Fussball": "Football",
+      "Basketball": "Basketball",
+      "Eishockey": "Ice hockey"
     },
     "countries": {
       "Schweiz": "Switzerland",
@@ -211,7 +212,21 @@
     "confirmFinishTitle": "Really finish the game?",
     "confirmFinishBody": "This action cannot be undone.",
     "eventRecorded": "Event recorded",
-    "noReporterAccess": "You're not registered as an editor for this team."
+    "noReporterAccess": "You're not registered as an editor for this team.",
+    "shot1Home": "Free throw home (+1)",
+    "shot1Away": "Free throw away (+1)",
+    "shot2Home": "Basket home (+2)",
+    "shot2Away": "Basket away (+2)",
+    "shot3Home": "3-pointer home (+3)",
+    "shot3Away": "3-pointer away (+3)",
+    "foulHome": "Foul home",
+    "foulAway": "Foul away",
+    "endQuarter": "End quarter",
+    "startNextQuarter": "Start next quarter",
+    "penaltyHome": "Penalty home",
+    "penaltyAway": "Penalty away",
+    "endPeriod": "End period",
+    "startNextPeriod": "Start next period"
   },
   "reporters": {
     "title": "Editors",

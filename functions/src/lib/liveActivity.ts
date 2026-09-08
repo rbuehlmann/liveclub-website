@@ -141,7 +141,15 @@ export async function notifyGameStarted(game: GameForActivity, devices: DeviceFo
  * Activity's content silently. `devices` must already be deduplicated by
  * the caller — see `notifyGameStarted`. */
 export async function notifyGameUpdated(game: GameForActivity, devices: DeviceFollow[]): Promise<void> {
-  const isGoal = game.lastEventType === "goalHome" || game.lastEventType === "goalAway";
+  // Ice hockey goals alert the same way (rare, event-worthy, same "Tor!"
+  // wording applies in German) — basketball's shotN events deliberately
+  // don't join this list, a made basket happens far too often per game to
+  // alert on every one, unlike a football/hockey goal.
+  const isGoal =
+    game.lastEventType === "goalHome" ||
+    game.lastEventType === "goalAway" ||
+    game.lastEventType === "goalHomeHockey" ||
+    game.lastEventType === "goalAwayHockey";
   const payload = {
     event: "update" as const,
     contentState: contentState(game),

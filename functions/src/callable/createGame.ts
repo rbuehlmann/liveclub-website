@@ -204,6 +204,11 @@ export const createGame = onCall<CreateGameRequest>(
 
     const gameRef = db.collection("games").doc();
     await gameRef.set({
+      // One club = one sport, fixed at creation (see onboarding/
+      // create-club/page.tsx) — a fixture's sport is always whichever club
+      // created it; normalizeSport() below (functions/src/lib/score.ts)
+      // resolves this to the stable id computeGameState dispatches on.
+      sport: club.sport ?? null,
       homeTeamName,
       awayTeamName,
       homeClubId: homeClubId ?? null,

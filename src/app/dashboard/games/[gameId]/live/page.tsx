@@ -19,7 +19,7 @@ import { useClubContext } from "@/components/club/ClubContext";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Game, GameEventType } from "@/lib/types";
+import { Game, GameEventType, normalizeSport } from "@/lib/types";
 
 interface RecentEvent {
   id: string;
@@ -75,6 +75,7 @@ export default function LiveControlPage() {
         scheduledStart: data.scheduledStart?.toDate?.().toISOString() ?? null,
         status: data.status,
         period: data.period,
+        sport: data.sport ?? null,
         score: data.score ?? { home: 0, away: 0 },
         cards: data.cards,
         mainEditorUid: data.mainEditorUid,
@@ -115,6 +116,12 @@ export default function LiveControlPage() {
   }, [game, pending]);
 
   if (!club || !game) return null;
+
+  // One club = one sport, fixed at creation (2026-09-08) — a fixture's
+  // sport is always whichever club created it, denormalized onto the game
+  // doc by createGame.ts. Missing on every game created before multi-sport
+  // support existed, which normalizeSport() resolves to "football".
+  const sport = normalizeSport(game.sport);
 
   // Exactly one uid may ever administer a game at a time (see the
   // 2026-08-15 "Spiel- und Redaktorenlogik" design) — this replaces the old
@@ -193,33 +200,143 @@ export default function LiveControlPage() {
 
       {(game.status === "live" || game.status === "paused") && (
         <>
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              disabled={submitting || pending || game.status === "paused"}
-              onClick={() => recordEvent("goalHome")}
-              className="h-24 text-xl"
-            >
-              {t("goalHome")}
-            </Button>
-            <Button
-              disabled={submitting || pending || game.status === "paused"}
-              onClick={() => recordEvent("goalAway")}
-              className="h-24 text-xl"
-            >
-              {t("goalAway")}
-            </Button>
-          </div>
+          {sport === "football" && (
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("goalHome")}
+                className="h-24 text-xl"
+              >
+                {t("goalHome")}
+              </Button>
+              <Button
+                disabled={submitting || pending || game.status === "paused"}
+                onClick={() => recordEvent("goalAway")}
+                className="h-24 text-xl"
+              >
+                {t("goalAway")}
+              </Button>
+            </div>
+          )}
 
-          {game.status === "live" && game.period === "firstHalf" && (
+          {sport === "basketball" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot1Home")}>
+                  {t("shot1Home")}
+                </Button>
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot1Away")}>
+                  {t("shot1Away")}
+                </Button>
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot2Home")}>
+                  {t("shot2Home")}
+                </Button>
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot2Away")}>
+                  {t("shot2Away")}
+                </Button>
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot3Home")}>
+                  {t("shot3Home")}
+                </Button>
+                <Button disabled={submitting || pending || game.status === "paused"} onClick={() => recordEvent("shot3Away")}>
+                  {t("shot3Away")}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("foulHome")}
+                >
+                  {t("foulHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("foulAway")}
+                >
+                  {t("foulAway")}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {sport === "iceHockey" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalHomeHockey")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalHome")}
+                </Button>
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalAwayHockey")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalAway")}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("penaltyHome")}
+                >
+                  {t("penaltyHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("penaltyAway")}
+                >
+                  {t("penaltyAway")}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {sport === "football" && game.status === "live" && game.period === "firstHalf" && (
             <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("halfTime")}>
               {t("halfTime")}
             </Button>
           )}
-          {game.status === "live" && game.period === "halftime" && (
+          {sport === "football" && game.status === "live" && game.period === "halftime" && (
             <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("secondHalfStarted")}>
               {t("startSecondHalf")}
             </Button>
           )}
+
+          {sport === "basketball" &&
+            game.status === "live" &&
+            ["period1", "period2", "period3"].includes(game.period ?? "") && (
+              <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+                {t("endQuarter")}
+              </Button>
+            )}
+          {sport === "basketball" &&
+            game.status === "live" &&
+            ["periodBreak1", "periodBreak2", "periodBreak3"].includes(game.period ?? "") && (
+              <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
+                {t("startNextQuarter")}
+              </Button>
+            )}
+
+          {sport === "iceHockey" &&
+            game.status === "live" &&
+            ["period1", "period2"].includes(game.period ?? "") && (
+              <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+                {t("endPeriod")}
+              </Button>
+            )}
+          {sport === "iceHockey" &&
+            game.status === "live" &&
+            ["periodBreak1", "periodBreak2"].includes(game.period ?? "") && (
+              <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
+                {t("startNextPeriod")}
+              </Button>
+            )}
 
           {game.status === "live" && (
             <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("gamePaused")}>

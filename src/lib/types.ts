@@ -60,7 +60,42 @@ export type GameStatus =
   | "finished"
   | "cancelled";
 
-export type GamePeriod = "notStarted" | "firstHalf" | "halftime" | "secondHalf" | "finished";
+// Football keeps its own explicit two-half vocabulary, untouched. Basketball
+// (4 quarters) and ice hockey (3 periods) share a generic numbered
+// "periodN"/"periodBreakN" vocabulary instead — see GameEventType's
+// periodEnded/periodStarted — since their break-between-segments semantics
+// are identical, unlike football's asymmetric halfTime/secondHalfStarted
+// pair. Keep in sync with functions/src/lib/score.ts's own copy.
+export type GamePeriod =
+  | "notStarted"
+  | "firstHalf"
+  | "halftime"
+  | "secondHalf"
+  | "finished"
+  | "period1"
+  | "periodBreak1"
+  | "period2"
+  | "periodBreak2"
+  | "period3"
+  | "periodBreak3"
+  | "period4";
+
+// 2026-09-08: one club = one sport, fixed at club creation (see
+// onboarding/create-club/page.tsx's SPORTS list) — a game's sport is always
+// its creating club's sport, denormalized once onto the game doc by
+// createGame.ts. "football" is the default/legacy value for every
+// club/game created before this existed (no `sport` field at all).
+export type Sport = "football" | "basketball" | "iceHockey";
+
+// SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
+// matching existing production data), so this is the one place that turns
+// those into the stable id used for branching. Keep in sync with
+// functions/src/lib/score.ts's own copy.
+export function normalizeSport(raw: string | null | undefined): Sport {
+  if (raw === "Basketball" || raw === "basketball") return "basketball";
+  if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
+  return "football";
+}
 
 // A fixture exists exactly once, at the top level (games/{gameId}) — not
 // nested under either club — so both the home and away club (when both use
@@ -89,6 +124,9 @@ export interface Game {
   actualEnd?: string | null;
   status: GameStatus;
   period?: GamePeriod;
+  // Missing (undefined/null) = "football" (see normalizeSport) — every game
+  // created before multi-sport support has no such field at all.
+  sport?: string | null;
   score: { home: number; away: number };
   cards?: {
     yellowHome: number;
@@ -96,6 +134,10 @@ export interface Game {
     redHome: number;
     redAway: number;
   };
+  // Basketball-only; absent on every other sport's games.
+  fouls?: { home: number; away: number };
+  // Ice-hockey-only; absent on every other sport's games.
+  penalties?: { home: number; away: number };
   lastEventType?: string | null;
   // Exactly one uid may administer (start/score/etc.) this game at a time —
   // enforced in firestore.rules on the events subcollection, not just in
@@ -157,7 +199,25 @@ export type GameEventType =
   | "gameResumed"
   | "gameFinished"
   | "gameCancelled"
-  | "manualCorrection";
+  | "manualCorrection"
+  // Basketball
+  | "shot1Home"
+  | "shot1Away"
+  | "shot2Home"
+  | "shot2Away"
+  | "shot3Home"
+  | "shot3Away"
+  | "foulHome"
+  | "foulAway"
+  // Ice hockey
+  | "goalHomeHockey"
+  | "goalAwayHockey"
+  | "penaltyHome"
+  | "penaltyAway"
+  // Shared between basketball (4 quarters) and ice hockey (3 periods) — see
+  // GamePeriod's own comment.
+  | "periodEnded"
+  | "periodStarted";
 
 export interface GameEvent {
   eventId: string;

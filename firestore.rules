@@ -130,7 +130,14 @@ service cloud.firestore {
             'gameStarted', 'goalHome', 'goalAway', 'goalCorrection',
             'yellowCardHome', 'yellowCardAway', 'redCardHome', 'redCardAway',
             'halfTime', 'secondHalfStarted', 'gamePaused', 'gameResumed',
-            'gameFinished', 'gameCancelled', 'manualCorrection'
+            'gameFinished', 'gameCancelled', 'manualCorrection',
+            // Basketball (2026-09-08, see functions/src/lib/score.ts)
+            'shot1Home', 'shot1Away', 'shot2Home', 'shot2Away',
+            'shot3Home', 'shot3Away', 'foulHome', 'foulAway',
+            // Ice hockey
+            'goalHomeHockey', 'goalAwayHockey', 'penaltyHome', 'penaltyAway',
+            // Shared between basketball and ice hockey
+            'periodEnded', 'periodStarted'
           ] &&
           // A club with an expired/inactive license can no longer start a
           // new match; already-running games may still be played to a

@@ -56,11 +56,12 @@
     "logoErrorPrefix": "Fehler:",
     "done": "Fertig",
     "skip": "Überspringen",
-    "sportMoreComingSoon": "Weitere Sportarten folgen bald.",
     "homeColor": "Heimfarbe",
     "awayColor": "Auswärtsfarbe",
     "sports": {
-      "Fussball": "Fussball"
+      "Fussball": "Fussball",
+      "Basketball": "Basketball",
+      "Eishockey": "Eishockey"
     },
     "countries": {
       "Schweiz": "Schweiz",
@@ -211,7 +212,21 @@
     "confirmFinishTitle": "Spiel wirklich beenden?",
     "confirmFinishBody": "Diese Aktion kann nicht rückgängig gemacht werden.",
     "eventRecorded": "Ereignis erfasst",
-    "noReporterAccess": "Du bist für diese Mannschaft nicht als Redaktor eingetragen."
+    "noReporterAccess": "Du bist für diese Mannschaft nicht als Redaktor eingetragen.",
+    "shot1Home": "Freiwurf Heim (+1)",
+    "shot1Away": "Freiwurf Gast (+1)",
+    "shot2Home": "Korb Heim (+2)",
+    "shot2Away": "Korb Gast (+2)",
+    "shot3Home": "Dreier Heim (+3)",
+    "shot3Away": "Dreier Gast (+3)",
+    "foulHome": "Foul Heim",
+    "foulAway": "Foul Gast",
+    "endQuarter": "Viertelende",
+    "startNextQuarter": "Nächstes Viertel starten",
+    "penaltyHome": "Strafzeit Heim",
+    "penaltyAway": "Strafzeit Gast",
+    "endPeriod": "Drittelende",
+    "startNextPeriod": "Nächstes Drittel starten"
   },
   "reporters": {
     "title": "Redaktoren",

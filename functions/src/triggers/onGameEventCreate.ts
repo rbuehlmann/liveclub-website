@@ -1,7 +1,7 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebaseAdmin";
-import { computeGameState, GameEventRecord } from "../lib/score";
+import { computeGameState, normalizeSport, GameEventRecord } from "../lib/score";
 
 export const onGameEventCreate = onDocumentCreated(
   "games/{gameId}/events/{eventId}",
@@ -32,6 +32,13 @@ export const onGameEventCreate = onDocumentCreated(
       gameRef.get(),
     ]);
 
+    const gameData = gameSnap.data();
+    if (!gameData) return;
+    // "football" for every game predating multi-sport support (no `sport`
+    // field at all, see createGame.ts) — never let a missing/legacy value
+    // pick anything but the original rules.
+    const sport = normalizeSport(gameData.sport);
+
     const records: GameEventRecord[] = eventsSnap.docs.map((d) => {
       const data = d.data();
       return {
@@ -43,10 +50,7 @@ export const onGameEventCreate = onDocumentCreated(
       };
     });
 
-    const state = computeGameState(records);
-
-    const gameData = gameSnap.data();
-    if (!gameData) return;
+    const state = computeGameState(records, sport);
 
     const updates: Record<string, unknown> = {
       score: { home: state.scoreHome, away: state.scoreAway },
@@ -61,6 +65,12 @@ export const onGameEventCreate = onDocumentCreated(
       lastEventType: state.lastEventType,
       updatedAt: FieldValue.serverTimestamp(),
     };
+    if (sport === "basketball") {
+      updates.fouls = { home: state.foulsHome, away: state.foulsAway };
+    }
+    if (sport === "iceHockey") {
+      updates.penalties = { home: state.penaltiesHome, away: state.penaltiesAway };
+    }
 
     if (state.status === "live" && !gameData.actualStart) {
       updates.actualStart = FieldValue.serverTimestamp();
