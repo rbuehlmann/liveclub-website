@@ -61,11 +61,12 @@ export type GameStatus =
   | "cancelled";
 
 // Football keeps its own explicit two-half vocabulary, untouched. Basketball
-// (4 quarters) and ice hockey (3 periods) share a generic numbered
-// "periodN"/"periodBreakN" vocabulary instead — see GameEventType's
-// periodEnded/periodStarted — since their break-between-segments semantics
-// are identical, unlike football's asymmetric halfTime/secondHalfStarted
-// pair. Keep in sync with functions/src/lib/score.ts's own copy.
+// (4 quarters), ice hockey (3 periods), and handball (2 halves) share a
+// generic numbered "periodN"/"periodBreakN" vocabulary instead — see
+// GameEventType's periodEnded/periodStarted — since their
+// break-between-segments semantics are identical, unlike football's
+// asymmetric halfTime/secondHalfStarted pair. Keep in sync with
+// functions/src/lib/score.ts's own copy.
 export type GamePeriod =
   | "notStarted"
   | "firstHalf"
@@ -85,7 +86,7 @@ export type GamePeriod =
 // its creating club's sport, denormalized once onto the game doc by
 // createGame.ts. "football" is the default/legacy value for every
 // club/game created before this existed (no `sport` field at all).
-export type Sport = "football" | "basketball" | "iceHockey";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data), so this is the one place that turns
@@ -94,6 +95,7 @@ export type Sport = "football" | "basketball" | "iceHockey";
 export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
+  if (raw === "Handball" || raw === "handball") return "handball";
   return "football";
 }
 
@@ -214,8 +216,18 @@ export type GameEventType =
   | "goalAwayHockey"
   | "penaltyHome"
   | "penaltyAway"
-  // Shared between basketball (4 quarters) and ice hockey (3 periods) — see
-  // GamePeriod's own comment.
+  // Handball — own event vocabulary, even though goals/cards are the same
+  // real-world concept as football's; two isolated halves via the shared
+  // periodEnded/periodStarted mechanic below, not football's own
+  // halfTime/secondHalfStarted.
+  | "goalHomeHandball"
+  | "goalAwayHandball"
+  | "yellowCardHomeHandball"
+  | "yellowCardAwayHandball"
+  | "redCardHomeHandball"
+  | "redCardAwayHandball"
+  // Shared between basketball (4 quarters), ice hockey (3 periods), and
+  // handball (2 halves) — see GamePeriod's own comment.
   | "periodEnded"
   | "periodStarted";
 

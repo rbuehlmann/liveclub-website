@@ -43,7 +43,7 @@ async function waitForClubMembership(uid: string, clubId: string) {
 // functions/src/lib/score.ts's normalizeSport() is what turns these into
 // the stable "football"/"basketball"/"iceHockey" ids that live-scoring
 // actually branches on (2026-09-08).
-const SPORTS = ["Fussball", "Basketball", "Eishockey"];
+const SPORTS = ["Fussball", "Basketball", "Eishockey", "Handball"];
 
 // Fixe Liste statt Freitext, damit die spätere Länder-Filterung in der
 // öffentlichen Suche konsistente Werte hat. Same pattern as home/countries.

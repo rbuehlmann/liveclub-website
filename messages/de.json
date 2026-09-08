@@ -61,7 +61,8 @@
     "sports": {
       "Fussball": "Fussball",
       "Basketball": "Basketball",
-      "Eishockey": "Eishockey"
+      "Eishockey": "Eishockey",
+      "Handball": "Handball"
     },
     "countries": {
       "Schweiz": "Schweiz",
@@ -226,7 +227,11 @@
     "penaltyHome": "Strafzeit Heim",
     "penaltyAway": "Strafzeit Gast",
     "endPeriod": "Drittelende",
-    "startNextPeriod": "Nächstes Drittel starten"
+    "startNextPeriod": "Nächstes Drittel starten",
+    "yellowCardHome": "Gelbe Karte Heim",
+    "yellowCardAway": "Gelbe Karte Gast",
+    "redCardHome": "Rote Karte Heim",
+    "redCardAway": "Rote Karte Gast"
   },
   "reporters": {
     "title": "Redaktoren",

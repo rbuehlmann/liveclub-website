@@ -61,7 +61,8 @@
     "sports": {
       "Fussball": "Football",
       "Basketball": "Basketball",
-      "Eishockey": "Ice hockey"
+      "Eishockey": "Ice hockey",
+      "Handball": "Handball"
     },
     "countries": {
       "Schweiz": "Switzerland",
@@ -226,7 +227,11 @@
     "penaltyHome": "Penalty home",
     "penaltyAway": "Penalty away",
     "endPeriod": "End period",
-    "startNextPeriod": "Start next period"
+    "startNextPeriod": "Start next period",
+    "yellowCardHome": "Yellow card home",
+    "yellowCardAway": "Yellow card away",
+    "redCardHome": "Red card home",
+    "redCardAway": "Red card away"
   },
   "reporters": {
     "title": "Editors",

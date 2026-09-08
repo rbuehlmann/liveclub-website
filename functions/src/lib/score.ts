@@ -9,10 +9,11 @@ export type GameStatus =
   | "cancelled";
 
 // Football keeps its own explicit two-half vocabulary, untouched. Basketball
-// (4 quarters) and ice hockey (3 periods) share a generic numbered
-// "periodN" / "periodBreakN" vocabulary instead — see periodEnded/
-// periodStarted below — since their break-between-segments semantics are
-// identical, unlike football's asymmetric halfTime/secondHalfStarted pair.
+// (4 quarters), ice hockey (3 periods), and handball (2 halves) share a
+// generic numbered "periodN" / "periodBreakN" vocabulary instead — see
+// periodEnded/periodStarted below — since their break-between-segments
+// semantics are identical, unlike football's asymmetric
+// halfTime/secondHalfStarted pair.
 export type GamePeriod =
   | "notStarted"
   | "firstHalf"
@@ -33,7 +34,7 @@ export type GamePeriod =
 // createGame.ts. "football" is the default/legacy value: every club/game
 // created before this existed has no `sport` field at all, and must keep
 // behaving exactly as before.
-export type Sport = "football" | "basketball" | "iceHockey";
+export type Sport = "football" | "basketball" | "iceHockey" | "handball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data — see that file's own comment on why),
@@ -44,6 +45,7 @@ export type Sport = "football" | "basketball" | "iceHockey";
 export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
+  if (raw === "Handball" || raw === "handball") return "handball";
   return "football";
 }
 
@@ -138,6 +140,7 @@ function relevantEvents(events: GameEventRecord[]): GameEventRecord[] {
 export function computeGameState(events: GameEventRecord[], sport: Sport = "football"): ComputedGameState {
   if (sport === "basketball") return computeBasketballState(events);
   if (sport === "iceHockey") return computeIceHockeyState(events);
+  if (sport === "handball") return computeHandballState(events);
   return computeFootballState(events);
 }
 
@@ -202,11 +205,21 @@ function computeFootballState(events: GameEventRecord[]): ComputedGameState {
 // periodStarted → next segment) — a reporter can always fall back to
 // "Letztes Ereignis korrigieren" (manualCorrection) if they misclick, same
 // as every other event, rather than this needing its own undo path.
+type SecondaryEventCategory =
+  | "foulHome"
+  | "foulAway"
+  | "penaltyHome"
+  | "penaltyAway"
+  | "yellowCardHome"
+  | "yellowCardAway"
+  | "redCardHome"
+  | "redCardAway";
+
 function computeSegmentedState(
   events: GameEventRecord[],
   totalSegments: number,
   scoreEvents: Record<string, { home?: number; away?: number }>,
-  secondaryEvents: Record<string, "foulHome" | "foulAway" | "penaltyHome" | "penaltyAway">
+  secondaryEvents: Record<string, SecondaryEventCategory>
 ): ComputedGameState {
   const state = emptyState();
   let segmentIndex = 0; // 0-based; segment 1 == index 0
@@ -224,6 +237,10 @@ function computeSegmentedState(
     else if (secondary === "foulAway") state.foulsAway += 1;
     else if (secondary === "penaltyHome") state.penaltiesHome += 1;
     else if (secondary === "penaltyAway") state.penaltiesAway += 1;
+    else if (secondary === "yellowCardHome") state.yellowCardsHome += 1;
+    else if (secondary === "yellowCardAway") state.yellowCardsAway += 1;
+    else if (secondary === "redCardHome") state.redCardsHome += 1;
+    else if (secondary === "redCardAway") state.redCardsAway += 1;
     if (secondary) {
       state.lastEventType = event.type;
       continue;
@@ -295,5 +312,32 @@ function computeIceHockeyState(events: GameEventRecord[]): ComputedGameState {
       goalAwayHockey: { away: 1 },
     },
     { penaltyHome: "penaltyHome", penaltyAway: "penaltyAway" }
+  );
+}
+
+// Two halves, like football — but isolated (own event vocabulary, own
+// reducer call), not sharing football's actual function or event types.
+// Reuses the generic segmented-state model (totalSegments: 2) rather than
+// football's explicit firstHalf/halftime/secondHalf, since the underlying
+// "end this segment, start the next" mechanic is identical to what
+// basketball/ice hockey already use — the reporter UI still shows
+// football-style "Halbzeit"/"2. Halbzeit starten" labels for it (same
+// German words), it's just wired to the generic periodEnded/periodStarted
+// events under the hood instead of football's own halfTime/
+// secondHalfStarted.
+function computeHandballState(events: GameEventRecord[]): ComputedGameState {
+  return computeSegmentedState(
+    events,
+    2,
+    {
+      goalHomeHandball: { home: 1 },
+      goalAwayHandball: { away: 1 },
+    },
+    {
+      yellowCardHomeHandball: "yellowCardHome",
+      yellowCardAwayHandball: "yellowCardAway",
+      redCardHomeHandball: "redCardHome",
+      redCardAwayHandball: "redCardAway",
+    }
   );
 }

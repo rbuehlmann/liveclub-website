@@ -297,6 +297,57 @@ export default function LiveControlPage() {
             </>
           )}
 
+          {sport === "handball" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalHomeHandball")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalHome")}
+                </Button>
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalAwayHandball")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalAway")}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("yellowCardHomeHandball")}
+                >
+                  {t("yellowCardHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("yellowCardAwayHandball")}
+                >
+                  {t("yellowCardAway")}
+                </Button>
+                <Button
+                  variant="danger"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("redCardHomeHandball")}
+                >
+                  {t("redCardHome")}
+                </Button>
+                <Button
+                  variant="danger"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("redCardAwayHandball")}
+                >
+                  {t("redCardAway")}
+                </Button>
+              </div>
+            </>
+          )}
+
           {sport === "football" && game.status === "live" && game.period === "firstHalf" && (
             <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("halfTime")}>
               {t("halfTime")}
@@ -304,6 +355,23 @@ export default function LiveControlPage() {
           )}
           {sport === "football" && game.status === "live" && game.period === "halftime" && (
             <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("secondHalfStarted")}>
+              {t("startSecondHalf")}
+            </Button>
+          )}
+
+          {/* Handball: 2 halves via the generic periodEnded/periodStarted
+              mechanic (only period1 gets an "end half" button — the 2nd
+              half ends via "Spiel beenden" only, same as football's 2nd
+              half never gets its own end button either), reusing football's
+              exact "Halbzeit"/"2. Halbzeit starten" copy since the German
+              words are identical. */}
+          {sport === "handball" && game.status === "live" && game.period === "period1" && (
+            <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+              {t("halfTime")}
+            </Button>
+          )}
+          {sport === "handball" && game.status === "live" && game.period === "periodBreak1" && (
+            <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
               {t("startSecondHalf")}
             </Button>
           )}
