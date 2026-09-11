@@ -151,6 +151,7 @@ export const onPublicGameWrite = onDocumentWritten(
       status: afterData.status as string,
       period: (afterData.period as string | null | undefined) ?? null,
       lastEventType: (afterData.lastEventType as string | null | undefined) ?? null,
+      sport: (afterData.sport as string | null | undefined) ?? null,
     };
 
     const wasLive = LIVE_STATUSES.has(beforeData?.status);

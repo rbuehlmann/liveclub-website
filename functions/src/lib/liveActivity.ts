@@ -1,5 +1,6 @@
 import { db } from "../firebaseAdmin";
 import { sendLiveActivityPush } from "./apns";
+import { normalizeSport } from "./score";
 
 // Field-for-field mirror of the iOS app's `LiveClubGameAttributes` /
 // `ContentState` (iOS/Shared/Models/LiveClubGameAttributes.swift) — keep
@@ -32,6 +33,16 @@ export interface GameForActivity {
   status: string;
   period?: string | null;
   lastEventType?: string | null;
+  // Raw value as stored on the game (German literal like "Basketball", or
+  // missing/legacy) — normalizeSport() below is what turns this into the
+  // stable id the client should actually switch on. 2026-09-11: added
+  // because the client had NO way to know which sport a game was, so it
+  // could never have interpreted `period`'s new non-football values
+  // (period1/periodBreak1/etc., see functions/src/lib/score.ts) correctly
+  // — very likely why a basketball game's Live Activity never started
+  // (the payload's `period` value was presumably undecodable by the iOS/
+  // Android client's football-only model, failing the whole push).
+  sport?: string | null;
 }
 
 export function contentState(game: GameForActivity) {
@@ -56,6 +67,13 @@ export function attributes(game: GameForActivity) {
     homeLogoData: game.homeClubLogoThumbnail ?? null,
     awayLogoData: game.awayClubLogoThumbnail ?? null,
     clubName: game.clubName,
+    // Static for the whole game (one club = one sport), so it belongs in
+    // the Attributes (set once at Activity creation), not ContentState
+    // (updated on every push) — normalized to the stable id
+    // ("football"/"basketball"/"iceHockey"/"handball"/"americanFootball"/
+    // "volleyball") so the client never has to know about the German
+    // literals SPORTS stores.
+    sport: normalizeSport(game.sport),
   };
 }
 

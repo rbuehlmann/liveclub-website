@@ -27,6 +27,7 @@ function dataPayload(event: "start" | "update" | "end", game: GameForActivity): 
     homeLogoUrl: attrs.homeLogoUrl ?? "",
     awayLogoUrl: attrs.awayLogoUrl ?? "",
     clubName: attrs.clubName,
+    sport: attrs.sport,
     scoreHome: String(state.scoreHome),
     scoreAway: String(state.scoreAway),
     status: state.status,
