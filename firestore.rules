@@ -323,6 +323,15 @@ service cloud.firestore {
       allow read: if isSignedIn();
     }
 
+    // Which sports the public club-registration form offers (see
+    // onboarding/create-club/page.tsx) — any signed-in user needs to read
+    // this so their own registration form shows the right options. Writes
+    // stay admin-only (falls through to the generic settings/{docId} rule
+    // below). More specific match wins.
+    match /settings/sportAvailability {
+      allow read: if isSignedIn();
+    }
+
     // Platform-wide settings — nothing here is club-specific or public.
     match /settings/{docId} {
       allow read, write: if isPlatformAdmin();

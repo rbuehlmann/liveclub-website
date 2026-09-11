@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { getIdTokenResult } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -45,6 +46,14 @@ async function waitForClubMembership(uid: string, clubId: string) {
 // actually branches on (2026-09-08).
 const SPORTS = ["Fussball", "Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
 
+// Gated by settings/sportAvailability.enabledSports (admin-editable at
+// /admin/settings) — the iOS/Android apps aren't updated for the 5 new
+// sports yet (2026-09-11), so only Fussball is offered here by default
+// until each one's client support is actually ready and an admin flips it
+// on. A platformAdmin always sees the full SPORTS list regardless, so
+// testing a not-yet-public sport never requires opening it up first.
+const DEFAULT_ENABLED_SPORTS = ["Fussball"];
+
 // Fixe Liste statt Freitext, damit die spätere Länder-Filterung in der
 // öffentlichen Suche konsistente Werte hat. Same pattern as home/countries.
 const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
@@ -65,6 +74,7 @@ function CreateClubForm() {
 
   const [name, setName] = useState("");
   const [sport, setSport] = useState(SPORTS[0]);
+  const [availableSports, setAvailableSports] = useState<string[]>(DEFAULT_ENABLED_SPORTS);
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [contactName, setContactName] = useState(user?.displayName ?? "");
   const [contactEmail, setContactEmail] = useState(user?.email ?? "");
@@ -81,6 +91,26 @@ function CreateClubForm() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { db } = getFirebaseClient();
+      const [settingsSnap, tokenResult] = await Promise.all([
+        getDoc(doc(db, "settings", "sportAvailability")),
+        getIdTokenResult(user),
+      ]);
+      // A platformAdmin always sees every sport, regardless of what's
+      // publicly enabled — testing a not-yet-launched sport must never
+      // require opening it up to the public first.
+      if (tokenResult.claims.platformAdmin === true) {
+        setAvailableSports(SPORTS);
+        return;
+      }
+      const enabled = settingsSnap.data()?.enabledSports as string[] | undefined;
+      setAvailableSports(enabled && enabled.length > 0 ? SPORTS.filter((s) => enabled.includes(s)) : DEFAULT_ENABLED_SPORTS);
+    })();
+  }, [user]);
 
   if (!authLoading && !user) {
     router.replace("/login");
@@ -197,7 +227,7 @@ function CreateClubForm() {
               onChange={(e) => setSport(e.target.value)}
               className="rounded-lg border border-gray-300 px-4 py-3 text-base focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
             >
-              {SPORTS.map((s) => (
+              {availableSports.map((s) => (
                 <option key={s} value={s}>
                   {t(`sports.${s}`)}
                 </option>

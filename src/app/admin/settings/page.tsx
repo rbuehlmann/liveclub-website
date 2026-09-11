@@ -230,6 +230,86 @@ function ImageField({ label, fieldKey, value, onChange }: ImageFieldProps) {
   );
 }
 
+// Kept in sync with onboarding/create-club/page.tsx's own SPORTS array —
+// Fussball is always enabled (checkbox locked) since it's the one sport the
+// iOS/Android apps have always supported; the other 5 are off by default
+// (settings/sportAvailability doesn't exist yet) until each one's app-side
+// support is actually ready, see the 2026-09-11 "Live Activity" report.
+// PlatformAdmins bypass this restriction entirely in the registration form
+// itself (getIdTokenResult there), so flipping a sport on here is only ever
+// about the *public* registration form, never a precondition for testing it.
+const TOGGLEABLE_SPORTS = ["Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
+
+function SportAvailabilityCard() {
+  const [enabled, setEnabled] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { db } = getFirebaseClient();
+    getDoc(doc(db, "settings", "sportAvailability")).then((snap) => {
+      const stored = (snap.data()?.enabledSports as string[] | undefined) ?? [];
+      setEnabled(new Set(stored));
+      setLoading(false);
+    });
+  }, []);
+
+  function toggle(s: string) {
+    setEnabled((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const { db } = getFirebaseClient();
+      await setDoc(
+        doc(db, "settings", "sportAvailability"),
+        { enabledSports: Array.from(enabled) },
+        { merge: true }
+      );
+      setMessage("Gespeichert ✓ — wirkt sofort, ohne Deploy.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <Card>
+      <h2 className="mb-1 font-semibold text-gray-900 dark:text-white">Sportarten bei der Registrierung</h2>
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        Welche Sportarten neu registrierende Vereine auswählen können. Fussball ist immer verfügbar.
+        Als Plattform-Admin siehst du bei der eigenen Vereins-Registrierung trotzdem immer alle
+        Sportarten — diese Einstellung betrifft nur das öffentliche Formular.
+      </p>
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <input type="checkbox" checked disabled />
+          Fussball
+        </label>
+        {TOGGLEABLE_SPORTS.map((s) => (
+          <label key={s} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <input type="checkbox" checked={enabled.has(s)} onChange={() => toggle(s)} />
+            {s}
+          </label>
+        ))}
+      </div>
+      {message && <p className="mt-2 text-sm text-green-700">{message}</p>}
+      <Button className="mt-4" onClick={handleSave} disabled={saving}>
+        {saving ? "Wird gespeichert …" : "Speichern"}
+      </Button>
+    </Card>
+  );
+}
+
 // Deliberately its own component with its own load/save (merge: true),
 // completely decoupled from AdminSettingsPage's `branding` state and its
 // "Alles auf Standard zurücksetzen" button below — that reset is scoped to
@@ -547,6 +627,8 @@ export default function AdminSettingsPage() {
           </div>
         </div>
       </Card>
+
+      <SportAvailabilityCard />
 
       <ClubFallbackIconCard />
 
