@@ -42,9 +42,16 @@ export async function sendTeamInfoPush(
     ),
     ...iosTokens.map((token) => sendAlertPush(token, notification)),
   ]);
-  const failed = results.filter((r) => r.status === "rejected").length;
-  if (failed > 0) {
-    console.warn(`sendTeamInfoPush: ${failed}/${results.length} push(es) failed`);
+  const failures = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+  if (failures.length > 0) {
+    // Previously just logged the count — with no reason ever recorded,
+    // a real, ongoing failure (2026-09-11 report: iOS pushes not
+    // arriving) is undiagnosable after the fact. Same logFailures pattern
+    // liveActivity.ts already uses.
+    console.warn(
+      `sendTeamInfoPush: ${failures.length}/${results.length} push(es) failed`,
+      failures.map((f) => String(f.reason))
+    );
   }
-  return { sent: results.length - failed, failed };
+  return { sent: results.length - failures.length, failed: failures.length };
 }
