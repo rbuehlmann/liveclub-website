@@ -3,6 +3,9 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db, auth } from "../firebaseAdmin";
 import { generateUniquePublicClubId } from "../lib/publicClubId";
 import { upsertLicense } from "../lib/license";
+import { sendMail, LIVECLUB_TEAM_EMAIL } from "../lib/mailer";
+import { getTemplate, renderTemplate } from "../lib/emailTemplates";
+import { smtpPassword } from "../lib/secrets";
 
 const TRIAL_DAYS = 30;
 
@@ -29,7 +32,7 @@ function assertNonEmptyString(value: unknown, field: string): asserts value is s
  * client-side Firestore writes) so the publicClubId can be generated
  * uniquely and the trial license can never be forged by the client.
  */
-export const createClub = onCall<CreateClubRequest>(async (request) => {
+export const createClub = onCall<CreateClubRequest>({ secrets: [smtpPassword] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
@@ -112,6 +115,17 @@ export const createClub = onCall<CreateClubRequest>(async (request) => {
     source: "registration",
     notes: "Automatische 30-tägige Testphase bei Vereinsregistrierung.",
   });
+
+  // Internal-only "control" notification (2026-09-11 request) — never
+  // blocks/fails the registration itself if the mail send has a hiccup,
+  // same as every other internal notification in this codebase.
+  const template = await getTemplate(db, "newClubRegistered");
+  const vars = { clubName: name, sport, country, contactName, contactEmail };
+  await sendMail({
+    to: LIVECLUB_TEAM_EMAIL,
+    subject: renderTemplate(template.subject, vars),
+    html: renderTemplate(template.html, vars),
+  }).catch(() => undefined);
 
   return { clubId: clubRef.id, publicClubId };
 });

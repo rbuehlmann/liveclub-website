@@ -139,6 +139,20 @@ export const DEFAULT_TEMPLATES: Record<string, EmailTemplateContent> = {
     html: `<p>Hallo,</p>
 <p><strong>{{editorName}}</strong> hat die Administration für <strong>{{homeTeamName}} vs. {{awayTeamName}}</strong> am {{gameDate}} übernommen — das Spiel war offen, seid ihr aber jetzt versorgt.</p>`,
   },
+  // Internal — goes to LIVECLUB_TEAM_EMAIL only, real-time on every new
+  // club registration (2026-09-11 "Kontrolle" request) — see createClub.ts.
+  newClubRegistered: {
+    label: "Neuer Verein registriert (intern)",
+    subject: "Neuer Verein registriert: {{clubName}}",
+    html: `<p>Ein neuer Verein hat sich registriert.</p>
+<ul>
+<li><strong>Verein:</strong> {{clubName}}</li>
+<li><strong>Sportart:</strong> {{sport}}</li>
+<li><strong>Land:</strong> {{country}}</li>
+<li><strong>Kontakt:</strong> {{contactName}} ({{contactEmail}})</li>
+</ul>
+<p><a href="https://liveclub.app/admin/clubs">Im Admin-Panel öffnen</a></p>`,
+  },
   // Sent to LiveClub, the club's contactEmail, AND the original author
   // when a redaktor hides a Team-Info (see hideTeamInfo.ts) — the full
   // post content is included deliberately, so urgency can be judged

@@ -45,6 +45,11 @@ const KNOWN_TEMPLATES: { id: string; label: string; hint: string }[] = [
     label: "Verein gelöscht (intern)",
     hint: "{{clubName}}, {{triggeredBy}}, {{reason}}, {{archiveUrl}}",
   },
+  {
+    id: "newClubRegistered",
+    label: "Neuer Verein registriert (intern)",
+    hint: "{{clubName}}, {{sport}}, {{country}}, {{contactName}}, {{contactEmail}}",
+  },
   { id: "redaktorRemoved", label: "Verein gelöscht (an Redaktor)", hint: "{{clubName}}" },
   { id: "clubMemberLeft", label: "Redaktor hat sein Konto gelöscht", hint: "{{memberName}}, {{memberEmail}}, {{clubName}}" },
   {
@@ -69,6 +74,7 @@ const CATEGORIES: { label: string; ids: string[] }[] = [
       "redaktorRemoved",
       "clubMemberLeft",
       "clubRecommendation",
+      "newClubRegistered",
     ],
   },
   { label: "Spiele", ids: ["gameTakeoverInvite", "gameTakenOver", "gameHandedOff", "gameOpenClaimed"] },
@@ -161,6 +167,17 @@ const DEFAULT_CONTENT: Record<string, { subject: string; html: string }> = {
 <p><strong>Ausgelöst von:</strong> {{triggeredBy}}</p>
 <p><strong>Grund:</strong> {{reason}}</p>
 <p><strong>Archiv (30 Tage verfügbar):</strong> <a href="{{archiveUrl}}">Herunterladen</a></p>`,
+  },
+  newClubRegistered: {
+    subject: "Neuer Verein registriert: {{clubName}}",
+    html: `<p>Ein neuer Verein hat sich registriert.</p>
+<ul>
+<li><strong>Verein:</strong> {{clubName}}</li>
+<li><strong>Sportart:</strong> {{sport}}</li>
+<li><strong>Land:</strong> {{country}}</li>
+<li><strong>Kontakt:</strong> {{contactName}} ({{contactEmail}})</li>
+</ul>
+<p><a href="https://liveclub.app/admin/clubs">Im Admin-Panel öffnen</a></p>`,
   },
   redaktorRemoved: {
     subject: "{{clubName}} wurde gelöscht",
