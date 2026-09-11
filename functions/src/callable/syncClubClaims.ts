@@ -18,14 +18,35 @@ export const syncClubClaims = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "Anmeldung erforderlich.");
   }
   const uid = request.auth.uid;
-  const userSnap = await db.collection("users").doc(uid).get();
+  const [userSnap, userRecord] = await Promise.all([
+    db.collection("users").doc(uid).get(),
+    auth.getUser(uid),
+  ]);
   const data = userSnap.data();
   const clubIds: string[] = data?.clubIds ?? [];
   const clubRoles: Record<string, string> = data?.clubRoles ?? {};
   const primaryClubId = clubIds[0] ?? null;
   const role = primaryClubId ? clubRoles[primaryClubId] ?? null : null;
 
-  await auth.setCustomUserClaims(uid, primaryClubId && role ? { clubId: primaryClubId, role } : {});
+  // setCustomUserClaims always REPLACES the whole claims object, never
+  // merges — this function only ever owns clubId/role, so every *other*
+  // claim (platformAdmin being the one that matters in practice) must be
+  // read fresh from the Admin SDK and carried forward, or it gets silently
+  // wiped the next time this runs (every sign-in, see AuthProvider) — 2026-
+  // 09-11 bug report: granting platformAdmin via /admin, then reloading
+  // (which re-triggers this before the grant's own token refresh has
+  // propagated) erased it again. Reading `auth.getUser(uid)` here rather
+  // than `request.auth.token` deliberately avoids trusting whatever ID
+  // token the client happened to send, which can itself be stale.
+  const existingClaims = userRecord.customClaims ?? {};
+  const preservedClaims = Object.fromEntries(
+    Object.entries(existingClaims).filter(([key]) => key !== "clubId" && key !== "role")
+  );
+
+  await auth.setCustomUserClaims(uid, {
+    ...preservedClaims,
+    ...(primaryClubId && role ? { clubId: primaryClubId, role } : {}),
+  });
 
   return { clubId: primaryClubId, role };
 });

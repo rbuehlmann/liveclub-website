@@ -95,20 +95,37 @@ function CreateClubForm() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { db } = getFirebaseClient();
-      const [settingsSnap, tokenResult] = await Promise.all([
-        getDoc(doc(db, "settings", "sportAvailability")),
-        getIdTokenResult(user),
-      ]);
-      // A platformAdmin always sees every sport, regardless of what's
-      // publicly enabled — testing a not-yet-launched sport must never
-      // require opening it up to the public first.
-      if (tokenResult.claims.platformAdmin === true) {
-        setAvailableSports(SPORTS);
-        return;
+      try {
+        const { db } = getFirebaseClient();
+        // Force a fresh token rather than trusting whatever's cached —
+        // syncClubClaims (AuthProvider, runs on every sign-in) used to
+        // silently wipe a just-granted platformAdmin claim on the very
+        // next sign-in/reload (2026-09-11 bug, fixed server-side too), so
+        // this also defends against any *other* staleness on this
+        // specific check rather than relying only on that fix.
+        const [settingsSnap, tokenResult] = await Promise.all([
+          getDoc(doc(db, "settings", "sportAvailability")),
+          getIdTokenResult(user, true),
+        ]);
+        // A platformAdmin always sees every sport, regardless of what's
+        // publicly enabled — testing a not-yet-launched sport must never
+        // require opening it up to the public first.
+        if (tokenResult.claims.platformAdmin === true) {
+          setAvailableSports(SPORTS);
+          return;
+        }
+        const enabled = settingsSnap.data()?.enabledSports as string[] | undefined;
+        setAvailableSports(
+          enabled && enabled.length > 0 ? SPORTS.filter((s) => enabled.includes(s)) : DEFAULT_ENABLED_SPORTS
+        );
+      } catch (err) {
+        // Fails closed (Fussball-only, the safe default) rather than
+        // leaving the dropdown in an undefined state — but logged, so a
+        // genuine hiccup here is visible instead of silently looking like
+        // "the sport just isn't enabled".
+        console.error("Failed to resolve available sports", err);
+        setAvailableSports(DEFAULT_ENABLED_SPORTS);
       }
-      const enabled = settingsSnap.data()?.enabledSports as string[] | undefined;
-      setAvailableSports(enabled && enabled.length > 0 ? SPORTS.filter((s) => enabled.includes(s)) : DEFAULT_ENABLED_SPORTS);
     })();
   }, [user]);
 
