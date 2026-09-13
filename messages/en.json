@@ -378,6 +378,16 @@
       "Österreich": "Austria",
       "Liechtenstein": "Liechtenstein"
     },
+    "sportLabel": "Sport",
+    "allSports": "All sports",
+    "sports": {
+      "Fussball": "Football",
+      "Basketball": "Basketball",
+      "Eishockey": "Ice hockey",
+      "Handball": "Handball",
+      "American Football": "American Football",
+      "Volleyball": "Volleyball"
+    },
     "noClubsFound": "No clubs found.",
     "missingClub": "Can't find your club?",
     "tellUs": "Let us know",

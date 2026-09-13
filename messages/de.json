@@ -388,6 +388,16 @@
       "Österreich": "Österreich",
       "Liechtenstein": "Liechtenstein"
     },
+    "sportLabel": "Sportart",
+    "allSports": "Alle Sportarten",
+    "sports": {
+      "Fussball": "Fussball",
+      "Basketball": "Basketball",
+      "Eishockey": "Eishockey",
+      "Handball": "Handball",
+      "American Football": "American Football",
+      "Volleyball": "Volleyball"
+    },
     "noClubsFound": "Keine Vereine gefunden.",
     "missingClub": "Vermisst du deinen Verein?",
     "tellUs": "Sag uns Bescheid",

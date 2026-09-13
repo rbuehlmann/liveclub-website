@@ -24,6 +24,12 @@ import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 // home.countries in messages/{locale}.json, keyed by these same strings.
 const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
 
+// Same literal values as onboarding/create-club/page.tsx's SPORTS — but
+// unlike there, never gated by settings/sportAvailability: this is a search
+// filter over clubs that already exist, not a picker for creating a new
+// one, so there's nothing to protect by hiding an option here.
+const SPORTS = ["Fussball", "Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
+
 interface ClubResult {
   publicClubId: string;
   name: string;
@@ -129,6 +135,7 @@ export default function Home() {
   const platform = useMobilePlatform();
   const [searchTerm, setSearchTerm] = useState("");
   const [country, setCountry] = useState("");
+  const [sport, setSport] = useState("");
   const [allClubs, setAllClubs] = useState<ClubResult[]>([]);
   const [teamMatchesByClub, setTeamMatchesByClub] = useState<Record<string, TeamNameMatch[]>>({});
   const [selectedClub, setSelectedClub] = useState<ClubResult | null>(null);
@@ -255,6 +262,7 @@ export default function Home() {
       .map((club) => {
         if (!licensedClubIds.has(club.publicClubId)) return null;
         if (country && club.country !== country) return null;
+        if (sport && club.sport !== sport) return null;
         if (club.name.toLowerCase().includes(term)) return { club, matchingTeam: null };
         const matchingTeam = (teamMatchesByClub[club.publicClubId] ?? []).find(
           (t) => t.name.toLowerCase().includes(term) || t.shortName.toLowerCase().includes(term)
@@ -262,7 +270,7 @@ export default function Home() {
         return matchingTeam ? { club, matchingTeam } : null;
       })
       .filter((entry): entry is { club: ClubResult; matchingTeam: TeamNameMatch | null } => entry !== null);
-  }, [allClubs, teamMatchesByClub, searchTerm, country]);
+  }, [allClubs, teamMatchesByClub, searchTerm, country, sport]);
 
   async function selectClub(club: ClubResult) {
     setSelectedClub(club);
@@ -547,6 +555,23 @@ export default function Home() {
                     {COUNTRIES.map((c) => (
                       <option key={c} value={c}>
                         {t(`countries.${c}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t("sportLabel")}
+                  </label>
+                  <select
+                    value={sport}
+                    onChange={(e) => setSport(e.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20 dark:border-white/15 dark:bg-white/5 dark:text-white"
+                  >
+                    <option value="">{t("allSports")}</option>
+                    {SPORTS.map((s) => (
+                      <option key={s} value={s}>
+                        {t(`sports.${s}`)}
                       </option>
                     ))}
                   </select>
