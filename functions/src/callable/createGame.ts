@@ -126,6 +126,15 @@ export const createGame = onCall<CreateGameRequest>(
       const publicClubSnap = await db.collection("publicClubs").doc(opponentPublicClubId.trim()).get();
       if (publicClubSnap.exists) {
         const publicClubData = publicClubSnap.data()!;
+        // One club = one sport (see onboarding/create-club/page.tsx) — a
+        // fixture only makes sense between two teams of the same sport.
+        // The opponent search UI already filters by sport, but a linked
+        // real club must be re-checked here too, since this is the only
+        // place that actually decides the game's `sport` field (always the
+        // *creating* club's own sport — see the write below).
+        if (publicClubData.sport && publicClubData.sport !== club.sport) {
+          throw new HttpsError("invalid-argument", "Der Gegner-Verein hat eine andere Sportart.");
+        }
         opponentClubPublicId = opponentPublicClubId.trim();
         opponentClubRealId = publicClubData.clubId;
         if (opponentTeamId?.trim()) {

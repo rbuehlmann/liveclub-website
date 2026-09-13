@@ -167,6 +167,10 @@ export default function GamesPage() {
     if (!term || !club) return [];
     return allPublicTeams
       .filter((pt) => pt.publicClubId !== club.publicClubId)
+      // One club = one sport (see src/lib/types.ts) — a fixture only ever
+      // makes sense between two teams of the same sport, so a football club
+      // must never see e.g. basketball teams as opponent candidates.
+      .filter((pt) => pt.sport === club.sport)
       .filter(
         (pt) =>
           pt.name.toLowerCase().includes(term) ||
