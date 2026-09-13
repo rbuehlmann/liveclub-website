@@ -53,6 +53,9 @@ export const onTeamWrite = onDocumentWritten(
         name: afterData.name,
         shortName: afterData.shortName,
         sport: afterData.sport,
+        // One club = one country (same convention as sport) — used by the
+        // opponent search to optionally narrow results, see games/page.tsx.
+        country: clubData?.country ?? null,
         updatedAt: FieldValue.serverTimestamp(),
       });
     }

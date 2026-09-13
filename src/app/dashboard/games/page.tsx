@@ -144,6 +144,7 @@ export default function GamesPage() {
           name: d.data().name,
           shortName: d.data().shortName,
           sport: d.data().sport,
+          country: d.data().country ?? null,
         }))
       );
     });
@@ -171,6 +172,11 @@ export default function GamesPage() {
       // makes sense between two teams of the same sport, so a football club
       // must never see e.g. basketball teams as opponent candidates.
       .filter((pt) => pt.sport === club.sport)
+      // Narrows results to the same country, same as sport — but leniently:
+      // a missing pt.country (publicTeams docs mirrored before this field
+      // existed, not yet backfilled by a later team edit) is treated as
+      // "unknown" rather than excluded, so it never hides a real opponent.
+      .filter((pt) => !pt.country || !club.country || pt.country === club.country)
       .filter(
         (pt) =>
           pt.name.toLowerCase().includes(term) ||

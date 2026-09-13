@@ -405,6 +405,11 @@ export interface PublicTeamProfile {
   name: string;
   shortName: string;
   sport: string;
+  // Denormalized from the owning club (see onTeamWrite.ts) — missing on
+  // publicTeams docs mirrored before this field existed, until that team is
+  // next written. Opponent search treats a missing value as "unknown",
+  // never as a mismatch.
+  country?: string | null;
 }
 
 // clubRecommendations/{id} — "tell us about a club we're missing", from
