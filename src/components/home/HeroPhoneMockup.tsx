@@ -80,14 +80,12 @@ function BatteryIcon() {
 function TeamSlot({
   publicClubId,
   teamName,
-  align,
 }: {
   publicClubId: string | null;
   teamName: string;
-  align: "start" | "end";
 }) {
   return (
-    <div className={`flex min-w-0 flex-1 flex-col items-center gap-1.5 ${align === "end" ? "items-end" : "items-start"}`}>
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
       <TeamIcon publicClubId={publicClubId} teamName={teamName} size={30} />
       <span className="max-w-full truncate text-[10px] font-medium text-white/80">{teamName}</span>
     </div>
@@ -162,7 +160,7 @@ export function HeroPhoneMockup({ game }: { game: HeroPhoneGame }) {
 
           {/* Live Activity — the actual point of this whole mockup. */}
           <div className="relative z-10 mx-4 mt-8 rounded-[1.6rem] border border-white/10 bg-white/10 p-3.5 shadow-lg backdrop-blur-md">
-            <div className="mb-2.5 flex items-center gap-1.5 px-0.5">
+            <div className="mb-2.5 flex items-center justify-center gap-1.5 px-0.5">
               {game.isLive && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-orange" />}
               <span
                 className={`text-[10px] font-bold tracking-wide uppercase ${
@@ -173,11 +171,11 @@ export function HeroPhoneMockup({ game }: { game: HeroPhoneGame }) {
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <TeamSlot publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} align="start" />
+              <TeamSlot publicClubId={game.homeClubPublicId} teamName={game.homeTeamName} />
               <span className="font-teko shrink-0 px-1 text-4xl font-bold tabular-nums text-white">
                 {game.scoreHome}:{game.scoreAway}
               </span>
-              <TeamSlot publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} align="end" />
+              <TeamSlot publicClubId={game.awayClubPublicId} teamName={game.awayTeamName} />
             </div>
           </div>
         </div>
