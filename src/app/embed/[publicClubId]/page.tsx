@@ -6,6 +6,7 @@ import { collection, doc, limit as fbLimit, onSnapshot, query, where } from "fir
 import { Timestamp } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { TeamIcon } from "@/components/TeamIcon";
+import { useBranding } from "@/components/layout/BrandingProvider";
 import { formatDateDe } from "@/lib/date";
 import { PublicClub, PublicGame } from "@/lib/types";
 
@@ -257,6 +258,25 @@ function FeedRow({
   );
 }
 
+// Small "powered by LiveClub" mark shown instead of repeating the club's
+// own name — this widget only ever gets embedded on that same club's own
+// site, so the name is already redundant context, but the platform still
+// needs its own attribution somewhere (2026-09-18 feedback). Falls back to
+// bold text the same way src/lib/embedGenerator.ts's badge wordmark does,
+// for installs with no branding.logoLight/logoDark uploaded yet.
+function EmbedBrandMark({ theme }: { theme: EmbedTheme }) {
+  const branding = useBranding();
+  const colors = FEED_THEME[theme];
+  const logoUrl = theme === "dark" ? branding.logoDark ?? branding.logoLight : branding.logoLight;
+  if (logoUrl) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logoUrl} alt="LiveClub" style={{ height: 16, width: "auto" }} />;
+  }
+  return (
+    <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.4, color: colors.subtext }}>LiveClub</span>
+  );
+}
+
 function FeedEmbed({
   publicClubId,
   scope,
@@ -377,7 +397,9 @@ function FeedEmbed({
         minHeight: "100vh",
       }}
     >
-      <strong style={{ marginBottom: 4 }}>{club.name}</strong>
+      <div style={{ marginBottom: 4 }}>
+        <EmbedBrandMark theme={theme} />
+      </div>
       {!hasAnything && <p style={{ color: colors.subtext, fontSize: 13 }}>Noch keine Spiele.</p>}
       {liveGame && (
         <FeedRow
