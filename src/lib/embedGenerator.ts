@@ -236,18 +236,29 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, targetWidth = 1080): 
   ctx.drawImage(qrCanvas, (width - qrSize) / 2, cursorY + qrPad, qrSize, qrSize);
   cursorY += qrSize + qrPad * 2 + s(FLYER_BASE.innerGap);
 
+  // Icon + name sit side by side as one row (like buildBadgeHtml's
+  // `<span style="display:flex;align-items:center;gap:6px;">`), the row as
+  // a whole centered — not each element independently centered on its own,
+  // which is what drew them stacked on top of each other before
+  // (2026-09-18 bug report).
   const iconSize = s(FLYER_BASE.iconSize);
+  const nameGap = s(6);
+  ctx.font = `600 ${Math.round(s(FLYER_BASE.nameFontSize))}px system-ui, sans-serif`;
+  const nameWidth = ctx.measureText(spec.targetName).width;
+  const rowWidth = (spec.clubIconUrl ? iconSize + nameGap : 0) + nameWidth;
+  const rowStartX = (width - rowWidth) / 2;
+
   if (spec.clubIconUrl) {
     try {
       const icon = await loadImage(spec.clubIconUrl);
       ctx.save();
       ctx.beginPath();
-      ctx.arc(width / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+      ctx.arc(rowStartX + iconSize / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
       ctx.closePath();
       ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.clip();
-      ctx.drawImage(icon, width / 2 - iconSize / 2, cursorY, iconSize, iconSize);
+      ctx.drawImage(icon, rowStartX, cursorY, iconSize, iconSize);
       ctx.restore();
     } catch {
       // Skip silently — see doc comment above.
@@ -255,8 +266,13 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, targetWidth = 1080): 
   }
 
   ctx.fillStyle = textColor;
+  ctx.textAlign = "left";
   ctx.font = `600 ${Math.round(s(FLYER_BASE.nameFontSize))}px system-ui, sans-serif`;
-  ctx.fillText(spec.targetName, width / 2, cursorY + iconSize / 2 + s(FLYER_BASE.nameFontSize) * 0.35);
+  ctx.fillText(
+    spec.targetName,
+    rowStartX + (spec.clubIconUrl ? iconSize + nameGap : 0),
+    cursorY + iconSize / 2 + s(FLYER_BASE.nameFontSize) * 0.35
+  );
   cursorY += iconSize + s(FLYER_BASE.outerGap);
 
   // Store badges, side by side, centered — same reasoning as buildBadgeHtml.
