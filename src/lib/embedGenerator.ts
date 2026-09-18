@@ -148,11 +148,14 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   ctx.fillStyle = bg.hex;
   ctx.fillRect(0, 0, size, size);
 
-  // Layout budget got tighter over two rounds of feedback (2026-09-18): a
-  // store-badges row was added at the bottom, then the badges themselves
-  // needed to be noticeably bigger — every earlier gap shrank to keep it
-  // all fitting a fixed square 1080x1080 canvas.
-  let cursorY = size * 0.07;
+  // Proportions matched to buildBadgeHtml's own card (260px wide) rather
+  // than guessed independently — e.g. its QR is 140/260 ≈ 54% of the card
+  // width; the same ratio here (2026-09-18: "everything reads too small
+  // compared to the HTML widget"). A few ratios are pulled in slightly
+  // (QR 54%→42%, badges stay under the HTML version's 12.3%) since matching
+  // every one exactly doesn't fit a fixed square canvas — this is the
+  // closest fit that still keeps a real margin top and bottom.
+  let cursorY = size * 0.05;
 
   // "LiveClub" wordmark, in the same Teko font as PublicHeader.tsx's own
   // fallback (2026-09-18: reads as "the logo" to the user even though it's
@@ -162,34 +165,34 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   // before it's ready, which canvas (unlike DOM text) never recovers from
   // on its own. Always solid black regardless of the chosen background
   // swatch (2026-09-18 request), same as buildBadgeHtml.
-  const wordmarkFont = `700 ${Math.round(size * 0.06)}px Teko, system-ui, sans-serif`;
+  const wordmarkFont = `700 ${Math.round(size * 0.085)}px Teko, system-ui, sans-serif`;
   await document.fonts.load(wordmarkFont).catch(() => undefined);
   ctx.fillStyle = "#10140c";
   ctx.textAlign = "center";
   ctx.font = wordmarkFont;
-  ctx.fillText("LiveClub", size / 2, cursorY + size * 0.05);
-  cursorY += size * 0.05 + size * 0.035;
+  ctx.fillText("LiveClub", size / 2, cursorY + size * 0.072);
+  cursorY += size * 0.072 + size * 0.03;
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
-  ctx.font = `700 ${Math.round(size * 0.036)}px system-ui, sans-serif`;
+  ctx.font = `700 ${Math.round(size * 0.032)}px system-ui, sans-serif`;
   ctx.fillText(spec.followText, size / 2, cursorY);
-  cursorY += size * 0.045;
+  cursorY += size * 0.04;
 
-  const qrSize = size * 0.32;
-  const qrPad = size * 0.02;
+  const qrSize = size * 0.42;
+  const qrPad = size * 0.018;
   const qrCanvas = document.createElement("canvas");
   await QRCode.toCanvas(qrCanvas, spec.targetUrl, { width: qrSize, margin: 0 });
   ctx.fillStyle = "#ffffff";
   roundRect(ctx, (size - qrSize) / 2 - qrPad, cursorY, qrSize + qrPad * 2, qrSize + qrPad * 2, size * 0.02);
   ctx.fill();
   ctx.drawImage(qrCanvas, (size - qrSize) / 2, cursorY + qrPad, qrSize, qrSize);
-  cursorY += qrSize + qrPad * 2 + size * 0.04;
+  cursorY += qrSize + qrPad * 2 + size * 0.03;
 
   if (spec.clubIconUrl) {
     try {
       const icon = await loadImage(spec.clubIconUrl);
-      const iconSize = size * 0.065;
+      const iconSize = size * 0.07;
       ctx.save();
       ctx.beginPath();
       ctx.arc(size / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
@@ -199,7 +202,7 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
       ctx.clip();
       ctx.drawImage(icon, size / 2 - iconSize / 2, cursorY, iconSize, iconSize);
       ctx.restore();
-      cursorY += iconSize + size * 0.02;
+      cursorY += iconSize + size * 0.018;
     } catch {
       // Skip silently — see doc comment above.
     }
@@ -208,7 +211,7 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   ctx.fillStyle = textColor;
   ctx.font = `600 ${Math.round(size * 0.028)}px system-ui, sans-serif`;
   ctx.fillText(spec.targetName, size / 2, cursorY + size * 0.018);
-  cursorY += size * 0.06;
+  cursorY += size * 0.05;
 
   // Store badges, side by side, centered — same reasoning as buildBadgeHtml.
   try {
@@ -216,10 +219,9 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
       loadImage(APP_STORE_BADGE_URL),
       loadImage(PLAY_STORE_BADGE_URL),
     ]);
-    // Bumped up (2026-09-18 feedback: too small, should read more like the
-    // HTML badge's own proportions — see buildBadgeHtml, roughly
-    // badgeHeight/cardWidth ≈ 0.12 there).
-    const badgeH = size * 0.1;
+    // Matched to buildBadgeHtml's own proportion (badgeHeight/cardWidth ≈
+    // 32/260 ≈ 0.123 there).
+    const badgeH = size * 0.115;
     const appW = badgeH * (appStore.width / appStore.height);
     const playW = badgeH * (playStore.width / playStore.height);
     const gap = size * 0.02;
