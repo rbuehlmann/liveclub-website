@@ -263,12 +263,27 @@
   },
   "share": {
     "title": "Share & Embed",
-    "publicLink": "Public club link",
     "widgetCode": "HTML widget code",
-    "qrCode": "QR code",
-    "shareText": "Follow our club on LiveClub",
-    "shareTeams": "Share teams",
-    "qrCodeForTeam": "QR code {team}"
+    "tab": {
+      "feed": "Feed widget",
+      "badge": "Follow badge",
+      "flyer": "Flyer export"
+    },
+    "feedScopeLabel": "Show",
+    "feedScopeAll": "All teams",
+    "feedScopeTeam": "Single team",
+    "feedTeamLabel": "Team",
+    "feedThemeLabel": "Appearance",
+    "feedThemeLight": "Light",
+    "feedThemeDark": "Dark",
+    "targetLabel": "Target",
+    "targetClub": "Club",
+    "targetTeam": "Team",
+    "backgroundLabel": "Background color",
+    "previewLabel": "Live preview",
+    "regenerateFlyer": "Refresh preview",
+    "downloadFlyer": "Download as image",
+    "flyerError": "Could not create the image."
   },
   "teamInfos": {
     "pageTitle": "Team Info",

@@ -263,12 +263,27 @@
   },
   "share": {
     "title": "Teilen & Einbetten",
-    "publicLink": "Öffentlicher Vereinslink",
     "widgetCode": "HTML-Widget-Code",
-    "qrCode": "QR-Code",
-    "shareText": "Folge unserem Verein auf LiveClub",
-    "shareTeams": "Mannschaften teilen",
-    "qrCodeForTeam": "QR-Code {team}"
+    "tab": {
+      "feed": "Feed-Widget",
+      "badge": "Follow-Badge",
+      "flyer": "Flyer-Export"
+    },
+    "feedScopeLabel": "Anzeige",
+    "feedScopeAll": "Alle Mannschaften",
+    "feedScopeTeam": "Einzelne Mannschaft",
+    "feedTeamLabel": "Mannschaft",
+    "feedThemeLabel": "Darstellung",
+    "feedThemeLight": "Hell",
+    "feedThemeDark": "Dunkel",
+    "targetLabel": "Ziel",
+    "targetClub": "Verein",
+    "targetTeam": "Mannschaft",
+    "backgroundLabel": "Hintergrundfarbe",
+    "previewLabel": "Live-Vorschau",
+    "regenerateFlyer": "Vorschau aktualisieren",
+    "downloadFlyer": "Als Bild herunterladen",
+    "flyerError": "Bild konnte nicht erstellt werden."
   },
   "admin": {
     "title": "Plattform-Administration",

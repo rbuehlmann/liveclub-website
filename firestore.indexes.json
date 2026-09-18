@@ -25,6 +25,22 @@
       ]
     },
     {
+      "collectionGroup": "publicGames",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "homeClubPublicId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicGames",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "awayClubPublicId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "teamInfos",
       "queryScope": "COLLECTION",
       "fields": [
