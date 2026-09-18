@@ -22,7 +22,14 @@ export const config = {
   // exclusion this middleware intercepted the request before it ever
   // reached the route handler (silently 404ing it — 2026-08-26, found
   // while adding a dynamic branding-aware favicon).
+  //
+  // embed: also outside app/[locale]/ (third-party-embeddable, always
+  // German, no locale concept at all) — missing from this list let
+  // next-intl's "as-needed" middleware rewrite /embed/[id] to /de/embed/[id]
+  // internally, which has no matching route and 404s (2026-09-18, found
+  // while adding the feed-widget embed mode — every embed URL, including
+  // the plain pre-existing single-game one, was broken by this).
   matcher: [
-    "/((?!api|_next|_vercel|\\.well-known|dashboard|admin|login|register|onboarding|icon|apple-icon|.*\\..*).*)",
+    "/((?!api|_next|_vercel|\\.well-known|dashboard|admin|login|register|onboarding|embed|icon|apple-icon|.*\\..*).*)",
   ],
 };
