@@ -6,6 +6,7 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { AppLanguageSwitcher } from "@/components/layout/AppLanguageSwitcher";
 import { GoLiveButton } from "@/components/layout/GoLiveButton";
 import { useBranding } from "@/components/layout/BrandingProvider";
+import { LiveClubLogo } from "@/components/LiveClubLogo";
 
 // Shared top bar for every public-facing page (homepage/search, login,
 // register, public club/team/game pages, onboarding, invite) so LiveClub
@@ -57,7 +58,7 @@ export function PublicHeader({
               <img src={logoDark ?? logoLight} alt="LiveClub" className="hidden h-9 dark:block" />
             </>
           ) : (
-            <span className="font-teko text-3xl font-bold text-brand-red-link">LiveClub</span>
+            <LiveClubLogo color="var(--brand-red-link)" className="h-9 w-auto" />
           )}
         </Link>
         <div className="flex items-center gap-3">

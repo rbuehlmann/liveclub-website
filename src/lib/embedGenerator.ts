@@ -1,5 +1,16 @@
 import QRCode from "qrcode";
 import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
+import { LIVECLUB_LOGO_PATH, LIVECLUB_LOGO_VIEWBOX } from "@/components/LiveClubLogo";
+
+// Real logo now (2026-09-18, see LiveClubLogo.tsx) — an inline <svg> (not an
+// <img src="...">) so it can take an explicit, always-black fill directly
+// in the markup, same reasoning buildBadgeHtml/renderBadgeToCanvas already
+// use for every other "must stay black regardless of the swatch" choice.
+// The viewBox's own aspect ratio (≈4.8:1) sets the width once a height is
+// picked — no separate width math needed.
+function liveClubLogoSvg(heightPx: number): string {
+  return `<svg viewBox="${LIVECLUB_LOGO_VIEWBOX}" xmlns="http://www.w3.org/2000/svg" style="height:${heightPx}px;width:auto;display:block;"><path fill="#10140c" transform="matrix(0.457618,0,0,0.243627,-68.4928,-27.2334)" d="${LIVECLUB_LOGO_PATH}"/></svg>`;
+}
 
 // Shared by the "Follow us" HTML badge (Module 2, embedded live on a club's
 // own site) and the downloadable flyer image (Module 3, same visual,
@@ -66,10 +77,9 @@ export async function buildBadgeHtml(spec: BadgeSpec): Promise<string> {
   const name = escapeHtml(spec.targetName);
   const text = escapeHtml(spec.followText);
 
-  return `<style>@import url('https://fonts.googleapis.com/css2?family=Teko:wght@700&display=swap');</style>
-<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};font-family:system-ui,sans-serif;text-align:center;">
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};font-family:system-ui,sans-serif;text-align:center;">
   <a href="${spec.targetUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:${textColor};text-decoration:none;">
-    <strong style="font-family:'Teko',system-ui,sans-serif;font-size:30px;font-weight:700;line-height:1;color:#10140c;">LiveClub</strong>
+    ${liveClubLogoSvg(28)}
     <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
     <img src="${qrDataUrl}" alt="QR-Code" width="140" height="140" style="border-radius:10px;background:#fff;padding:6px;" />
     <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
@@ -157,21 +167,20 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   // closest fit that still keeps a real margin top and bottom.
   let cursorY = size * 0.05;
 
-  // "LiveClub" wordmark, in the same Teko font as PublicHeader.tsx's own
-  // fallback (2026-09-18: reads as "the logo" to the user even though it's
-  // actually just styled text there too — see that component). This page
-  // is part of the LiveClub app itself, so next/font has already loaded
-  // Teko; document.fonts.load() is just a cheap guard against drawing text
-  // before it's ready, which canvas (unlike DOM text) never recovers from
-  // on its own. Always solid black regardless of the chosen background
-  // swatch (2026-09-18 request), same as buildBadgeHtml.
-  const wordmarkFont = `700 ${Math.round(size * 0.085)}px Teko, system-ui, sans-serif`;
-  await document.fonts.load(wordmarkFont).catch(() => undefined);
-  ctx.fillStyle = "#10140c";
-  ctx.textAlign = "center";
-  ctx.font = wordmarkFont;
-  ctx.fillText("LiveClub", size / 2, cursorY + size * 0.072);
-  cursorY += size * 0.072 + size * 0.03;
+  // Real logo (2026-09-18, see LiveClubLogo.tsx) — rasterized via a
+  // data-URI <img> so it can be drawn onto the canvas. Always solid black
+  // regardless of the chosen background swatch (2026-09-18 request), same
+  // as buildBadgeHtml.
+  try {
+    const logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(liveClubLogoSvg(200))}`;
+    const logo = await loadImage(logoUrl);
+    const logoH = size * 0.08;
+    const logoW = logoH * (logo.width / logo.height);
+    ctx.drawImage(logo, (size - logoW) / 2, cursorY, logoW, logoH);
+    cursorY += logoH + size * 0.03;
+  } catch {
+    // Skip silently — see doc comment above.
+  }
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
