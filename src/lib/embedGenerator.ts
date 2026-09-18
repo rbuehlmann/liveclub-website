@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 
 // Shared by the "Follow us" HTML badge (Module 2, embedded live on a club's
 // own site) and the downloadable flyer image (Module 3, same visual,
@@ -30,6 +31,15 @@ export interface BadgeSpec {
   followText: string;
 }
 
+// Same badge image files the homepage/MobileAppPrompt already use
+// (public/badges/) — absolute URLs so the exported HTML/canvas still
+// resolves them correctly wherever it ends up pasted (a third-party site,
+// not liveclub.app itself). Android is still internal-testing-only (see
+// APP_STORE_URL/PLAY_STORE_URL in storeLinks.ts) but shown here anyway —
+// same convention the homepage already follows.
+const APP_STORE_BADGE_URL = "https://liveclub.app/badges/app-store-badge.svg";
+const PLAY_STORE_BADGE_URL = "https://liveclub.app/badges/google-play-badge.svg";
+
 function resolveBackground(background: NeonBackground) {
   return NEON_BACKGROUNDS.find((b) => b.id === background) ?? NEON_BACKGROUNDS[0];
 }
@@ -44,9 +54,14 @@ function escapeHtml(value: string): string {
 
 /**
  * Builds the pasteable HTML for Module 2 — a self-contained card (inline
- * styles only, one <a> wrapping everything) with no script/iframe, since it
- * needs no live data: a QR code (inlined as a data URI, no extra request),
- * the LiveClub logo, the club's own icon, and a short call-to-action.
+ * styles only) with no script/iframe, since it needs no live data: a QR
+ * code (inlined as a data URI, no extra request), the LiveClub logo, the
+ * club's own icon, a short call-to-action, and — since a visitor scanning
+ * this has no way to know a mobile app even exists otherwise — App Store/
+ * Play Store badges at the bottom (2026-09-18 feedback). The QR/follow-text
+ * portion is its own inner <a> (to the club/team page) rather than one
+ * giant link wrapping everything, since the store badges need their own,
+ * different hrefs — nested <a> tags aren't valid HTML.
  */
 export async function buildBadgeHtml(spec: BadgeSpec): Promise<string> {
   const bg = resolveBackground(spec.background);
@@ -62,16 +77,26 @@ export async function buildBadgeHtml(spec: BadgeSpec): Promise<string> {
   // switches to the real <img> automatically the moment one is set, no
   // further change needed here.
   const wordmark = logoUrl
-    ? `  <img src="${logoUrl}" alt="LiveClub" style="height:22px;width:auto;" />\n`
-    : `  <strong style="font-size:18px;font-weight:800;letter-spacing:0.5px;">LiveClub</strong>\n`;
+    ? `    <img src="${logoUrl}" alt="LiveClub" style="height:22px;width:auto;" />\n`
+    : `    <strong style="font-size:18px;font-weight:800;letter-spacing:0.5px;">LiveClub</strong>\n`;
 
-  return `<a href="${spec.targetUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;flex-direction:column;align-items:center;gap:10px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};text-decoration:none;font-family:system-ui,sans-serif;text-align:center;">
-${wordmark}  <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
-  <img src="${qrDataUrl}" alt="QR-Code" width="140" height="140" style="border-radius:10px;background:#fff;padding:6px;" />
-  <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
-${spec.clubIconUrl ? `    <img src="${spec.clubIconUrl}" alt="" width="20" height="20" style="border-radius:9999px;object-fit:contain;background:#fff;" />\n` : ""}    ${name}
-  </span>
-</a>`;
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};font-family:system-ui,sans-serif;text-align:center;">
+  <a href="${spec.targetUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:${textColor};text-decoration:none;">
+${wordmark}    <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
+    <img src="${qrDataUrl}" alt="QR-Code" width="140" height="140" style="border-radius:10px;background:#fff;padding:6px;" />
+    <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
+${spec.clubIconUrl ? `      <img src="${spec.clubIconUrl}" alt="" width="20" height="20" style="border-radius:9999px;object-fit:contain;background:#fff;" />\n` : ""}      ${name}
+    </span>
+  </a>
+  <div style="display:flex;gap:8px;">
+    <a href="${APP_STORE_URL}" target="_blank" rel="noopener noreferrer">
+      <img src="${APP_STORE_BADGE_URL}" alt="App Store" style="height:32px;width:auto;" />
+    </a>
+    <a href="${PLAY_STORE_URL}" target="_blank" rel="noopener noreferrer">
+      <img src="${PLAY_STORE_BADGE_URL}" alt="Google Play" style="height:32px;width:auto;" />
+    </a>
+  </div>
+</div>`;
 }
 
 // Routed through our own /api/image-proxy — Firebase Storage sends no
@@ -81,13 +106,25 @@ ${spec.clubIconUrl ? `    <img src="${spec.clubIconUrl}" alt="" width="20" heigh
 // error you'd notice; see that route's doc comment for the full reasoning.
 // buildBadgeHtml's plain <img> tags don't go through this — a displayed
 // <img> never triggers CORS/tainting, only a canvas read-back does.
+// Only Firebase Storage needs the proxy (see the route's own doc comment)
+// — the store badge SVGs are already same-origin static files on
+// liveclub.app itself, and /api/image-proxy's allow-list would reject them
+// anyway (see its ALLOWED_HOST check).
+function needsProxy(src: string): boolean {
+  try {
+    return new URL(src).hostname === "firebasestorage.googleapis.com";
+  } catch {
+    return false;
+  }
+}
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+    img.src = needsProxy(src) ? `/api/image-proxy?url=${encodeURIComponent(src)}` : src;
   });
 }
 
@@ -124,15 +161,19 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   ctx.fillStyle = bg.hex;
   ctx.fillRect(0, 0, size, size);
 
-  let cursorY = size * 0.12;
+  // Tighter than the first version of this layout — a store-badges row was
+  // added at the bottom (2026-09-18 feedback: a scanned QR/flyer alone
+  // never tells anyone an app exists), so every earlier gap shrank a bit to
+  // keep the whole thing fitting a square 1080x1080 canvas.
+  let cursorY = size * 0.09;
 
   if (logoUrl) {
     try {
       const logo = await loadImage(logoUrl);
-      const logoH = size * 0.06;
+      const logoH = size * 0.05;
       const logoW = logoH * (logo.width / logo.height);
       ctx.drawImage(logo, (size - logoW) / 2, cursorY, logoW, logoH);
-      cursorY += logoH + size * 0.05;
+      cursorY += logoH + size * 0.035;
     } catch {
       // Skip silently — see doc comment above.
     }
@@ -141,31 +182,31 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
     // draw a bold text wordmark instead of leaving the slot empty.
     ctx.fillStyle = textColor;
     ctx.textAlign = "center";
-    ctx.font = `800 ${Math.round(size * 0.05)}px system-ui, sans-serif`;
-    ctx.fillText("LiveClub", size / 2, cursorY + size * 0.045);
-    cursorY += size * 0.05 + size * 0.05;
+    ctx.font = `800 ${Math.round(size * 0.045)}px system-ui, sans-serif`;
+    ctx.fillText("LiveClub", size / 2, cursorY + size * 0.038);
+    cursorY += size * 0.038 + size * 0.035;
   }
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
-  ctx.font = `700 ${Math.round(size * 0.042)}px system-ui, sans-serif`;
+  ctx.font = `700 ${Math.round(size * 0.036)}px system-ui, sans-serif`;
   ctx.fillText(spec.followText, size / 2, cursorY);
-  cursorY += size * 0.06;
+  cursorY += size * 0.045;
 
-  const qrSize = size * 0.4;
-  const qrPad = size * 0.025;
+  const qrSize = size * 0.32;
+  const qrPad = size * 0.02;
   const qrCanvas = document.createElement("canvas");
   await QRCode.toCanvas(qrCanvas, spec.targetUrl, { width: qrSize, margin: 0 });
   ctx.fillStyle = "#ffffff";
   roundRect(ctx, (size - qrSize) / 2 - qrPad, cursorY, qrSize + qrPad * 2, qrSize + qrPad * 2, size * 0.02);
   ctx.fill();
   ctx.drawImage(qrCanvas, (size - qrSize) / 2, cursorY + qrPad, qrSize, qrSize);
-  cursorY += qrSize + qrPad * 2 + size * 0.06;
+  cursorY += qrSize + qrPad * 2 + size * 0.04;
 
   if (spec.clubIconUrl) {
     try {
       const icon = await loadImage(spec.clubIconUrl);
-      const iconSize = size * 0.08;
+      const iconSize = size * 0.065;
       ctx.save();
       ctx.beginPath();
       ctx.arc(size / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
@@ -175,15 +216,34 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
       ctx.clip();
       ctx.drawImage(icon, size / 2 - iconSize / 2, cursorY, iconSize, iconSize);
       ctx.restore();
-      cursorY += iconSize + size * 0.03;
+      cursorY += iconSize + size * 0.02;
     } catch {
       // Skip silently — see doc comment above.
     }
   }
 
   ctx.fillStyle = textColor;
-  ctx.font = `600 ${Math.round(size * 0.032)}px system-ui, sans-serif`;
-  ctx.fillText(spec.targetName, size / 2, cursorY + size * 0.02);
+  ctx.font = `600 ${Math.round(size * 0.028)}px system-ui, sans-serif`;
+  ctx.fillText(spec.targetName, size / 2, cursorY + size * 0.018);
+  cursorY += size * 0.06;
+
+  // Store badges, side by side, centered — same reasoning as buildBadgeHtml.
+  try {
+    const [appStore, playStore] = await Promise.all([
+      loadImage(APP_STORE_BADGE_URL),
+      loadImage(PLAY_STORE_BADGE_URL),
+    ]);
+    const badgeH = size * 0.045;
+    const appW = badgeH * (appStore.width / appStore.height);
+    const playW = badgeH * (playStore.width / playStore.height);
+    const gap = size * 0.02;
+    const totalW = appW + gap + playW;
+    const startX = (size - totalW) / 2;
+    ctx.drawImage(appStore, startX, cursorY, appW, badgeH);
+    ctx.drawImage(playStore, startX + appW + gap, cursorY, playW, badgeH);
+  } catch {
+    // Skip silently — see doc comment above.
+  }
 
   return canvas;
 }
