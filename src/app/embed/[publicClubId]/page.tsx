@@ -195,6 +195,78 @@ function mapFeedGame(id: string, data: Record<string, unknown>): FeedGame {
   };
 }
 
+// Team-Info announcements (see functions/src/callable/createTeamInfo.ts) —
+// the native app's own feed already mixes these chronologically alongside
+// games (see firestore.rules' comment on the teamInfos collection); the
+// embed widget was missing this entirely until now (2026-09-18 feedback).
+interface NewsItem {
+  infoId: string;
+  publicClubId: string | null;
+  clubName: string;
+  title: string;
+  text: string;
+  createdAtMs: number;
+}
+
+function mapNewsItem(id: string, data: Record<string, unknown>): NewsItem {
+  const createdAt = data.createdAt as Timestamp | undefined;
+  return {
+    infoId: id,
+    publicClubId: (data.publicClubId as string | null) ?? null,
+    clubName: (data.clubName as string) ?? "",
+    title: (data.title as string) ?? "",
+    text: (data.text as string) ?? "",
+    createdAtMs: createdAt?.toMillis?.() ?? 0,
+  };
+}
+
+// A merged, chronologically-sorted feed entry — either a game result or a
+// news item, discriminated so FeedEmbed can render the right row for each
+// without the two shapes leaking into each other.
+type FeedListItem = ({ kind: "game" } & FeedGame) | ({ kind: "news" } & NewsItem);
+
+function NewsRow({ item, theme }: { item: NewsItem; theme: EmbedTheme }) {
+  const colors = FEED_THEME[theme];
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px",
+        borderRadius: 10,
+        background: colors.rowBackground,
+        border: `1px solid ${colors.border}`,
+      }}
+    >
+      <TeamIcon publicClubId={item.publicClubId} teamName={item.clubName} size={22} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {item.title}
+        </div>
+        {item.text && (
+          <div
+            style={{
+              fontSize: 11,
+              color: colors.subtext,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {item.text}
+          </div>
+        )}
+      </div>
+      {item.createdAtMs > 0 && (
+        <span style={{ flexShrink: 0, fontSize: 11, color: colors.subtext }}>
+          {formatDateDe(new Date(item.createdAtMs).toISOString())}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function FeedRow({
   home,
   away,
@@ -294,6 +366,7 @@ function FeedEmbed({
   const [liveGame, setLiveGame] = useState<FeedGame | null>(null);
   const [homeGames, setHomeGames] = useState<FeedGame[]>([]);
   const [awayGames, setAwayGames] = useState<FeedGame[]>([]);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     const { db } = getFirebaseClient();
@@ -368,13 +441,45 @@ function FeedEmbed({
     };
   }, [scope, teamId, publicClubId, limitCount]);
 
-  const pastGames = useMemo(() => {
-    const byId = new Map<string, FeedGame>();
-    for (const g of [...homeGames, ...awayGames]) byId.set(g.gameId, g);
-    return Array.from(byId.values())
-      .sort((a, b) => b.updatedAtMs - a.updatedAtMs)
+  // A teamInfo belongs to exactly one team/club (unlike a game, which has a
+  // home and away side) — a single equality query, no composite index
+  // needed. Hidden ones (redaktor/admin moderation, see hideTeamInfo.ts)
+  // are filtered client-side rather than in the query, same reasoning as
+  // not filtering finished-games by anything beyond `status` server-side.
+  useEffect(() => {
+    const id = scope === "team" ? teamId : publicClubId;
+    const field = scope === "team" ? "publicTeamId" : "publicClubId";
+    if (!id) {
+      setNewsItems([]);
+      return;
+    }
+    const { db } = getFirebaseClient();
+    return onSnapshot(
+      query(collection(db, "teamInfos"), where(field, "==", id), fbLimit(limitCount)),
+      (snap) =>
+        setNewsItems(
+          snap.docs
+            .filter((d) => d.data().hidden !== true)
+            .map((d) => mapNewsItem(d.id, d.data()))
+        )
+    );
+  }, [scope, teamId, publicClubId, limitCount]);
+
+  const feedItems = useMemo(() => {
+    const gamesById = new Map<string, FeedGame>();
+    for (const g of [...homeGames, ...awayGames]) gamesById.set(g.gameId, g);
+    const items: FeedListItem[] = [
+      ...Array.from(gamesById.values()).map((g): FeedListItem => ({ kind: "game", ...g })),
+      ...newsItems.map((n): FeedListItem => ({ kind: "news", ...n })),
+    ];
+    return items
+      .sort((a, b) => {
+        const bMs = b.kind === "game" ? b.updatedAtMs : b.createdAtMs;
+        const aMs = a.kind === "game" ? a.updatedAtMs : a.createdAtMs;
+        return bMs - aMs;
+      })
       .slice(0, limitCount);
-  }, [homeGames, awayGames, limitCount]);
+  }, [homeGames, awayGames, newsItems, limitCount]);
 
   const colors = FEED_THEME[theme];
 
@@ -382,7 +487,7 @@ function FeedEmbed({
     return <div style={{ background: colors.background, minHeight: "100vh" }} />;
   }
 
-  const hasAnything = liveGame || pastGames.length > 0;
+  const hasAnything = liveGame || feedItems.length > 0;
 
   return (
     <div
@@ -412,18 +517,22 @@ function FeedEmbed({
           theme={theme}
         />
       )}
-      {pastGames.map((g) => (
-        <FeedRow
-          key={g.gameId}
-          home={{ publicClubId: g.homeClubPublicId, name: g.homeTeamName }}
-          away={{ publicClubId: g.awayClubPublicId, name: g.awayTeamName }}
-          scoreHome={g.scoreHome}
-          scoreAway={g.scoreAway}
-          isLive={false}
-          dateLabel={g.updatedAtMs ? formatDateDe(new Date(g.updatedAtMs).toISOString()) : null}
-          theme={theme}
-        />
-      ))}
+      {feedItems.map((item) =>
+        item.kind === "game" ? (
+          <FeedRow
+            key={item.gameId}
+            home={{ publicClubId: item.homeClubPublicId, name: item.homeTeamName }}
+            away={{ publicClubId: item.awayClubPublicId, name: item.awayTeamName }}
+            scoreHome={item.scoreHome}
+            scoreAway={item.scoreAway}
+            isLive={false}
+            dateLabel={item.updatedAtMs ? formatDateDe(new Date(item.updatedAtMs).toISOString()) : null}
+            theme={theme}
+          />
+        ) : (
+          <NewsRow key={item.infoId} item={item} theme={theme} />
+        )
+      )}
     </div>
   );
 }
