@@ -74,13 +74,20 @@ ${spec.clubIconUrl ? `    <img src="${spec.clubIconUrl}" alt="" width="20" heigh
 </a>`;
 }
 
+// Routed through our own /api/image-proxy — Firebase Storage sends no
+// Access-Control-Allow-Origin header, so a direct crossOrigin="anonymous"
+// load of a club icon/LiveClub logo either fails outright or taints the
+// canvas (breaking toDataURL() at export time) without ever throwing an
+// error you'd notice; see that route's doc comment for the full reasoning.
+// buildBadgeHtml's plain <img> tags don't go through this — a displayed
+// <img> never triggers CORS/tainting, only a canvas read-back does.
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = src;
+    img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
   });
 }
 

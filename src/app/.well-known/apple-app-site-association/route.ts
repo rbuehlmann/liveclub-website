@@ -24,6 +24,7 @@ const PATHS = [
   // through to the "/*" club catch-all as if "admin" were a publicClubId.
   "NOT /admin",
   "NOT /admin/*",
+  "NOT /api/*",
   "NOT /dashboard",
   "NOT /dashboard/*",
   "NOT /embed/*",
