@@ -55,9 +55,18 @@ export async function buildBadgeHtml(spec: BadgeSpec): Promise<string> {
   const qrDataUrl = await QRCode.toDataURL(spec.targetUrl, { width: 200, margin: 1 });
   const name = escapeHtml(spec.targetName);
   const text = escapeHtml(spec.followText);
+  // No branding.logoLight/logoDark uploaded yet (see /admin/settings) —
+  // most installs won't have one on day one, and a bare sentence with no
+  // wordmark at all reads as unbranded. A bold, letter-spaced "LiveClub" in
+  // the swatch's own text color stands in until a real logo image exists;
+  // switches to the real <img> automatically the moment one is set, no
+  // further change needed here.
+  const wordmark = logoUrl
+    ? `  <img src="${logoUrl}" alt="LiveClub" style="height:22px;width:auto;" />\n`
+    : `  <strong style="font-size:18px;font-weight:800;letter-spacing:0.5px;">LiveClub</strong>\n`;
 
   return `<a href="${spec.targetUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;flex-direction:column;align-items:center;gap:10px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};text-decoration:none;font-family:system-ui,sans-serif;text-align:center;">
-${logoUrl ? `  <img src="${logoUrl}" alt="LiveClub" style="height:22px;width:auto;" />\n` : ""}  <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
+${wordmark}  <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
   <img src="${qrDataUrl}" alt="QR-Code" width="140" height="140" style="border-radius:10px;background:#fff;padding:6px;" />
   <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
 ${spec.clubIconUrl ? `    <img src="${spec.clubIconUrl}" alt="" width="20" height="20" style="border-radius:9999px;object-fit:contain;background:#fff;" />\n` : ""}    ${name}
@@ -120,6 +129,14 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
     } catch {
       // Skip silently — see doc comment above.
     }
+  } else {
+    // Same reasoning as buildBadgeHtml's `wordmark` — no logo uploaded yet,
+    // draw a bold text wordmark instead of leaving the slot empty.
+    ctx.fillStyle = textColor;
+    ctx.textAlign = "center";
+    ctx.font = `800 ${Math.round(size * 0.05)}px system-ui, sans-serif`;
+    ctx.fillText("LiveClub", size / 2, cursorY + size * 0.045);
+    cursorY += size * 0.05 + size * 0.05;
   }
 
   ctx.fillStyle = textColor;
