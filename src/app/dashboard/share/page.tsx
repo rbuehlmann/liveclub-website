@@ -104,8 +104,6 @@ export default function SharePage() {
           targetUrl,
           targetName,
           clubIconUrl,
-          liveClubLogoLight: branding.logoLight ?? null,
-          liveClubLogoDark: branding.logoDark ?? branding.logoLight ?? null,
           background,
           followText: FOLLOW_US_TEXT,
         }
@@ -132,14 +130,7 @@ export default function SharePage() {
     };
     // badgeSpec is a fresh object every render; compare its actual fields.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    badgeSpec?.targetUrl,
-    badgeSpec?.targetName,
-    badgeSpec?.clubIconUrl,
-    badgeSpec?.liveClubLogoLight,
-    badgeSpec?.liveClubLogoDark,
-    badgeSpec?.background,
-  ]);
+  }, [badgeSpec?.targetUrl, badgeSpec?.targetName, badgeSpec?.clubIconUrl, badgeSpec?.background]);
 
   async function generateFlyer() {
     if (!badgeSpec) return;
@@ -161,15 +152,7 @@ export default function SharePage() {
     if (tab !== "flyer" || !badgeSpec) return;
     generateFlyer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    tab,
-    badgeSpec?.targetUrl,
-    badgeSpec?.targetName,
-    badgeSpec?.clubIconUrl,
-    badgeSpec?.liveClubLogoLight,
-    badgeSpec?.liveClubLogoDark,
-    badgeSpec?.background,
-  ]);
+  }, [tab, badgeSpec?.targetUrl, badgeSpec?.targetName, badgeSpec?.clubIconUrl, badgeSpec?.background]);
 
   async function copy(key: string, text: string) {
     await navigator.clipboard.writeText(text);
