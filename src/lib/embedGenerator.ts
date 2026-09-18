@@ -136,19 +136,65 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
+// Exact pixel values from buildBadgeHtml's own markup (its 260px-wide
+// card) — not independently chosen. Module 3 is meant to be a straight
+// image export of that same card ("wirklich so wie das Teilen-HTML...
+// dass die Verhältnisse gleich sind", 2026-09-18), so every dimension below
+// is that file's real number, scaled up together by one factor rather than
+// re-derived as a fraction of some fixed canvas size — the previous square-
+// canvas version needed constant rebalancing precisely because forcing a
+// free-form card into a fixed square never matches its actual proportions.
+const FLYER_BASE = {
+  cardWidth: 260,
+  padX: 20,
+  padTop: 24,
+  padBottom: 24,
+  innerGap: 10, // between logo / follow-text / QR / name-row inside the <a>
+  outerGap: 14, // between that <a> and the store-badges row
+  logoHeight: 28,
+  followFontSize: 14,
+  followLineHeight: 17,
+  qrImageSize: 140,
+  qrPadding: 6,
+  iconSize: 20,
+  nameFontSize: 13,
+  badgeHeight: 32,
+  badgeGap: 8,
+};
+
+const FLYER_CARD_HEIGHT =
+  FLYER_BASE.padTop +
+  FLYER_BASE.logoHeight +
+  FLYER_BASE.innerGap +
+  FLYER_BASE.followLineHeight +
+  FLYER_BASE.innerGap +
+  (FLYER_BASE.qrImageSize + FLYER_BASE.qrPadding * 2) +
+  FLYER_BASE.innerGap +
+  FLYER_BASE.iconSize +
+  FLYER_BASE.outerGap +
+  FLYER_BASE.badgeHeight +
+  FLYER_BASE.padBottom;
+
 /**
- * Renders the same visual as buildBadgeHtml onto a square <canvas> for
- * Module 3's PNG export — the two share layout decisions (see NEON_
- * BACKGROUNDS/resolveBackground above) but not markup, since a canvas has
- * no flexbox: every element is centered manually via explicit coordinates.
- * Failed image loads (club icon/LiveClub logo) are skipped rather than
- * rejecting the whole render — a flyer with a missing logo is still useful,
- * an export that throws isn't.
+ * Renders the same visual as buildBadgeHtml onto a <canvas> for Module 3's
+ * PNG export — free-form (matching that card's real aspect ratio, not a
+ * fixed square), scaled up from its exact pixel values so the proportions
+ * are identical, not just similar. `targetWidth` picks the export
+ * resolution; height follows from FLYER_CARD_HEIGHT automatically. Every
+ * element is positioned manually (no flexbox on a canvas). Failed image
+ * loads (club icon/logo) are skipped rather than rejecting the whole
+ * render — a flyer with a missing logo is still useful, an export that
+ * throws isn't.
  */
-export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise<HTMLCanvasElement> {
+export async function renderBadgeToCanvas(spec: BadgeSpec, targetWidth = 1080): Promise<HTMLCanvasElement> {
+  const scale = targetWidth / FLYER_BASE.cardWidth;
+  const s = (basePx: number) => basePx * scale;
+  const width = Math.round(s(FLYER_BASE.cardWidth));
+  const height = Math.round(s(FLYER_CARD_HEIGHT));
+
   const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("2D-Canvas-Kontext nicht verfügbar.");
 
@@ -156,71 +202,62 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
   const textColor = bg.useLightText ? "#f5f7ef" : "#10140c";
 
   ctx.fillStyle = bg.hex;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, width, height);
 
-  // Proportions matched to buildBadgeHtml's own card (260px wide) rather
-  // than guessed independently — e.g. its QR is 140/260 ≈ 54% of the card
-  // width; the same ratio here (2026-09-18: "everything reads too small
-  // compared to the HTML widget"). A few ratios are pulled in slightly
-  // (QR 54%→42%, badges stay under the HTML version's 12.3%) since matching
-  // every one exactly doesn't fit a fixed square canvas — this is the
-  // closest fit that still keeps a real margin top and bottom.
-  let cursorY = size * 0.05;
+  let cursorY = s(FLYER_BASE.padTop);
 
   // Real logo (2026-09-18, see LiveClubLogo.tsx) — rasterized via a
   // data-URI <img> so it can be drawn onto the canvas. Always solid black
-  // regardless of the chosen background swatch (2026-09-18 request), same
-  // as buildBadgeHtml.
+  // regardless of the chosen background swatch, same as buildBadgeHtml.
   try {
     const logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(liveClubLogoSvg(200))}`;
     const logo = await loadImage(logoUrl);
-    const logoH = size * 0.08;
+    const logoH = s(FLYER_BASE.logoHeight);
     const logoW = logoH * (logo.width / logo.height);
-    ctx.drawImage(logo, (size - logoW) / 2, cursorY, logoW, logoH);
-    cursorY += logoH + size * 0.03;
+    ctx.drawImage(logo, (width - logoW) / 2, cursorY, logoW, logoH);
   } catch {
     // Skip silently — see doc comment above.
   }
+  cursorY += s(FLYER_BASE.logoHeight) + s(FLYER_BASE.innerGap);
 
   ctx.fillStyle = textColor;
   ctx.textAlign = "center";
-  ctx.font = `700 ${Math.round(size * 0.032)}px system-ui, sans-serif`;
-  ctx.fillText(spec.followText, size / 2, cursorY);
-  cursorY += size * 0.04;
+  ctx.font = `700 ${Math.round(s(FLYER_BASE.followFontSize))}px system-ui, sans-serif`;
+  ctx.fillText(spec.followText, width / 2, cursorY + s(FLYER_BASE.followLineHeight) * 0.78);
+  cursorY += s(FLYER_BASE.followLineHeight) + s(FLYER_BASE.innerGap);
 
-  const qrSize = size * 0.42;
-  const qrPad = size * 0.018;
+  const qrSize = s(FLYER_BASE.qrImageSize);
+  const qrPad = s(FLYER_BASE.qrPadding);
   const qrCanvas = document.createElement("canvas");
   await QRCode.toCanvas(qrCanvas, spec.targetUrl, { width: qrSize, margin: 0 });
   ctx.fillStyle = "#ffffff";
-  roundRect(ctx, (size - qrSize) / 2 - qrPad, cursorY, qrSize + qrPad * 2, qrSize + qrPad * 2, size * 0.02);
+  roundRect(ctx, (width - qrSize) / 2 - qrPad, cursorY, qrSize + qrPad * 2, qrSize + qrPad * 2, s(10));
   ctx.fill();
-  ctx.drawImage(qrCanvas, (size - qrSize) / 2, cursorY + qrPad, qrSize, qrSize);
-  cursorY += qrSize + qrPad * 2 + size * 0.03;
+  ctx.drawImage(qrCanvas, (width - qrSize) / 2, cursorY + qrPad, qrSize, qrSize);
+  cursorY += qrSize + qrPad * 2 + s(FLYER_BASE.innerGap);
 
+  const iconSize = s(FLYER_BASE.iconSize);
   if (spec.clubIconUrl) {
     try {
       const icon = await loadImage(spec.clubIconUrl);
-      const iconSize = size * 0.07;
       ctx.save();
       ctx.beginPath();
-      ctx.arc(size / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
+      ctx.arc(width / 2, cursorY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
       ctx.closePath();
       ctx.fillStyle = "#ffffff";
       ctx.fill();
       ctx.clip();
-      ctx.drawImage(icon, size / 2 - iconSize / 2, cursorY, iconSize, iconSize);
+      ctx.drawImage(icon, width / 2 - iconSize / 2, cursorY, iconSize, iconSize);
       ctx.restore();
-      cursorY += iconSize + size * 0.018;
     } catch {
       // Skip silently — see doc comment above.
     }
   }
 
   ctx.fillStyle = textColor;
-  ctx.font = `600 ${Math.round(size * 0.028)}px system-ui, sans-serif`;
-  ctx.fillText(spec.targetName, size / 2, cursorY + size * 0.018);
-  cursorY += size * 0.05;
+  ctx.font = `600 ${Math.round(s(FLYER_BASE.nameFontSize))}px system-ui, sans-serif`;
+  ctx.fillText(spec.targetName, width / 2, cursorY + iconSize / 2 + s(FLYER_BASE.nameFontSize) * 0.35);
+  cursorY += iconSize + s(FLYER_BASE.outerGap);
 
   // Store badges, side by side, centered — same reasoning as buildBadgeHtml.
   try {
@@ -228,14 +265,12 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, size = 1080): Promise
       loadImage(APP_STORE_BADGE_URL),
       loadImage(PLAY_STORE_BADGE_URL),
     ]);
-    // Matched to buildBadgeHtml's own proportion (badgeHeight/cardWidth ≈
-    // 32/260 ≈ 0.123 there).
-    const badgeH = size * 0.115;
+    const badgeH = s(FLYER_BASE.badgeHeight);
     const appW = badgeH * (appStore.width / appStore.height);
     const playW = badgeH * (playStore.width / playStore.height);
-    const gap = size * 0.02;
+    const gap = s(FLYER_BASE.badgeGap);
     const totalW = appW + gap + playW;
-    const startX = (size - totalW) / 2;
+    const startX = (width - totalW) / 2;
     ctx.drawImage(appStore, startX, cursorY, appW, badgeH);
     ctx.drawImage(playStore, startX + appW + gap, cursorY, playW, badgeH);
   } catch {
