@@ -3,13 +3,17 @@ import { APP_STORE_URL, PLAY_STORE_URL } from "@/lib/storeLinks";
 import { LIVECLUB_LOGO_PATH, LIVECLUB_LOGO_VIEWBOX } from "@/components/LiveClubLogo";
 
 // Real logo now (2026-09-18, see LiveClubLogo.tsx) — an inline <svg> (not an
-// <img src="...">) so it can take an explicit, always-black fill directly
-// in the markup, same reasoning buildBadgeHtml/renderBadgeToCanvas already
-// use for every other "must stay black regardless of the swatch" choice.
-// The viewBox's own aspect ratio (≈4.8:1) sets the width once a height is
-// picked — no separate width math needed.
-function liveClubLogoSvg(heightPx: number): string {
-  return `<svg viewBox="${LIVECLUB_LOGO_VIEWBOX}" xmlns="http://www.w3.org/2000/svg" style="height:${heightPx}px;width:auto;display:block;"><path fill="#10140c" transform="matrix(0.457618,0,0,0.243627,-68.4928,-27.2334)" d="${LIVECLUB_LOGO_PATH}"/></svg>`;
+// <img src="...">) so it can take an explicit fill directly in the markup.
+// Always ink, except on the ink swatch itself (2026-09-19 bug report: ink
+// logo on an ink background was invisible) — there it switches to lime so
+// it stays legible. The viewBox's own aspect ratio (≈4.8:1) sets the width
+// once a height is picked — no separate width math needed.
+function liveClubLogoSvg(heightPx: number, fill: string): string {
+  return `<svg viewBox="${LIVECLUB_LOGO_VIEWBOX}" xmlns="http://www.w3.org/2000/svg" style="height:${heightPx}px;width:auto;display:block;"><path fill="${fill}" transform="matrix(0.457618,0,0,0.243627,-68.4928,-27.2334)" d="${LIVECLUB_LOGO_PATH}"/></svg>`;
+}
+
+function logoFillFor(background: NeonBackground): string {
+  return background === "ink" ? "#c6ff00" : "#10140c";
 }
 
 // Shared by the "Follow us" HTML badge (Module 2, embedded live on a club's
@@ -79,7 +83,7 @@ export async function buildBadgeHtml(spec: BadgeSpec): Promise<string> {
 
   return `<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:260px;padding:24px 20px;border-radius:20px;background:${bg.hex};color:${textColor};font-family:system-ui,sans-serif;text-align:center;">
   <a href="${spec.targetUrl}" target="_blank" rel="noopener noreferrer" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:${textColor};text-decoration:none;">
-    ${liveClubLogoSvg(28)}
+    ${liveClubLogoSvg(28, logoFillFor(spec.background))}
     <strong style="font-size:14px;letter-spacing:0.5px;">${text}</strong>
     <img src="${qrDataUrl}" alt="QR-Code" width="140" height="140" style="border-radius:10px;background:#fff;padding:6px;" />
     <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
@@ -207,10 +211,10 @@ export async function renderBadgeToCanvas(spec: BadgeSpec, targetWidth = 1080): 
   let cursorY = s(FLYER_BASE.padTop);
 
   // Real logo (2026-09-18, see LiveClubLogo.tsx) — rasterized via a
-  // data-URI <img> so it can be drawn onto the canvas. Always solid black
-  // regardless of the chosen background swatch, same as buildBadgeHtml.
+  // data-URI <img> so it can be drawn onto the canvas. Same ink/lime
+  // swatch-dependent fill as buildBadgeHtml (see logoFillFor).
   try {
-    const logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(liveClubLogoSvg(200))}`;
+    const logoUrl = `data:image/svg+xml;utf8,${encodeURIComponent(liveClubLogoSvg(200, logoFillFor(spec.background)))}`;
     const logo = await loadImage(logoUrl);
     const logoH = s(FLYER_BASE.logoHeight);
     const logoW = logoH * (logo.width / logo.height);
