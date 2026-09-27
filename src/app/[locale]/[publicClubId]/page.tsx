@@ -24,11 +24,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const description = t("metaDescription", { name });
   const url = localizedUrl(locale, `/${publicClubId}`);
   const logoUrl = club.logoUrl as string | null;
+  const languages: Record<string, string> = {};
+  for (const l of routing.locales) languages[l] = localizedUrl(l, `/${publicClubId}`);
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages },
     openGraph: {
       title,
       description,
@@ -36,6 +38,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       type: "website",
       images: logoUrl ? [{ url: logoUrl }] : undefined,
     },
+    twitter: { card: "summary", title, description },
   };
 }
 
@@ -46,9 +49,25 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 // 200), and per-club SEO metadata above. The live scoreboard itself is
 // unchanged, just moved into PublicClubPageClient.
 export default async function PublicClubPage({ params }: { params: Params }) {
-  const { publicClubId } = await params;
+  const { locale, publicClubId } = await params;
   const club = await fetchPublicDoc("publicClubs", publicClubId);
   if (!club) notFound();
 
-  return <PublicClubPageClient publicClubId={publicClubId} />;
+  // SportsTeam structured data — only fields actually on the club doc, no
+  // invented ratings/addresses (2026-09-27 SEO pass).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsTeam",
+    name: club.name as string,
+    sport: club.sport as string | undefined,
+    url: localizedUrl(locale, `/${publicClubId}`),
+    logo: (club.logoUrl as string | null) ?? undefined,
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PublicClubPageClient publicClubId={publicClubId} />
+    </>
+  );
 }

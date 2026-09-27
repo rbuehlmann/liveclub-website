@@ -25,6 +25,13 @@ const teko = Teko({
 });
 
 export const metadata: Metadata = {
+  // Fallback only — every public page that matters for SEO sets its own
+  // title/description (see [locale]/page.tsx, [publicClubId]/page.tsx,
+  // team/[publicTeamId]/page.tsx); this is what dashboard/admin/login and
+  // anything else without its own metadata still shows. metadataBase lets
+  // every page's relative OG/Twitter image paths resolve to a real
+  // absolute URL instead of silently failing (2026-09-27 SEO pass).
+  metadataBase: new URL("https://liveclub.app"),
   title: "LiveClub",
   description: "Live-Spielstände für kleine Sportvereine.",
 };

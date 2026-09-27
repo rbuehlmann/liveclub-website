@@ -24,11 +24,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const description = t("metaDescription", { name, clubName });
   const url = localizedUrl(locale, `/team/${publicTeamId}`);
   const logoUrl = team.clubLogoUrl as string | null;
+  const languages: Record<string, string> = {};
+  for (const l of routing.locales) languages[l] = localizedUrl(l, `/team/${publicTeamId}`);
 
   return {
     title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, languages },
     openGraph: {
       title,
       description,
@@ -36,14 +38,33 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       type: "website",
       images: logoUrl ? [{ url: logoUrl }] : undefined,
     },
+    twitter: { card: "summary", title, description },
   };
 }
 
-// Same reasoning as src/app/[publicClubId]/page.tsx — see that file.
+// Same reasoning as src/app/[publicClubId]/page.tsx — see that file, incl.
+// the SportsTeam structured data below (2026-09-27 SEO pass).
 export default async function PublicTeamPage({ params }: { params: Params }) {
-  const { publicTeamId } = await params;
+  const { locale, publicTeamId } = await params;
   const team = await fetchPublicDoc("publicTeams", publicTeamId);
   if (!team) notFound();
 
-  return <PublicTeamPageClient publicTeamId={publicTeamId} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsTeam",
+    name: team.name as string,
+    sport: team.sport as string | undefined,
+    memberOf: (team.clubName as string | undefined)
+      ? { "@type": "SportsOrganization", name: team.clubName as string }
+      : undefined,
+    url: localizedUrl(locale, `/team/${publicTeamId}`),
+    logo: (team.clubLogoUrl as string | null) ?? undefined,
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PublicTeamPageClient publicTeamId={publicTeamId} />
+    </>
+  );
 }

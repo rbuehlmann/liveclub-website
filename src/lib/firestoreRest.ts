@@ -22,6 +22,7 @@ type FirestoreFieldValue =
   | { doubleValue: number }
   | { booleanValue: boolean }
   | { nullValue: null }
+  | { timestampValue: string }
   | { mapValue: { fields?: Record<string, FirestoreFieldValue> } };
 
 function parseValue(value: FirestoreFieldValue | undefined): unknown {
@@ -31,6 +32,10 @@ function parseValue(value: FirestoreFieldValue | undefined): unknown {
   if ("doubleValue" in value) return value.doubleValue;
   if ("booleanValue" in value) return value.booleanValue;
   if ("nullValue" in value) return null;
+  // ISO 8601 string (RFC 3339) — sitemap.ts is the first caller that needs
+  // a Firestore Timestamp field (licenseValidUntil), everything before
+  // this only ever read strings.
+  if ("timestampValue" in value) return value.timestampValue;
   if ("mapValue" in value) return parseFields(value.mapValue.fields ?? {});
   return undefined;
 }
@@ -58,4 +63,39 @@ export async function fetchPublicDoc(
   if (!res.ok) return null;
   const doc = (await res.json()) as { fields?: Record<string, FirestoreFieldValue> };
   return parseFields(doc.fields ?? {});
+}
+
+/**
+ * Lists every document in a public collection (paginated internally, since
+ * Firestore's REST list endpoint caps pageSize) — used only by sitemap.ts,
+ * which is the one place that needs "every publicClub/publicTeam", not just
+ * one by id. Same public, unauthenticated REST surface as fetchPublicDoc;
+ * firestore.rules already allows `list: if true` on both collections this
+ * is called with.
+ */
+export async function fetchPublicCollection(
+  collection: string
+): Promise<{ id: string; fields: Record<string, unknown> }[]> {
+  if (!PROJECT_ID) return [];
+  const results: { id: string; fields: Record<string, unknown> }[] = [];
+  let pageToken: string | undefined;
+  do {
+    const url = new URL(`${BASE_URL}/${collection}`);
+    url.searchParams.set("pageSize", "300");
+    if (pageToken) url.searchParams.set("pageToken", pageToken);
+    const res = await fetch(url.toString(), {
+      ...(USE_EMULATORS ? { cache: "no-store" as const } : { next: { revalidate: 3600 } }),
+    });
+    if (!res.ok) break;
+    const page = (await res.json()) as {
+      documents?: { name: string; fields?: Record<string, FirestoreFieldValue> }[];
+      nextPageToken?: string;
+    };
+    for (const doc of page.documents ?? []) {
+      const id = doc.name.split("/").pop() ?? "";
+      results.push({ id, fields: parseFields(doc.fields ?? {}) });
+    }
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+  return results;
 }
