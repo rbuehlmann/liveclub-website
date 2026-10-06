@@ -61,6 +61,10 @@ export const onGameEventCreate = onDocumentCreated(
         yellowAway: state.yellowCardsAway,
         redHome: state.redCardsHome,
         redAway: state.redCardsAway,
+        // Field-hockey-only third tier — harmless 0 for every other sport,
+        // same convention as yellow/red already being unconditional.
+        greenHome: state.greenCardsHome,
+        greenAway: state.greenCardsAway,
       },
       lastEventType: state.lastEventType,
       updatedAt: FieldValue.serverTimestamp(),
@@ -68,7 +72,7 @@ export const onGameEventCreate = onDocumentCreated(
     if (sport === "basketball") {
       updates.fouls = { home: state.foulsHome, away: state.foulsAway };
     }
-    if (sport === "iceHockey") {
+    if (sport === "iceHockey" || sport === "floorball") {
       updates.penalties = { home: state.penaltiesHome, away: state.penaltiesAway };
     }
     if (sport === "volleyball") {

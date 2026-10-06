@@ -64,7 +64,9 @@
       "Eishockey": "Ice hockey",
       "Handball": "Handball",
       "American Football": "American Football",
-      "Volleyball": "Volleyball"
+      "Volleyball": "Volleyball",
+      "Landhockey": "Field Hockey",
+      "Unihockey": "Floorball"
     },
     "countries": {
       "Schweiz": "Switzerland",
@@ -103,6 +105,8 @@
     "subscription": "Subscription & License",
     "trialEndsIn": "Trial ends in {days} days",
     "trialExpired": "Trial expired",
+    "licenseBlockedTitle": "License not active",
+    "licenseBlockedBody": "Without an active license, games can't be created or started and no team infos or pushes can be sent. Please <link>renew the license</link>.",
     "licenseStatusActive": "Active",
     "licenseStatusExpired": "Expired",
     "suspendedNotice": "This club has been manually deactivated.",
@@ -230,6 +234,8 @@
     "penaltyAway": "Penalty away",
     "endPeriod": "End period",
     "startNextPeriod": "Start next period",
+    "greenCardHome": "Green card home",
+    "greenCardAway": "Green card away",
     "yellowCardHome": "Yellow card home",
     "yellowCardAway": "Yellow card away",
     "redCardHome": "Red card home",
@@ -403,7 +409,9 @@
       "Eishockey": "Ice hockey",
       "Handball": "Handball",
       "American Football": "American Football",
-      "Volleyball": "Volleyball"
+      "Volleyball": "Volleyball",
+      "Landhockey": "Field Hockey",
+      "Unihockey": "Floorball"
     },
     "noClubsFound": "No clubs found.",
     "missingClub": "Can't find your club?",

@@ -90,18 +90,32 @@ export type GamePeriod =
 // its creating club's sport, denormalized once onto the game doc by
 // createGame.ts. "football" is the default/legacy value for every
 // club/game created before this existed (no `sport` field at all).
-export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball" | "volleyball";
+export type Sport =
+  | "football"
+  | "basketball"
+  | "iceHockey"
+  | "handball"
+  | "americanFootball"
+  | "volleyball"
+  | "fieldHockey"
+  | "floorball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data), so this is the one place that turns
 // those into the stable id used for branching. Keep in sync with
 // functions/src/lib/score.ts's own copy.
+//
+// "Landhockey"/"fieldHockey": stored value stays the full, unambiguous
+// name even though the displayed label is just "Hockey" — see that file's
+// own comment for why that's not ambiguous with Eishockey in this market.
 export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
   if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
   if (raw === "Volleyball" || raw === "volleyball") return "volleyball";
+  if (raw === "Landhockey" || raw === "fieldHockey") return "fieldHockey";
+  if (raw === "Unihockey" || raw === "floorball") return "floorball";
   return "football";
 }
 
@@ -141,10 +155,14 @@ export interface Game {
     yellowAway: number;
     redHome: number;
     redAway: number;
+    // Field-hockey-only third tier; 0 for every other sport (see
+    // onGameEventCreate.ts — written unconditionally, same as yellow/red).
+    greenHome: number;
+    greenAway: number;
   };
   // Basketball-only; absent on every other sport's games.
   fouls?: { home: number; away: number };
-  // Ice-hockey-only; absent on every other sport's games.
+  // Ice-hockey- and floorball-only; absent on every other sport's games.
   penalties?: { home: number; away: number };
   // Volleyball-only. `score` above stays the top-level result — sets won —
   // consistent with every other sport; this carries the *live* point count
@@ -255,8 +273,26 @@ export type GameEventType =
   // "end this segment" click like every other multi-segment sport here.
   | "pointHomeVolleyball"
   | "pointAwayVolleyball"
-  // Shared between basketball (4 quarters), ice hockey (3 periods), and
-  // handball (2 halves) — see GamePeriod's own comment.
+  // Field hockey (Landhockey, displayed as "Hockey") — 4 quarters, own
+  // event vocabulary, plus a third ("green") card tier no other sport
+  // here has.
+  | "goalHomeFieldHockey"
+  | "goalAwayFieldHockey"
+  | "greenCardHomeFieldHockey"
+  | "greenCardAwayFieldHockey"
+  | "yellowCardHomeFieldHockey"
+  | "yellowCardAwayFieldHockey"
+  | "redCardHomeFieldHockey"
+  | "redCardAwayFieldHockey"
+  // Floorball (Unihockey) — 3 periods, structurally almost identical to
+  // ice hockey (goal + penalty count only).
+  | "goalHomeFloorball"
+  | "goalAwayFloorball"
+  | "penaltyHomeFloorball"
+  | "penaltyAwayFloorball"
+  // Shared between basketball (4 quarters), ice hockey (3 periods),
+  // handball (2 halves), american football (4 quarters), field hockey (4
+  // quarters), and floorball (3 periods) — see GamePeriod's own comment.
   | "periodEnded"
   | "periodStarted";
 

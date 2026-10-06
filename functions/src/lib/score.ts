@@ -38,7 +38,15 @@ export type GamePeriod =
 // createGame.ts. "football" is the default/legacy value: every club/game
 // created before this existed has no `sport` field at all, and must keep
 // behaving exactly as before.
-export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "americanFootball" | "volleyball";
+export type Sport =
+  | "football"
+  | "basketball"
+  | "iceHockey"
+  | "handball"
+  | "americanFootball"
+  | "volleyball"
+  | "fieldHockey"
+  | "floorball";
 
 // SPORTS in create-club/page.tsx stores German literals ("Fussball" etc.,
 // matching existing production data — see that file's own comment on why),
@@ -46,12 +54,22 @@ export type Sport = "football" | "basketball" | "iceHockey" | "handball" | "amer
 // branching below. Anything unrecognized (including undefined/legacy
 // fields) falls back to "football" — never let a bad/missing value pick a
 // sport's rules for it.
+//
+// "Landhockey"/"fieldHockey": the German literal is deliberately the
+// unambiguous full name (matches real-world usage, e.g. the Swiss
+// federation "Swiss Hockey") even though the *displayed* label is just
+// "Hockey" (messages/{locale}.json's clubSetup.sports/home.sports) —
+// unqualified "Hockey" is the normal Swiss term for this sport, not for
+// ice hockey (which is always explicitly "Eis-"), so no ambiguity there —
+// but the stored/internal value stays fully spelled out on purpose.
 export function normalizeSport(raw: string | null | undefined): Sport {
   if (raw === "Basketball" || raw === "basketball") return "basketball";
   if (raw === "Eishockey" || raw === "iceHockey") return "iceHockey";
   if (raw === "Handball" || raw === "handball") return "handball";
   if (raw === "American Football" || raw === "americanFootball") return "americanFootball";
   if (raw === "Volleyball" || raw === "volleyball") return "volleyball";
+  if (raw === "Landhockey" || raw === "fieldHockey") return "fieldHockey";
+  if (raw === "Unihockey" || raw === "floorball") return "floorball";
   return "football";
 }
 
@@ -94,6 +112,11 @@ export interface ComputedGameState {
   currentSetScoreHome: number;
   currentSetScoreAway: number;
   setsHistory: { home: number; away: number }[];
+  // Field-hockey-only (always 0 for other sports) — the third, mildest tier
+  // of its three-level card system (green/yellow/red), same count-only
+  // simplicity as every other card/foul/penalty field here.
+  greenCardsHome: number;
+  greenCardsAway: number;
   lastEventType: string | null;
   statusBeforePause: GameStatus | null;
 }
@@ -115,6 +138,8 @@ function emptyState(): ComputedGameState {
     currentSetScoreHome: 0,
     currentSetScoreAway: 0,
     setsHistory: [],
+    greenCardsHome: 0,
+    greenCardsAway: 0,
     lastEventType: null,
     statusBeforePause: null,
   };
@@ -164,6 +189,8 @@ export function computeGameState(events: GameEventRecord[], sport: Sport = "foot
   if (sport === "handball") return computeHandballState(events);
   if (sport === "americanFootball") return computeAmericanFootballState(events);
   if (sport === "volleyball") return computeVolleyballState(events);
+  if (sport === "fieldHockey") return computeFieldHockeyState(events);
+  if (sport === "floorball") return computeFloorballState(events);
   return computeFootballState(events);
 }
 
@@ -236,7 +263,10 @@ type SecondaryEventCategory =
   | "yellowCardHome"
   | "yellowCardAway"
   | "redCardHome"
-  | "redCardAway";
+  | "redCardAway"
+  // Field-hockey-only third card tier — see ComputedGameState.
+  | "greenCardHome"
+  | "greenCardAway";
 
 function computeSegmentedState(
   events: GameEventRecord[],
@@ -264,6 +294,8 @@ function computeSegmentedState(
     else if (secondary === "yellowCardAway") state.yellowCardsAway += 1;
     else if (secondary === "redCardHome") state.redCardsHome += 1;
     else if (secondary === "redCardAway") state.redCardsAway += 1;
+    else if (secondary === "greenCardHome") state.greenCardsHome += 1;
+    else if (secondary === "greenCardAway") state.greenCardsAway += 1;
     if (secondary) {
       state.lastEventType = event.type;
       continue;
@@ -390,6 +422,51 @@ function computeAmericanFootballState(events: GameEventRecord[]): ComputedGameSt
       safetyAway: { away: 2 },
     },
     {}
+  );
+}
+
+// 4 quarters (FIH standard since 2019, now the norm at club level too),
+// same generic segmented model as basketball/American football. The one
+// genuinely new element vs. every other sport here: field hockey's
+// three-tier card system (green = mildest, temporary caution; yellow/red
+// reuse the same categories every other carded sport already has). No
+// suspension-timer simulation for the green/yellow cards, same count-only
+// simplicity already used for ice hockey's penalties.
+function computeFieldHockeyState(events: GameEventRecord[]): ComputedGameState {
+  return computeSegmentedState(
+    events,
+    4,
+    {
+      goalHomeFieldHockey: { home: 1 },
+      goalAwayFieldHockey: { away: 1 },
+    },
+    {
+      greenCardHomeFieldHockey: "greenCardHome",
+      greenCardAwayFieldHockey: "greenCardAway",
+      yellowCardHomeFieldHockey: "yellowCardHome",
+      yellowCardAwayFieldHockey: "yellowCardAway",
+      redCardHomeFieldHockey: "redCardHome",
+      redCardAwayFieldHockey: "redCardAway",
+    }
+  );
+}
+
+// 3 periods, penalty count only (no penalty-box countdown, deliberately —
+// same simplification as ice hockey) — floorball is structurally almost
+// identical to ice hockey, down to reusing the exact same
+// penaltiesHome/Away fields on ComputedGameState (no new field needed).
+function computeFloorballState(events: GameEventRecord[]): ComputedGameState {
+  return computeSegmentedState(
+    events,
+    3,
+    {
+      goalHomeFloorball: { home: 1 },
+      goalAwayFloorball: { away: 1 },
+    },
+    {
+      penaltyHomeFloorball: "penaltyHome",
+      penaltyAwayFloorball: "penaltyAway",
+    }
   );
 }
 

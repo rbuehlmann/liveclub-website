@@ -148,8 +148,16 @@ service cloud.firestore {
             'safetyHome', 'safetyAway',
             // Volleyball
             'pointHomeVolleyball', 'pointAwayVolleyball',
-            // Shared between basketball, ice hockey, handball, and
-            // american football
+            // Field hockey (Landhockey, displayed as "Hockey")
+            'goalHomeFieldHockey', 'goalAwayFieldHockey',
+            'greenCardHomeFieldHockey', 'greenCardAwayFieldHockey',
+            'yellowCardHomeFieldHockey', 'yellowCardAwayFieldHockey',
+            'redCardHomeFieldHockey', 'redCardAwayFieldHockey',
+            // Floorball (Unihockey)
+            'goalHomeFloorball', 'goalAwayFloorball',
+            'penaltyHomeFloorball', 'penaltyAwayFloorball',
+            // Shared between basketball, ice hockey, handball, american
+            // football, field hockey, and floorball
             'periodEnded', 'periodStarted'
           ] &&
           // A club with an expired/inactive license can no longer start a

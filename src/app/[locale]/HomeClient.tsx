@@ -28,7 +28,16 @@ const COUNTRIES = ["Schweiz", "Deutschland", "Österreich", "Liechtenstein"];
 // unlike there, never gated by settings/sportAvailability: this is a search
 // filter over clubs that already exist, not a picker for creating a new
 // one, so there's nothing to protect by hiding an option here.
-const SPORTS = ["Fussball", "Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
+const SPORTS = [
+  "Fussball",
+  "Basketball",
+  "Eishockey",
+  "Handball",
+  "American Football",
+  "Volleyball",
+  "Landhockey",
+  "Unihockey",
+];
 
 interface ClubResult {
   publicClubId: string;

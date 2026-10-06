@@ -16,6 +16,8 @@ import {
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
+import { LicenseExpiredNotice } from "@/components/club/LicenseExpiredNotice";
+import { isClubLicenseActive } from "@/lib/licenseStatus";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -204,9 +206,16 @@ export default function LiveControlPage() {
       )}
 
       {(game.status === "draft" || game.status === "scheduled") && (
-        <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("gameStarted")}>
-          {submitting || pending ? tCommon("loading") : t("startGame")}
-        </Button>
+        <>
+          {!isClubLicenseActive(club) && <LicenseExpiredNotice />}
+          <Button
+            fullWidth
+            disabled={submitting || pending || !isClubLicenseActive(club)}
+            onClick={() => recordEvent("gameStarted")}
+          >
+            {submitting || pending ? tCommon("loading") : t("startGame")}
+          </Button>
+        </>
       )}
 
       {(game.status === "live" || game.status === "paused") && (
@@ -448,6 +457,114 @@ export default function LiveControlPage() {
             </div>
           )}
 
+          {/* Field hockey (Landhockey, displayed as "Hockey") — same
+              goal-button pattern as handball/ice hockey, but a third
+              ("green") card tier below yellow/red, no other sport here
+              has one. */}
+          {sport === "fieldHockey" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalHomeFieldHockey")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalHome")}
+                </Button>
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalAwayFieldHockey")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalAway")}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("greenCardHomeFieldHockey")}
+                >
+                  {t("greenCardHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("greenCardAwayFieldHockey")}
+                >
+                  {t("greenCardAway")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("yellowCardHomeFieldHockey")}
+                >
+                  {t("yellowCardHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("yellowCardAwayFieldHockey")}
+                >
+                  {t("yellowCardAway")}
+                </Button>
+                <Button
+                  variant="danger"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("redCardHomeFieldHockey")}
+                >
+                  {t("redCardHome")}
+                </Button>
+                <Button
+                  variant="danger"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("redCardAwayFieldHockey")}
+                >
+                  {t("redCardAway")}
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* Floorball (Unihockey) — structurally almost identical to ice
+              hockey (goal + penalty count only). */}
+          {sport === "floorball" && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalHomeFloorball")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalHome")}
+                </Button>
+                <Button
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("goalAwayFloorball")}
+                  className="h-24 text-xl"
+                >
+                  {t("goalAway")}
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("penaltyHomeFloorball")}
+                >
+                  {t("penaltyHome")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={submitting || pending || game.status === "paused"}
+                  onClick={() => recordEvent("penaltyAwayFloorball")}
+                >
+                  {t("penaltyAway")}
+                </Button>
+              </div>
+            </>
+          )}
+
           {sport === "football" && game.status === "live" && game.period === "firstHalf" && (
             <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("halfTime")}>
               {t("halfTime")}
@@ -518,6 +635,42 @@ export default function LiveControlPage() {
               </Button>
             )}
           {sport === "iceHockey" &&
+            game.status === "live" &&
+            ["periodBreak1", "periodBreak2"].includes(game.period ?? "") && (
+              <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
+                {t("startNextPeriod")}
+              </Button>
+            )}
+
+          {/* Field hockey also plays in quarters — reuses the exact same
+              "Viertelende"/"Nächstes Viertel starten" copy as basketball/
+              american football, same generic periodEnded/periodStarted
+              mechanic. */}
+          {sport === "fieldHockey" &&
+            game.status === "live" &&
+            ["period1", "period2", "period3"].includes(game.period ?? "") && (
+              <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+                {t("endQuarter")}
+              </Button>
+            )}
+          {sport === "fieldHockey" &&
+            game.status === "live" &&
+            ["periodBreak1", "periodBreak2", "periodBreak3"].includes(game.period ?? "") && (
+              <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>
+                {t("startNextQuarter")}
+              </Button>
+            )}
+
+          {/* Floorball also plays 3 periods — reuses the exact same
+              "Drittelende"/"Nächstes Drittel starten" copy as ice hockey. */}
+          {sport === "floorball" &&
+            game.status === "live" &&
+            ["period1", "period2"].includes(game.period ?? "") && (
+              <Button variant="secondary" fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodEnded")}>
+                {t("endPeriod")}
+              </Button>
+            )}
+          {sport === "floorball" &&
             game.status === "live" &&
             ["periodBreak1", "periodBreak2"].includes(game.period ?? "") && (
               <Button fullWidth disabled={submitting || pending} onClick={() => recordEvent("periodStarted")}>

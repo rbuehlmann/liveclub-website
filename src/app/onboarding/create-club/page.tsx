@@ -44,7 +44,16 @@ async function waitForClubMembership(uid: string, clubId: string) {
 // functions/src/lib/score.ts's normalizeSport() is what turns these into
 // the stable "football"/"basketball"/"iceHockey" ids that live-scoring
 // actually branches on (2026-09-08).
-const SPORTS = ["Fussball", "Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
+const SPORTS = [
+  "Fussball",
+  "Basketball",
+  "Eishockey",
+  "Handball",
+  "American Football",
+  "Volleyball",
+  "Landhockey",
+  "Unihockey",
+];
 
 // Gated by settings/sportAvailability.enabledSports (admin-editable at
 // /admin/settings) — the iOS/Android apps aren't updated for the 5 new

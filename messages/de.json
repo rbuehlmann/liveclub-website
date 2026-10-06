@@ -64,7 +64,9 @@
       "Eishockey": "Eishockey",
       "Handball": "Handball",
       "American Football": "American Football",
-      "Volleyball": "Volleyball"
+      "Volleyball": "Volleyball",
+      "Landhockey": "Hockey",
+      "Unihockey": "Unihockey"
     },
     "countries": {
       "Schweiz": "Schweiz",
@@ -103,6 +105,8 @@
     "subscription": "Abo & Lizenz",
     "trialEndsIn": "Testphase endet in {days} Tagen",
     "trialExpired": "Testphase abgelaufen",
+    "licenseBlockedTitle": "Lizenz nicht aktiv",
+    "licenseBlockedBody": "Ohne aktive Lizenz können keine Spiele erstellt oder gestartet und keine Team-Infos oder Pushes gesendet werden. Bitte <link>verlängere die Lizenz</link>.",
     "licenseStatusActive": "Aktiv",
     "licenseStatusExpired": "Abgelaufen",
     "suspendedNotice": "Dieser Verein wurde manuell deaktiviert.",
@@ -230,6 +234,8 @@
     "penaltyAway": "Strafzeit Gast",
     "endPeriod": "Drittelende",
     "startNextPeriod": "Nächstes Drittel starten",
+    "greenCardHome": "Grüne Karte Heim",
+    "greenCardAway": "Grüne Karte Gast",
     "yellowCardHome": "Gelbe Karte Heim",
     "yellowCardAway": "Gelbe Karte Gast",
     "redCardHome": "Rote Karte Heim",
@@ -413,7 +419,9 @@
       "Eishockey": "Eishockey",
       "Handball": "Handball",
       "American Football": "American Football",
-      "Volleyball": "Volleyball"
+      "Volleyball": "Volleyball",
+      "Landhockey": "Hockey",
+      "Unihockey": "Unihockey"
     },
     "noClubsFound": "Keine Vereine gefunden.",
     "missingClub": "Vermisst du deinen Verein?",

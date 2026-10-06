@@ -7,6 +7,8 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useClubContext } from "@/components/club/ClubContext";
+import { LicenseExpiredNotice } from "@/components/club/LicenseExpiredNotice";
+import { isClubLicenseActive, isLicenseBlockedError } from "@/lib/licenseStatus";
 import {
   createGame,
   acceptGameTransfer,
@@ -74,6 +76,7 @@ function mapGameDoc(id: string, data: Record<string, unknown>): Game {
 export default function GamesPage() {
   const t = useTranslations("games");
   const tCommon = useTranslations("common");
+  const tDash = useTranslations("dashboard");
   const { user } = useAuth();
   const { club, role, teamIds: myTeamIds } = useClubContext();
 
@@ -264,7 +267,11 @@ export default function GamesPage() {
       setManualOpponentName("");
       setScheduledStart("");
     } catch (err) {
-      setCreateError((err as { message?: string })?.message ?? t("createFailed"));
+      setCreateError(
+        isLicenseBlockedError(err)
+          ? tDash("licenseBlockedTitle")
+          : ((err as { message?: string })?.message ?? t("createFailed"))
+      );
     } finally {
       setCreating(false);
     }
@@ -277,6 +284,11 @@ export default function GamesPage() {
       {(role === "clubAdmin" || role === "reporter") && (
         <Card>
           <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">{t("newGame")}</h2>
+          {club && !isClubLicenseActive(club) && (
+            <div className="mb-4">
+              <LicenseExpiredNotice />
+            </div>
+          )}
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("team")}</label>
@@ -405,7 +417,10 @@ export default function GamesPage() {
             </div>
             {createError && <p className="text-sm text-red-600">{createError}</p>}
             {createNotice && <p className="text-sm text-blue-700 dark:text-blue-400">{createNotice}</p>}
-            <Button type="submit" disabled={creating || !opponentDisplayName || !scheduledStart}>
+            <Button
+              type="submit"
+              disabled={creating || !opponentDisplayName || !scheduledStart || !isClubLicenseActive(club)}
+            >
               {creating ? tCommon("loading") : t("create")}
             </Button>
           </form>

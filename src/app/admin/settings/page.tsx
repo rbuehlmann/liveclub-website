@@ -238,7 +238,15 @@ function ImageField({ label, fieldKey, value, onChange }: ImageFieldProps) {
 // PlatformAdmins bypass this restriction entirely in the registration form
 // itself (getIdTokenResult there), so flipping a sport on here is only ever
 // about the *public* registration form, never a precondition for testing it.
-const TOGGLEABLE_SPORTS = ["Basketball", "Eishockey", "Handball", "American Football", "Volleyball"];
+const TOGGLEABLE_SPORTS = [
+  "Basketball",
+  "Eishockey",
+  "Handball",
+  "American Football",
+  "Volleyball",
+  "Landhockey",
+  "Unihockey",
+];
 
 function SportAvailabilityCard() {
   const [enabled, setEnabled] = useState<Set<string>>(new Set());

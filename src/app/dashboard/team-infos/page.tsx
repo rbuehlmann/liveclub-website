@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { collection, doc, getDoc, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useClubContext } from "@/components/club/ClubContext";
+import { LicenseExpiredNotice } from "@/components/club/LicenseExpiredNotice";
+import { isClubLicenseActive, isLicenseBlockedError } from "@/lib/licenseStatus";
 import { createTeamInfo, hideTeamInfo } from "@/lib/firebase/functionsApi";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -65,6 +67,7 @@ function mapTeamInfoDoc(id: string, data: Record<string, unknown>): TeamInfo {
 
 export default function TeamInfosPage() {
   const t = useTranslations("teamInfos");
+  const tDash = useTranslations("dashboard");
   const locale = useLocale() as "de" | "en";
   const { club, role, teamIds: myTeamIds } = useClubContext();
 
@@ -197,7 +200,11 @@ export default function TeamInfosPage() {
       await createTeamInfo({ clubId: club!.clubId, teamId, title: title.trim(), text: text.trim(), sendPush });
       resetForm();
     } catch (err) {
-      setCreateError((err as { message?: string })?.message ?? t("createFailed"));
+      setCreateError(
+        isLicenseBlockedError(err)
+          ? tDash("licenseBlockedTitle")
+          : ((err as { message?: string })?.message ?? t("createFailed"))
+      );
     } finally {
       setCreating(false);
       setConfirmingPush(false);
@@ -228,7 +235,7 @@ export default function TeamInfosPage() {
   }
 
   const canSubmit =
-    teamInfosEnabled && !!teamId && !!title.trim() && !!text.trim() && infosRemaining > 0 && !creating;
+    isClubLicenseActive(club) && teamInfosEnabled && !!teamId && !!title.trim() && !!text.trim() && infosRemaining > 0 && !creating;
 
   return (
     <div className="flex flex-col gap-6">
@@ -257,6 +264,7 @@ export default function TeamInfosPage() {
               </select>
             </div>
 
+            {!isClubLicenseActive(club) && <LicenseExpiredNotice />}
             {!teamInfosEnabled && <p className="text-sm text-red-600">{t("disabledNotice")}</p>}
 
             {teamId && teamInfosEnabled && (
