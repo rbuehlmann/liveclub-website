@@ -119,14 +119,22 @@ function CreateClubForm() {
         // A platformAdmin always sees every sport, regardless of what's
         // publicly enabled — testing a not-yet-launched sport must never
         // require opening it up to the public first.
+        let list: string[];
         if (tokenResult.claims.platformAdmin === true) {
-          setAvailableSports(SPORTS);
-          return;
+          list = SPORTS;
+        } else {
+          const enabled = settingsSnap.data()?.enabledSports as string[] | undefined;
+          // Fussball is always available and never stored in enabledSports
+          // (its checkbox is locked in /admin/settings).
+          list =
+            enabled && enabled.length > 0
+              ? SPORTS.filter((s) => s === "Fussball" || enabled.includes(s))
+              : DEFAULT_ENABLED_SPORTS;
         }
-        const enabled = settingsSnap.data()?.enabledSports as string[] | undefined;
-        setAvailableSports(
-          enabled && enabled.length > 0 ? SPORTS.filter((s) => enabled.includes(s)) : DEFAULT_ENABLED_SPORTS
-        );
+        setAvailableSports(list);
+        // The <select> shows its first option when the current value isn't
+        // in the list, but state would stay stale — keep them in sync.
+        setSport((prev) => (list.includes(prev) ? prev : list[0]));
       } catch (err) {
         // Fails closed (Fussball-only, the safe default) rather than
         // leaving the dropdown in an undefined state — but logged, so a
