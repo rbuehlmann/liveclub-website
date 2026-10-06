@@ -30,8 +30,17 @@ export const onClubWrite = onDocumentWritten("clubs/{clubId}", async (event) => 
       : null
     : (existing.data()?.logoThumbnailBase64 as string | null | undefined) ?? null;
 
+  // Home/away colors (#rrggbb from the dashboard color picker) — only
+  // included in the write when they differ from what's already mirrored.
+  const primaryColor: string | null = afterData.primaryColor ?? null;
+  const secondaryColor: string | null = afterData.secondaryColor ?? null;
+  const colorUpdates: Record<string, string | null> = {};
+  if (existing.data()?.primaryColor !== primaryColor) colorUpdates.primaryColor = primaryColor;
+  if (existing.data()?.secondaryColor !== secondaryColor) colorUpdates.secondaryColor = secondaryColor;
+
   await publicClubRef.set(
     {
+      ...colorUpdates,
       name: afterData.name,
       sport: afterData.sport,
       country: afterData.country ?? null,
